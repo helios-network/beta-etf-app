@@ -1,0 +1,396 @@
+.etfList {
+  width: 100%;
+  padding: 2rem 1rem;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem 0.75rem;
+  }
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.networkWarning {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 2rem;
+  background: var(--warning-lowest);
+  border: 1px solid var(--warning-low);
+  border-radius: 8px;
+  color: var(--warning-high);
+
+  svg {
+    font-size: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+.mainCard {
+  padding: 2rem !important;
+  background-color: var(--background-lower) !important;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem !important;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem !important;
+  }
+}
+
+.headingWrapper {
+  margin-bottom: 2.5rem;
+
+  @media (max-width: 768px) {
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.filterCardContent {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--background-low);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+  }
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 1rem;
+  align-items: flex-end;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.searchWrapper {
+  grid-column: 1 / -1;
+
+  @media (max-width: 1024px) {
+    grid-column: 1 / 2;
+  }
+
+  @media (max-width: 640px) {
+    grid-column: 1 / -1;
+  }
+}
+
+.searchInput {
+  width: 100%;
+}
+
+.statsHeader {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--background-low);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+
+    .label {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .statValue {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-medium);
+    }
+  }
+}
+
+.etfsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 1rem;
+  }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+
+  .emptyIcon {
+    font-size: 3rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    opacity: 0.8;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.6;
+  }
+}
+
+.etfCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+
+  @media (max-width: 480px) {
+    gap: 1rem;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.etfTitle {
+  flex: 1;
+
+  h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+
+    @media (max-width: 480px) {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+.symbol {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background: var(--background-low);
+  color: var(--primary-medium);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: flex-start;
+    grid-column: 1 / -1;
+  }
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--background-low);
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
+
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+  }
+}
+
+.metricLabel {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metricValue {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-medium);
+
+  &.positive {
+    color: var(--success-medium);
+  }
+
+  &.negative {
+    color: var(--danger-medium);
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.95rem;
+  }
+}
+
+.description {
+  opacity: 0.75;
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.composition {
+  h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.tokens {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.token {
+  display: grid;
+  grid-template-columns: 50px 1fr 40px;
+  align-items: center;
+  gap: 0.75rem;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 45px 1fr 35px;
+    gap: 0.5rem;
+  }
+}
+
+.tokenSymbol {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-medium);
+}
+
+.percentageBar {
+  height: 6px;
+  background: var(--background-medium);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.percentageFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-medium), var(--primary-low));
+  transition: width 0.3s ease;
+}
+
+.percentage {
+  text-align: right;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.moreTokens {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--primary-medium);
+  background: var(--background-low);
+  border-radius: 4px;
+  border: 1px dashed var(--border-light);
+  font-weight: 600;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: auto;
+
+  button {
+    min-height: 36px;
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+
+    button {
+      min-height: 32px;
+      font-size: 0.75rem;
+      padding: 0.5rem !important;
+    }
+  }
+}

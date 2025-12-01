@@ -1,0 +1,130 @@
+@use "styles/mixins" as *;
+
+.wrapper {
+  width: 100%;
+}
+
+.input {
+  --input-transition: 0.2s;
+  --input-padding: var(--size-3);
+  transition: outline var(--input-transition),
+    background-color var(--input-transition);
+  background-color: var(--background-medium);
+  border-radius: var(--radius-s);
+  padding: var(--input-padding) calc(var(--input-padding) * 1.5);
+  display: flex;
+  align-items: center;
+  gap: var(--size-4);
+  font-size: var(--size-4-5);
+  text-align: left;
+  position: relative;
+  outline: 2px solid transparent;
+  min-height: 3.5em;
+
+  &:focus-within {
+    background-color: var(--background-low);
+    outline: 2px solid var(--primary-medium);
+  }
+
+  &.textarea {
+    align-items: flex-start;
+    padding-top: var(--input-padding);
+  }
+
+  .icon {
+    width: 1em;
+    transform: scale(1.15);
+    color: var(--primary-medium);
+
+    &Textarea {
+      top: 0.5em;
+      position: relative;
+    }
+  }
+
+  .icon:last-child {
+    position: absolute;
+    right: var(--size-3);
+    pointer-events: none;
+  }
+
+  .value {
+    flex: 1;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    height: 100%;
+    resize: none;
+
+    &::placeholder {
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+  }
+
+  select {
+    height: 100%;
+    line-height: 2;
+    appearance: none;
+    cursor: pointer;
+    padding: 0.5em 2em 0.5em 0.5em;
+    font-weight: 600;
+    border: none;
+    background-color: transparent;
+    color: var(--text-primary);
+    font-size: var(--size-4-5);
+    border-radius: var(--radius-xs);
+
+    &::-ms-expand {
+      display: none;
+    }
+
+    option {
+      background-color: var(--background-medium);
+      color: var(--text-primary);
+      font-weight: 500;
+      padding: 0.5em;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  textarea {
+    padding: 0.25em 0;
+    height: 7em !important;
+    @include no-scrollbar;
+  }
+}
+
+.label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  @include ellipsis;
+  text-align: right;
+  font-size: var(--size-3-5);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding-bottom: 0.65em;
+
+  small {
+    display: block;
+    font-size: 0.6em;
+    margin-top: 0.25em;
+  }
+}
+
+.helper {
+  display: block;
+  font-size: var(--size-3);
+  margin-top: var(--size-2);
+  color: var(--color-medium, var(--text-secondary));
+  text-align: left;
+  padding: 0 0.5em;
+}

@@ -1,0 +1,114 @@
+.home {
+  width: 100%;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 4rem;
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    font-size: 1.1rem;
+    opacity: 0.8;
+  }
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.featureCard {
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+
+  h3 {
+    margin-top: 1rem;
+    font-size: 1.3rem;
+  }
+
+  p {
+    margin-top: 0.5rem;
+    opacity: 0.7;
+    font-size: 0.9rem;
+  }
+}
+
+.cardIcon {
+  font-size: 3rem;
+  opacity: 0.8;
+}
+
+.infoBox {
+  display: flex;
+  gap: 1.5rem;
+  padding: 2rem;
+  border-radius: 8px;
+  background: rgba(0, 45, 203, 0.05);
+  border: 1px solid rgba(0, 45, 203, 0.1);
+
+  svg {
+    font-size: 2rem;
+    color: #002dcb;
+    flex-shrink: 0;
+  }
+
+  h4 {
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+  }
+
+  p {
+    opacity: 0.8;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  @media (max-width: 600px) {
+    padding: 1.5rem;
+    gap: 1rem;
+
+    svg {
+      font-size: 1.5rem;
+    }
+
+    h4 {
+      font-size: 0.95rem;
+    }
+
+    p {
+      font-size: 0.85rem;
+    }
+  }
+}

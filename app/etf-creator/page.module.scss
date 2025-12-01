@@ -1,0 +1,20 @@
+@use "styles/mixins" as *;
+
+.etfCreator {
+  display: flex;
+  gap: var(--size-8); // 32px gap between columns
+  align-items: flex-start;
+
+  @include max(1150px) {
+    flex-direction: column;
+  }
+}
+
+.leftColumn,
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-8); // 32px gap between sections within each column
+  flex: 1;
+  min-width: 0;
+}

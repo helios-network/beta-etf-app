@@ -1,0 +1,160 @@
+@use "styles/mixins" as *;
+
+$responsive: 700px;
+
+.type {
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  --size: var(--button-medium-height);
+  background-color: var(--primary-medium);
+  border-radius: var(--radius-rounded);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size);
+  height: var(--size);
+  position: relative;
+  color: var(--white);
+  margin-right: 1em;
+
+  &Svg {
+    font-size: calc(var(--size) / 2);
+  }
+
+  @include max($responsive) {
+    --size: var(--button-small-height);
+  }
+}
+
+.status {
+  position: absolute;
+  width: calc(var(--size) / 3);
+  height: calc(var(--size) / 3);
+  border-radius: var(--radius-rounded);
+  background-color: var(--bg);
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.warning {
+    --bg: var(--warning-medium);
+  }
+
+  &.danger {
+    --bg: var(--danger-medium);
+  }
+
+  &.success {
+    --bg: var(--success-medium);
+  }
+
+  svg {
+    width: 60%;
+    color: var(--white);
+
+    * {
+      stroke-width: 3;
+    }
+  }
+}
+
+.stronger {
+  @include ellipsis;
+  font-size: 1.15em;
+  padding-bottom: 0.1em;
+
+  @include max($responsive) {
+    font-size: 1em;
+  }
+}
+
+.small {
+  font-size: 0.95em;
+  color: var(--text-tertiary);
+}
+
+.cell {
+  font-variant-numeric: tabular-nums;
+
+  &From,
+  &To {
+    @include max($responsive) {
+      display: none;
+    }
+  }
+  &Amount {
+    align-items: center;
+    width: 110px;
+    text-align: right;
+
+    strong {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      svg {
+        width: 20px;
+        height: auto;
+      }
+    }
+
+    @include min($responsive) {
+      .small {
+        display: none;
+      }
+    }
+
+    @include max($responsive) {
+      border-radius: 0 var(--td-radius) var(--td-radius) 0;
+      text-align: right;
+      padding-right: 2em;
+
+      .small {
+        display: block;
+      }
+    }
+  }
+
+  &Right {
+    @include max($responsive) {
+      display: none;
+    }
+  }
+}
+
+.empty {
+  --card-padding: var(--size-10);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--card-padding) / 2);
+  flex: 1;
+}
+
+.sad {
+  font-size: 2em;
+  color: var(--primary-medium);
+}
+
+.tooltipContent {
+  @include backdrop;
+  padding: var(--size-2) var(--size-3);
+  border-radius: var(--radius-m);
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-m);
+  background-color: var(--background-lower);
+}
+
+.tooltipArrow {
+  fill: var(--bg);
+}
