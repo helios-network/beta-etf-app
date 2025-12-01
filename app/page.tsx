@@ -40,10 +40,14 @@ export default function Home() {
         <div className={s.infoBox}>
           <Icon icon="hugeicons:info-circle" />
           <div>
-            <h4>ETF Smart Contract Integration</h4>
+            <div className={s.titleWrapper}>
+              <Icon icon="hugeicons:idea-01" className={s.topicIcon} />
+              <h4>How It Works</h4>
+            </div>
             <p>
-              This beta experience will integrate with our ETF smart contracts, enabling seamless token minting,
-              withdrawals, and portfolio management directly on the blockchain.
+              Create customized ETF baskets with your preferred token allocations, mint tokens to start investing,
+              or browse existing ETF portfolios in the marketplace. Manage your diversified portfolio with full control
+              over token selection and asset allocation.
             </p>
           </div>
         </div>
