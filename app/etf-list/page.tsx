@@ -320,6 +320,21 @@ export default function ETFList() {
   return (
     <div className={s.etfList}>
       <div className={s.container}>
+        <div className={s.statsHeader}>
+          <div className={s.stat}>
+            <span className={s.label}>Total ETFs</span>
+            <span className={s.statValue}>{filteredAndSortedETFs.length}</span>
+          </div>
+          <div className={s.stat}>
+            <span className={s.label}>Total TVL</span>
+            <span className={s.statValue}>${(filteredAndSortedETFs.reduce((sum, etf) => sum + parseFloat(etf.tvl.replace(/[^0-9.]/g, '')), 0)).toFixed(2)}M</span>
+          </div>
+          <div className={s.stat}>
+            <span className={s.label}>Avg APY</span>
+            <span className={s.statValue}>{(filteredAndSortedETFs.reduce((sum, etf) => sum + parseFloat(etf.apy), 0) / filteredAndSortedETFs.length || 0).toFixed(2)}%</span>
+          </div>
+        </div>
+
         <Card className={s.mainCard}>
           <div className={s.headingWrapper}>
             <Heading
@@ -378,21 +393,6 @@ export default function ETFList() {
             </div>
           </div>
 
-          <div className={s.statsHeader}>
-            <div className={s.stat}>
-              <span className={s.label}>Total ETFs</span>
-              <span className={s.statValue}>{filteredAndSortedETFs.length}</span>
-            </div>
-            <div className={s.stat}>
-              <span className={s.label}>Total TVL</span>
-              <span className={s.statValue}>${(filteredAndSortedETFs.reduce((sum, etf) => sum + parseFloat(etf.tvl.replace(/[^0-9.]/g, '')), 0)).toFixed(2)}M</span>
-            </div>
-            <div className={s.stat}>
-              <span className={s.label}>Avg APY</span>
-              <span className={s.statValue}>{(filteredAndSortedETFs.reduce((sum, etf) => sum + parseFloat(etf.apy), 0) / filteredAndSortedETFs.length || 0).toFixed(2)}%</span>
-            </div>
-          </div>
-
           {filteredAndSortedETFs.length === 0 ? (
             <div className={s.emptyState}>
               <Icon icon="hugeicons:inbox-01" className={s.emptyIcon} />
@@ -442,9 +442,9 @@ export default function ETFList() {
                 </div>
 
                 <div className={s.composition}>
-                  <h4>Composition</h4>
+                  <h4>Composition ({etf.tokens.length} tokens)</h4>
                   <div className={s.tokens}>
-                    {etf.tokens.slice(0, 3).map((token) => (
+                    {etf.tokens.map((token) => (
                       <div key={token.symbol} className={s.token}>
                         <span className={s.tokenSymbol}>{token.symbol}</span>
                         <div className={s.percentageBar}>
@@ -456,11 +456,6 @@ export default function ETFList() {
                         <span className={s.percentage}>{token.percentage}%</span>
                       </div>
                     ))}
-                    {etf.tokens.length > 3 && (
-                      <div className={s.moreTokens}>
-                        +{etf.tokens.length - 3} more tokens
-                      </div>
-                    )}
                   </div>
                 </div>
 
