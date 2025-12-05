@@ -113,7 +113,7 @@ export default function ETFMint() {
           <div className={s.leftColumn}>
             <Card>
               <Heading
-                icon="hugeicons:plus-circle"
+                icon="hugeicons:coins-01"
                 title="Mint ETF Tokens"
                 description={`Provide underlying assets to mint new ${etfSymbol} tokens`}
               />
@@ -178,7 +178,7 @@ export default function ETFMint() {
           <div className={s.rightColumn}>
             <Card className={s.infoCard}>
               <Heading
-                icon="hugeicons:info-circle"
+                icon="hugeicons:book-open-01"
                 title="How to Mint"
                 description="Step-by-step guide"
               />
