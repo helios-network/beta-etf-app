@@ -422,7 +422,7 @@ export const ETFCreatorInterface = () => {
                             </div>
 
                             <div className={s.modeGrid}>
-                                <button
+                                <div
                                     className={`${s.modeButton} ${
                                         form.rebalancingMode === "automatic" ? s.selected : ""
                                     }`}
@@ -432,7 +432,17 @@ export const ETFCreatorInterface = () => {
                                             rebalancingMode: "automatic"
                                         }))
                                     }
-                                    type="button"
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault()
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                rebalancingMode: "automatic"
+                                            }))
+                                        }
+                                    }}
                                 >
                                     <div className={s.modeButtonContent}>
                                         <Icon icon="hugeicons:automation" className={s.modeIcon} />
@@ -450,20 +460,18 @@ export const ETFCreatorInterface = () => {
                                             <Icon icon="hugeicons:help-circle" />
                                         </button>
                                     </div>
-                                </button>
+                                </div>
 
-                                <button
+                                <div
                                     className={`${s.modeButton} ${
                                         form.rebalancingMode === "manual" ? s.selected : ""
-                                    }`}
-                                    onClick={() =>
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            rebalancingMode: "manual"
-                                        }))
-                                    }
-                                    type="button"
-                                    disabled={true}
+                                    } ${s.disabled}`}
+                                    onClick={() => {
+                                        // Disabled
+                                    }}
+                                    role="button"
+                                    tabIndex={-1}
+                                    aria-disabled="true"
                                 >
                                     <div className={s.modeButtonContent}>
                                         <Icon icon="hugeicons:hand-02" className={s.modeIcon} />
@@ -481,20 +489,18 @@ export const ETFCreatorInterface = () => {
                                             <Icon icon="hugeicons:help-circle" />
                                         </button>
                                     </div>
-                                </button>
+                                </div>
 
-                                <button
+                                <div
                                     className={`${s.modeButton} ${
                                         form.rebalancingMode === "no-rebalancing" ? s.selected : ""
-                                    }`}
-                                    onClick={() =>
-                                        setForm((prev) => ({
-                                            ...prev,
-                                            rebalancingMode: "no-rebalancing"
-                                        }))
-                                    }
-                                    disabled={true}
-                                    type="button"
+                                    } ${s.disabled}`}
+                                    onClick={() => {
+                                        // Disabled
+                                    }}
+                                    role="button"
+                                    tabIndex={-1}
+                                    aria-disabled="true"
                                 >
                                     <div className={s.modeButtonContent}>
                                         <Icon
@@ -515,7 +521,7 @@ export const ETFCreatorInterface = () => {
                                             <Icon icon="hugeicons:help-circle" />
                                         </button>
                                     </div>
-                                </button>
+                                </div>
                             </div>
                         </div>
 

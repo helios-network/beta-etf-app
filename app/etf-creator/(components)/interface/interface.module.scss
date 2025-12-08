@@ -40,6 +40,12 @@
   }
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .totalPercentage {
   font-size: 1.125rem;
   font-weight: 700;
@@ -72,6 +78,21 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+.emptyTokenList {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  background: var(--background-low);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-m);
+  margin-top: 0.5rem;
+
+  p {
+    margin: 0;
+  }
 }
 
 .tokenItem {
@@ -471,9 +492,17 @@
     }
   }
 
-  &[disabled] {
+  &[disabled],
+  &.disabled {
     opacity: 0.5;
     pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  &[aria-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
   }
 }
 
