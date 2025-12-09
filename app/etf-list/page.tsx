@@ -19,6 +19,7 @@ import { erc20Abi } from "@/constant/helios-contracts"
 import { Modal } from "@/components/modal"
 import clsx from "clsx"
 import s from "./page.module.scss"
+import { formatTokenAmount } from "@/lib/utils/number"
 
 interface ETF {
   factory: string
@@ -27,6 +28,7 @@ interface ETF {
   symbol: string
   description: string
   tvl: string
+  sharePrice: string
   apy: string
   change24h: number
   riskLevel: "low" | "medium" | "high"
@@ -45,13 +47,7 @@ interface ETF {
 }
 
 function formatETFResponse(etf: ETFResponse): ETF {
-  // Format TVL
-  const tvlValue = etf.tvl || 0
-  const tvlFormatted = tvlValue >= 1000000 
-    ? `$${(tvlValue / 1000000).toFixed(2)}M`
-    : tvlValue >= 1000
-    ? `$${(tvlValue / 1000).toFixed(2)}K`
-    : `$${tvlValue.toFixed(2)}`
+
 
   // Convert assets from API to tokens format
   // targetWeightBps: 10000 = 100%, so divide by 100 to get percentage
@@ -66,13 +62,14 @@ function formatETFResponse(etf: ETFResponse): ETF {
     name: etf.name,
     symbol: etf.symbol,
     description: `${etf.name} ETF basket`,
-    tvl: tvlFormatted,
+    tvl: etf.tvl,
+    sharePrice: etf.sharePrice || "0.00",
     apy: "0%", // Not available in API response
     change24h: 0, // Not available in API response
     riskLevel: "medium" as const, // Default value
     category: "ETF", // Default category
     tokens,
-    price: "$0.00", // Not available in API response
+    price: etf.sharePrice ? `$${etf.sharePrice}` : "$0.00", // Use sharePrice for price display
     vault: etf.vault,
     shareToken: etf.shareToken,
     depositToken: etf.depositToken,
@@ -628,7 +625,7 @@ export default function ETFList() {
                 <div className={s.metricsGrid}>
                   <div className={s.metric}>
                     <span className={s.metricLabel}>TVL</span>
-                    <span className={s.metricValue}>{etf.tvl}</span>
+                    <span className={s.metricValue}>{'$' + formatTokenAmount(etf.tvl)}</span>
                   </div>
                   <div className={s.metric}>
                     <span className={s.metricLabel}>APY</span>
@@ -642,7 +639,7 @@ export default function ETFList() {
                   </div>
                   <div className={s.metric}>
                     <span className={s.metricLabel}>Price</span>
-                    <span className={s.metricValue}>{etf.price}</span>
+                    <span className={s.metricValue}>{'$' + formatTokenAmount(etf.sharePrice)}</span>
                   </div>
                 </div>
 

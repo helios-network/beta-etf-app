@@ -57,7 +57,8 @@ interface ETFResponse {
   depositDecimals?: number
   name: string
   symbol: string
-  tvl: number
+  tvl: string
+  sharePrice?: string
   eventNonce: number
   eventHeight: number
   etfNonce: number
