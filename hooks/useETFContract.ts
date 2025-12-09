@@ -63,6 +63,7 @@ interface RedeemResult {
 }
 
 interface RebalanceParams {
+  factory: string
   vault: string
 }
 
@@ -216,7 +217,7 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
-        throw new Error(getErrorMessage(error) || "Error during createETF")
+        throw new Error((error as Error).message || "Error during createETF")
       }
     }
   })
@@ -257,7 +258,7 @@ export const useETFContract = () => {
             gasPrice: bestGasPrice.toString()
           })
       } catch (error: unknown) {
-        throw new Error(getErrorMessage(error) || "Error during token approval")
+        throw new Error((error as Error).message || "Error during token approval")
       }
     }
   })
@@ -283,12 +284,12 @@ export const useETFContract = () => {
 
         // Simulate the transaction and get the return value
         const sharesOutRet: any = await factoryContract.methods
-          .deposit(params.vault, params.amount, params.minSharesOut)
+          .deposit(params.vault, params.amount, params.minSharesOut, false)
           .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .deposit(params.vault, params.amount, params.minSharesOut)
+          .deposit(params.vault, params.amount, params.minSharesOut, false)
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -304,7 +305,7 @@ export const useETFContract = () => {
               from: address,
               to: factoryAddress,
               data: factoryContract.methods
-                .deposit(params.vault, params.amount, params.minSharesOut)
+                .deposit(params.vault, params.amount, params.minSharesOut, false)
                 .encodeABI(),
               gas: gasLimit.toString(),
               gasPrice: bestGasPrice.toString()
@@ -352,7 +353,7 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
-        throw new Error(getErrorMessage(error) || "Error during deposit")
+        throw new Error((error as Error).message || "Error during deposit")
       }
     }
   })
@@ -377,12 +378,12 @@ export const useETFContract = () => {
 
         // Simulate the transaction and get the return value
         const depositOutRet: any = await factoryContract.methods
-          .redeem(params.vault, params.shares, params.minOut)
+          .redeem(params.vault, params.shares, params.minOut, false)
           .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .redeem(params.vault, params.shares, params.minOut)
+          .redeem(params.vault, params.shares, params.minOut, false)
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -398,7 +399,7 @@ export const useETFContract = () => {
               from: address,
               to: factoryAddress,
               data: factoryContract.methods
-                .redeem(params.vault, params.shares, params.minOut)
+                .redeem(params.vault, params.shares, params.minOut, false)
                 .encodeABI(),
               gas: gasLimit.toString(),
               gasPrice: bestGasPrice.toString()
@@ -446,7 +447,7 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
-        throw new Error(getErrorMessage(error) || "Error during redeem")
+        throw new Error((error as Error).message || "Error during redeem")
       }
     }
   })
@@ -462,10 +463,7 @@ export const useETFContract = () => {
       }
 
       try {
-        const factoryAddress = ETF_FACTORY_ADDRESS[chainId as keyof typeof ETF_FACTORY_ADDRESS]
-        if (!factoryAddress) {
-          throw new Error("No factory contract found for chain id: " + chainId)
-        }
+        const factoryAddress = params.factory
 
         const factoryContract = new web3Provider.eth.Contract(
           factoryAbi as any,
@@ -538,7 +536,7 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
-        throw new Error(getErrorMessage(error) || "Error during rebalance")
+        throw new Error((error as Error).message || "Error during rebalance")
       }
     }
   })
@@ -558,15 +556,15 @@ export const useETFContract = () => {
         params.factory
       )
 
-      // Call deposit with minSharesOut = 0 to get the estimated shares
+      // Call deposit with minSharesOut = 0 and simulate = true to get the estimated shares
       // The function now returns sharesOutRet directly
       const sharesOutRet: any = await factoryContract.methods
-        .deposit(params.vault, params.amount, "0")
+        .deposit(params.vault, params.amount, "0", true)
         .call({ from: address })
       
       return String(sharesOutRet)
     } catch (error: unknown) {
-      throw new Error(getErrorMessage(error) || "Error estimating deposit shares")
+      throw new Error((error as Error).message || "Error estimating deposit shares")
     }
   }
 
@@ -585,15 +583,15 @@ export const useETFContract = () => {
         params.factory
       )
 
-      // Call redeem with minOut = 0 to get the estimated deposit tokens
+      // Call redeem with minOut = 0 and simulate = true to get the estimated deposit tokens
       // The function now returns depositOutRet directly
       const depositOutRet: any = await factoryContract.methods
-        .redeem(params.vault, params.shares, "0")
+        .redeem(params.vault, params.shares, "0", true)
         .call({ from: address })
       
       return String(depositOutRet)
     } catch (error: unknown) {
-      throw new Error(getErrorMessage(error) || "Error estimating redeem deposit")
+      throw new Error((error as Error).message || "Error estimating redeem deposit")
     }
   }
 

@@ -109,6 +109,8 @@ export default function ETFList() {
   const [sellShares, setSellShares] = useState("")
   const [minSharesOut, setMinSharesOut] = useState("")
   const [minOut, setMinOut] = useState("")
+  const [slippageBuy, setSlippageBuy] = useState(0.25) // Default 0.25%
+  const [slippageSell, setSlippageSell] = useState(0.25) // Default 0.25%
   const [depositTokenBalance, setDepositTokenBalance] = useState<string | null>(null)
   const [shareTokenBalance, setShareTokenBalance] = useState<string | null>(null)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
@@ -507,9 +509,10 @@ export default function ETFList() {
     }
 
     try {
-      await rebalance({ vault: etf.vault })
+      await rebalance({ factory: etf.factory, vault: etf.vault })
       toast.success(`Successfully rebalanced ${etf.symbol}`)
     } catch (error: unknown) {
+      console.error("Error during rebalance", error)
       const errorMessage = error instanceof Error ? error.message : "Rebalance failed"
       toast.error(errorMessage)
     }
@@ -791,12 +794,17 @@ export default function ETFList() {
                       amount: amountWei
                     })
                     
-                    // Convert shares from wei to human-readable format
+                    // Convert shares from wei to human-readable format and apply slippage
                     if (estimatedSharesWei && estimatedSharesWei !== "0") {
                       const sharesDecimals = 18
                       const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
                       const sharesBigInt = BigInt(estimatedSharesWei)
-                      const sharesNumber = Number(sharesBigInt) / Number(sharesMultiplier)
+                      
+                      // Apply slippage to the BigInt value
+                      const slippageMultiplier = BigInt(Math.floor((100 - slippageBuy) * 100))
+                      const sharesWithSlippage = (sharesBigInt * slippageMultiplier) / 10000n
+                      
+                      const sharesNumber = Number(sharesWithSlippage) / Number(sharesMultiplier)
                       const estimatedShares = formatNumberToString(sharesNumber, sharesDecimals)
                       setMinSharesOut(estimatedShares)
                     }
@@ -864,6 +872,32 @@ export default function ETFList() {
                 }
               }}
             />
+            <div className={s.slippageContainer}>
+              <label className={s.slippageLabel}>Slippage Tolerance</label>
+              <div className={s.slippageButtons}>
+                <button
+                  type="button"
+                  className={clsx(s.slippageButton, slippageBuy === 0.25 && s.active)}
+                  onClick={() => setSlippageBuy(0.25)}
+                >
+                  0.25%
+                </button>
+                <button
+                  type="button"
+                  className={clsx(s.slippageButton, slippageBuy === 0.5 && s.active)}
+                  onClick={() => setSlippageBuy(0.5)}
+                >
+                  0.5%
+                </button>
+                <button
+                  type="button"
+                  className={clsx(s.slippageButton, slippageBuy === 1 && s.active)}
+                  onClick={() => setSlippageBuy(1)}
+                >
+                  1%
+                </button>
+              </div>
+            </div>
             <Input
               label="Minimum Shares Out"
               type="text"
@@ -965,12 +999,17 @@ export default function ETFList() {
                       shares: sharesWei
                     })
                     
-                    // Convert deposit tokens from wei to human-readable format
+                    // Convert deposit tokens from wei to human-readable format and apply slippage
                     if (estimatedDepositWei && estimatedDepositWei !== "0") {
                       const depositDecimals = selectedETF.depositDecimals || 18
                       const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
                       const depositBigInt = BigInt(estimatedDepositWei)
-                      const depositNumber = Number(depositBigInt) / Number(depositMultiplier)
+                      
+                      // Apply slippage to the BigInt value
+                      const slippageMultiplier = BigInt(Math.floor((100 - slippageSell) * 100))
+                      const depositWithSlippage = (depositBigInt * slippageMultiplier) / 10000n
+                      
+                      const depositNumber = Number(depositWithSlippage) / Number(depositMultiplier)
                       const estimatedDeposit = formatNumberToString(depositNumber, depositDecimals)
                       setMinOut(estimatedDeposit)
                     }
@@ -1023,7 +1062,12 @@ export default function ETFList() {
                         const depositDecimals = selectedETF.depositDecimals || 18
                         const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
                         const depositBigInt = BigInt(estimatedDepositWei)
-                        const depositNumber = Number(depositBigInt) / Number(depositMultiplier)
+                        
+                        // Apply slippage to the BigInt value
+                        const slippageMultiplier = BigInt(Math.floor((100 - slippageSell) * 100))
+                        const depositWithSlippage = (depositBigInt * slippageMultiplier) / 10000n
+                        
+                        const depositNumber = Number(depositWithSlippage) / Number(depositMultiplier)
                         const estimatedDeposit = formatNumberToString(depositNumber, depositDecimals)
                         setMinOut(estimatedDeposit)
                       }
@@ -1037,6 +1081,32 @@ export default function ETFList() {
                 }
               }}
             />
+            <div className={s.slippageContainer}>
+              <label className={s.slippageLabel}>Slippage Tolerance</label>
+              <div className={s.slippageButtons}>
+                <button
+                  type="button"
+                  className={clsx(s.slippageButton, slippageSell === 0.25 && s.active)}
+                  onClick={() => setSlippageSell(0.25)}
+                >
+                  0.25%
+                </button>
+                <button
+                  type="button"
+                  className={clsx(s.slippageButton, slippageSell === 0.5 && s.active)}
+                  onClick={() => setSlippageSell(0.5)}
+                >
+                  0.5%
+                </button>
+                <button
+                  type="button"
+                  className={clsx(s.slippageButton, slippageSell === 1 && s.active)}
+                  onClick={() => setSlippageSell(1)}
+                >
+                  1%
+                </button>
+              </div>
+            </div>
             <Input
               label={`Minimum Output (${selectedETF?.depositSymbol || "TOKEN"})`}
               type="text"

@@ -113,6 +113,11 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "minSharesOut",
         type: "uint256"
+      },
+      {
+        internalType: "bool",
+        name: "simulate",
+        type: "bool"
       }
     ],
     name: "deposit",
@@ -142,6 +147,11 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "minOut",
         type: "uint256"
+      },
+      {
+        internalType: "bool",
+        name: "simulate",
+        type: "bool"
       }
     ],
     name: "redeem",
