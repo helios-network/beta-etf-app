@@ -186,28 +186,32 @@ export const useETFContract = () => {
             })
         })
 
-        // Parse the ETFCreated event from the receipt using getPastEvents
-        const events = await factoryContract.getPastEvents("ETFCreated", {
-          fromBlock: receipt.blockNumber,
-          toBlock: receipt.blockNumber,
-          filter: { transactionHash: receipt.transactionHash }
-        })
+        let etfCreatedEvent: any | null = null
 
-        if (events.length === 0) {
+        for (const log of receipt.logs) {
+          try {
+            const evt = decodeEventLog({
+              abi: factoryAbi,
+              data: log.data,
+              topics: log.topics,
+            })
+
+            if (evt.eventName === "ETFCreated") {
+              etfCreatedEvent = evt
+              break
+            }
+          } catch {}
+        }
+
+        if (!etfCreatedEvent) {
           throw new Error("Could not find ETFCreated event in transaction receipt")
         }
 
-        const event = events[0]
-        const vaultAddress = (event as EventLog).returnValues.vault as string
-        const shareTokenAddress = (event as EventLog).returnValues.shareToken as string
-
-        if (!vaultAddress || !shareTokenAddress) {
-          throw new Error("Could not find vault or shareToken in ETFCreated event")
-        }
+        const { vault, shareToken } = etfCreatedEvent.args
 
         return {
-          vault: vaultAddress,
-          shareToken: shareTokenAddress,
+          vault: vault,
+          shareToken: shareToken,
           txHash: receipt.transactionHash,
           blockNumber: Number(receipt.blockNumber)
         }
@@ -337,8 +341,6 @@ export const useETFContract = () => {
         // Ici evt = { eventName, args }
         const { depositAmount, sharesOut, eventNonce, eventHeight } = depositEvent.args
         
-        console.log({ depositAmount, sharesOut, eventNonce, eventHeight })
-        
         return {
           depositAmount,
           sharesOut,
@@ -407,22 +409,28 @@ export const useETFContract = () => {
             })
         })
 
-        // Parse the Redeem event
-        const events = await factoryContract.getPastEvents("Redeem", {
-          fromBlock: receipt.blockNumber,
-          toBlock: receipt.blockNumber,
-          filter: { transactionHash: receipt.transactionHash, vault: params.vault }
-        })
+        let redeemEvent: any | null = null
 
-        if (events.length === 0) {
+        for (const log of receipt.logs) {
+          try {
+            const evt = decodeEventLog({
+              abi: factoryAbi,
+              data: log.data,
+              topics: log.topics,
+            })
+
+            if (evt.eventName === "Redeem") {
+              redeemEvent = evt
+              break
+            }
+          } catch {}
+        }
+
+        if (!redeemEvent) {
           throw new Error("Could not find Redeem event in transaction receipt")
         }
 
-        const event = events[0] as EventLog
-        const sharesIn = event.returnValues.sharesIn as string
-        const depositOut = event.returnValues.depositOut as string
-        const eventNonce = event.returnValues.eventNonce as string
-        const eventHeight = event.returnValues.eventHeight as string
+        const { sharesIn, depositOut, eventNonce, eventHeight } = redeemEvent.args
 
         return {
           sharesIn,
@@ -491,24 +499,28 @@ export const useETFContract = () => {
             })
         })
 
-        // Parse the Rebalance event
-        const events = await factoryContract.getPastEvents("Rebalance", {
-          fromBlock: receipt.blockNumber,
-          toBlock: receipt.blockNumber,
-          filter: { transactionHash: receipt.transactionHash, vault: params.vault }
-        })
+        let rebalanceEvent: any | null = null
 
-        if (events.length === 0) {
+        for (const log of receipt.logs) {
+          try {
+            const evt = decodeEventLog({
+              abi: factoryAbi,
+              data: log.data,
+              topics: log.topics,
+            })
+
+            if (evt.eventName === "Rebalance") {
+              rebalanceEvent = evt
+              break
+            }
+          } catch {}
+        }
+
+        if (!rebalanceEvent) {
           throw new Error("Could not find Rebalance event in transaction receipt")
         }
 
-        const event = events[0] as EventLog
-        const fromIndex = event.returnValues.fromIndex as string
-        const toIndex = event.returnValues.toIndex as string
-        const moveValue = event.returnValues.moveValue as string
-        const eventNonce = event.returnValues.eventNonce as string
-        const eventHeight = event.returnValues.eventHeight as string
-        const bought = event.returnValues.bought as string
+        const { fromIndex, toIndex, moveValue, eventNonce, eventHeight, bought } = rebalanceEvent.args
 
         return {
           fromIndex,
