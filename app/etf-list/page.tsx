@@ -10,11 +10,18 @@ import { Select } from "@/components/input/select"
 import { useAccount, useChainId } from "wagmi"
 import { ETHEREUM_NETWORK_ID } from "@/config/app"
 import { useRouter } from "next/navigation"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { toast } from "sonner"
+import { fetchETFs, type ETFResponse } from "@/helpers/request"
+import { useETFContract } from "@/hooks/useETFContract"
+import { useWeb3Provider } from "@/hooks/useWeb3Provider"
+import { erc20Abi } from "@/constant/helios-contracts"
+import { Modal } from "@/components/modal"
+import clsx from "clsx"
 import s from "./page.module.scss"
 
 interface ETF {
+  factory: string
   id: string
   name: string
   symbol: string
@@ -29,190 +36,51 @@ interface ETF {
     percentage: number
   }>
   price: string
+  vault: string
+  shareToken: string
+  depositToken: string
+  depositSymbol: string
+  depositDecimals: number
+  chain: number
 }
 
-const HARDCODED_ETFS: ETF[] = [
-  {
-    id: "1",
-    name: "Blue Chip DeFi",
-    symbol: "DEFI",
-    description: "Top 5 DeFi protocol tokens",
-    tvl: "$2.5M",
-    apy: "8.5%",
-    change24h: 2.34,
-    riskLevel: "medium",
-    category: "DeFi",
-    tokens: [
-      { symbol: "AAVE", percentage: 25 },
-      { symbol: "UNI", percentage: 25 },
-      { symbol: "CURVE", percentage: 20 },
-      { symbol: "MKR", percentage: 20 },
-      { symbol: "COMP", percentage: 10 }
-    ],
-    price: "$1,234.50"
-  },
-  {
-    id: "2",
-    name: "Layer 2 Leaders",
-    symbol: "L2LDR",
-    description: "Layer 2 scaling solution tokens",
-    tvl: "$1.8M",
-    apy: "12.3%",
-    change24h: 5.67,
-    riskLevel: "high",
-    category: "L2 Solutions",
-    tokens: [
-      { symbol: "ARB", percentage: 35 },
-      { symbol: "OP", percentage: 35 },
-      { symbol: "STRK", percentage: 20 },
-      { symbol: "ZK", percentage: 10 }
-    ],
-    price: "$856.25"
-  },
-  {
-    id: "3",
-    name: "Stablecoin Mix",
-    symbol: "STABLE",
-    description: "Diversified stablecoin portfolio",
-    tvl: "$5.2M",
-    apy: "4.2%",
-    change24h: 0.05,
-    riskLevel: "low",
-    category: "Stablecoins",
-    tokens: [
-      { symbol: "USDC", percentage: 40 },
-      { symbol: "USDT", percentage: 40 },
-      { symbol: "DAI", percentage: 20 }
-    ],
-    price: "$1.02"
-  },
-  {
-    id: "4",
-    name: "Emerging Assets",
-    symbol: "EMRG",
-    description: "Up-and-coming blockchain projects",
-    tvl: "$900K",
-    apy: "18.7%",
-    change24h: 8.92,
-    riskLevel: "high",
-    category: "Emerging",
-    tokens: [
-      { symbol: "OP", percentage: 25 },
-      { symbol: "DYDX", percentage: 25 },
-      { symbol: "GRT", percentage: 25 },
-      { symbol: "ENS", percentage: 25 }
-    ],
-    price: "$456.78"
-  },
-  {
-    id: "5",
-    name: "NFT & Metaverse",
-    symbol: "NFTMV",
-    description: "Leading NFT and metaverse tokens",
-    tvl: "$1.2M",
-    apy: "6.8%",
-    change24h: 3.21,
-    riskLevel: "high",
-    category: "NFT",
-    tokens: [
-      { symbol: "ENJ", percentage: 30 },
-      { symbol: "SAND", percentage: 25 },
-      { symbol: "MANA", percentage: 25 },
-      { symbol: "FLOW", percentage: 20 }
-    ],
-    price: "$234.56"
-  },
-  {
-    id: "6",
-    name: "CEX & Trading",
-    symbol: "CEX",
-    description: "Centralized exchange and trading tokens",
-    tvl: "$3.1M",
-    apy: "7.2%",
-    change24h: 1.45,
-    riskLevel: "medium",
-    category: "Exchange",
-    tokens: [
-      { symbol: "BNB", percentage: 35 },
-      { symbol: "FTT", percentage: 30 },
-      { symbol: "OKB", percentage: 20 },
-      { symbol: "KCS", percentage: 15 }
-    ],
-    price: "$890.12"
-  },
-  {
-    id: "7",
-    name: "Infrastructure Stack",
-    symbol: "INFRA",
-    description: "Blockchain infrastructure and tooling",
-    tvl: "$2.0M",
-    apy: "9.5%",
-    change24h: 4.56,
-    riskLevel: "medium",
-    category: "Infrastructure",
-    tokens: [
-      { symbol: "THE", percentage: 25 },
-      { symbol: "ICP", percentage: 25 },
-      { symbol: "LINK", percentage: 25 },
-      { symbol: "ARK", percentage: 25 }
-    ],
-    price: "$567.89"
-  },
-  {
-    id: "8",
-    name: "Yield Farming",
-    symbol: "YIELD",
-    description: "High-yield farming protocol tokens",
-    tvl: "$1.5M",
-    apy: "22.3%",
-    change24h: 6.78,
-    riskLevel: "high",
-    category: "Yield",
-    tokens: [
-      { symbol: "AAVE", percentage: 30 },
-      { symbol: "COMP", percentage: 25 },
-      { symbol: "YGG", percentage: 25 },
-      { symbol: "SUSHI", percentage: 20 }
-    ],
-    price: "$345.67"
-  },
-  {
-    id: "9",
-    name: "Privacy & Security",
-    symbol: "PRIV",
-    description: "Privacy-focused and security tokens",
-    tvl: "$800K",
-    apy: "11.2%",
-    change24h: 2.89,
-    riskLevel: "medium",
-    category: "Privacy",
-    tokens: [
-      { symbol: "ZEC", percentage: 30 },
-      { symbol: "MONERO", percentage: 30 },
-      { symbol: "SECRET", percentage: 20 },
-      { symbol: "MASK", percentage: 20 }
-    ],
-    price: "$123.45"
-  },
-  {
-    id: "10",
-    name: "Governance Basket",
-    symbol: "GOV",
-    description: "DAO and governance tokens portfolio",
-    tvl: "$2.3M",
-    apy: "5.9%",
-    change24h: 1.23,
-    riskLevel: "low",
-    category: "Governance",
-    tokens: [
-      { symbol: "MKR", percentage: 25 },
-      { symbol: "AAVE", percentage: 25 },
-      { symbol: "UNI", percentage: 25 },
-      { symbol: "COMP", percentage: 25 }
-    ],
-    price: "$678.90"
+function formatETFResponse(etf: ETFResponse): ETF {
+  // Format TVL
+  const tvlValue = etf.tvl || 0
+  const tvlFormatted = tvlValue >= 1000000 
+    ? `$${(tvlValue / 1000000).toFixed(2)}M`
+    : tvlValue >= 1000
+    ? `$${(tvlValue / 1000).toFixed(2)}K`
+    : `$${tvlValue.toFixed(2)}`
+
+  // Convert assets from API to tokens format
+  // targetWeightBps: 10000 = 100%, so divide by 100 to get percentage
+  const tokens = etf.assets?.map(asset => ({
+    symbol: asset.symbol,
+    percentage: asset.targetWeightBps / 100
+  })) || []
+
+  return {
+    id: etf._id,
+    factory: etf.factory,
+    name: etf.name,
+    symbol: etf.symbol,
+    description: `${etf.name} ETF basket`,
+    tvl: tvlFormatted,
+    apy: "0%", // Not available in API response
+    change24h: 0, // Not available in API response
+    riskLevel: "medium" as const, // Default value
+    category: "ETF", // Default category
+    tokens,
+    price: "$0.00", // Not available in API response
+    vault: etf.vault,
+    shareToken: etf.shareToken,
+    depositToken: etf.depositToken,
+    depositSymbol: etf.depositSymbol || "TOKEN",
+    depositDecimals: etf.depositDecimals || 18,
+    chain: etf.chain
   }
-]
+}
 
 export default function ETFList() {
   const chainId = useChainId()
@@ -223,15 +91,143 @@ export default function ETFList() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedRisk, setSelectedRisk] = useState("all")
   const [sortBy, setSortBy] = useState("tvl")
+  const [etfs, setEtfs] = useState<ETF[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize] = useState(10)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    size: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  })
+
+  const [buyModalOpen, setBuyModalOpen] = useState(false)
+  const [sellModalOpen, setSellModalOpen] = useState(false)
+  const [selectedETF, setSelectedETF] = useState<ETF | null>(null)
+  const [buyAmount, setBuyAmount] = useState("")
+  const [sellShares, setSellShares] = useState("")
+  const [minSharesOut, setMinSharesOut] = useState("")
+  const [minOut, setMinOut] = useState("")
+  const [depositTokenBalance, setDepositTokenBalance] = useState<number | null>(null)
+  const [shareTokenBalance, setShareTokenBalance] = useState<number | null>(null)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [depositTokenAllowance, setDepositTokenAllowance] = useState<boolean>(false)
+  const [shareTokenAllowance, setShareTokenAllowance] = useState<boolean>(false)
+  const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
+
+  const { deposit, redeem, rebalance, approveToken, isLoading: isContractLoading } = useETFContract()
+  const web3Provider = useWeb3Provider()
 
   const isEthereumNetwork = chainId === ETHEREUM_NETWORK_ID
   const isWalletConnected = !!address
 
-  const categories = ["all", ...new Set(HARDCODED_ETFS.map(etf => etf.category))]
+  const isETFChainMatch = (etf: ETF) => {
+    return chainId === etf.chain
+  }
+
+  // Format number to string without scientific notation
+  const formatNumberToString = (num: number, maxDecimals: number = 18): string => {
+    if (num === 0) return "0"
+    
+    // Use toFixed with max decimals to avoid scientific notation
+    let str = num.toFixed(maxDecimals)
+    
+    // Remove trailing zeros
+    str = str.replace(/\.?0+$/, "")
+    
+    return str
+  }
+
+  // Validate and format decimal number input (max 18 decimals, point as separator)
+  const validateDecimalInput = (value: string, maxDecimals: number = 18): string => {
+    // Remove any non-numeric characters except decimal point
+    let cleaned = value.replace(/[^\d.]/g, "")
+    
+    // Replace comma with point
+    cleaned = cleaned.replace(/,/g, ".")
+    
+    // Only allow one decimal point
+    const parts = cleaned.split(".")
+    if (parts.length > 2) {
+      cleaned = parts[0] + "." + parts.slice(1).join("")
+    }
+    
+    // Limit decimal places
+    if (parts.length === 2 && parts[1].length > maxDecimals) {
+      cleaned = parts[0] + "." + parts[1].slice(0, maxDecimals)
+    }
+    
+    return cleaned
+  }
+
+  const fetchTokenBalance = async (tokenAddress: string, decimals: number): Promise<number | null> => {
+    if (!web3Provider || !address) return null
+
+    try {
+      const tokenContract = new web3Provider.eth.Contract(erc20Abi as any, tokenAddress)
+      const balance = await tokenContract.methods.balanceOf(address).call()
+      // Web3.js returns balance as a string, convert to BigInt then to number
+      const balanceStr = String(balance)
+      const balanceBigInt = BigInt(balanceStr)
+      const balanceMultiplier = BigInt(10) ** BigInt(decimals)
+      return Number(balanceBigInt) / Number(balanceMultiplier)
+    } catch (error) {
+      console.error("Error fetching token balance:", error)
+      return null
+    }
+  }
+
+  const checkAllowance = async (
+    tokenAddress: string,
+    spenderAddress: string,
+    amount: string
+  ): Promise<boolean> => {
+    if (!web3Provider || !address) return false
+
+    try {
+      const tokenContract = new web3Provider.eth.Contract(erc20Abi as any, tokenAddress)
+      const allowanceStr: string = await tokenContract.methods
+        .allowance(address, spenderAddress)
+        .call()
+      const allowance = BigInt(allowanceStr)
+      const requiredAmount = BigInt(amount)
+      return allowance >= requiredAmount
+    } catch (error) {
+      console.error("Error checking allowance:", error)
+      return false
+    }
+  }
+
+  useEffect(() => {
+    async function loadETFs() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await fetchETFs(currentPage, pageSize)
+        const formattedETFs = response.data.map(formatETFResponse)
+        setEtfs(formattedETFs)
+        setPagination(response.pagination)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load ETFs"
+        setError(errorMessage)
+        toast.error(errorMessage)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadETFs()
+  }, [currentPage, pageSize])
+
+  const categories = ["all", ...new Set(etfs.map(etf => etf.category))]
   const riskLevels = ["all", "low", "medium", "high"]
 
   const filteredAndSortedETFs = useMemo(() => {
-    const filtered = HARDCODED_ETFS.filter(etf => {
+    const filtered = etfs.filter(etf => {
       const matchesSearch = etf.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           etf.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           etf.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -254,54 +250,251 @@ export default function ETFList() {
       }
       return 0
     })
-  }, [searchTerm, selectedCategory, selectedRisk, sortBy])
+  }, [etfs, searchTerm, selectedCategory, selectedRisk, sortBy])
 
-  const handleBuy = (etf: ETF) => {
+  const handleBuy = async (etf: ETF) => {
     if (!isWalletConnected) {
       toast.error("Please connect your wallet first")
       return
     }
-    if (!isEthereumNetwork) {
-      toast.error("Please switch to Ethereum network")
+    if (!isETFChainMatch(etf)) {
+      toast.error(`Please switch to the correct network (Chain ID: ${etf.chain})`)
       return
     }
-    toast.success(`Buy ${etf.symbol} - Smart contract integration coming soon`)
+    setSelectedETF(etf)
+    setBuyAmount("")
+    setMinSharesOut("")
+    setDepositTokenBalance(null)
+    setDepositTokenAllowance(false)
+    setBuyModalOpen(true)
+    
+    // Fetch deposit token balance
+    setIsLoadingBalance(true)
+    const balance = await fetchTokenBalance(etf.depositToken, etf.depositDecimals)
+    setDepositTokenBalance(balance)
+    setIsLoadingBalance(false)
   }
 
-  const handleSell = (etf: ETF) => {
+  const handleSell = async (etf: ETF) => {
     if (!isWalletConnected) {
       toast.error("Please connect your wallet first")
       return
     }
-    if (!isEthereumNetwork) {
-      toast.error("Please switch to Ethereum network")
+    if (!isETFChainMatch(etf)) {
+      toast.error(`Please switch to the correct network (Chain ID: ${etf.chain})`)
       return
     }
-    toast.success(`Sell ${etf.symbol} - Smart contract integration coming soon`)
+    setSelectedETF(etf)
+    setSellShares("")
+    setMinOut("")
+    setShareTokenBalance(null)
+    setShareTokenAllowance(false)
+    setSellModalOpen(true)
+    
+    // Fetch share token balance
+    setIsLoadingBalance(true)
+    const balance = await fetchTokenBalance(etf.shareToken, 18) // Share tokens typically have 18 decimals
+    setShareTokenBalance(balance)
+    setIsLoadingBalance(false)
   }
 
-  const handleMint = (etf: ETF) => {
-    if (!isWalletConnected) {
-      toast.error("Please connect your wallet first")
+  const handleApproveBuy = async () => {
+    if (!selectedETF) return
+
+    if (!buyAmount || parseFloat(buyAmount) <= 0) {
+      toast.error("Please enter a valid amount")
       return
     }
-    if (!isEthereumNetwork) {
-      toast.error("Please switch to Ethereum network")
-      return
+
+    try {
+      // Convert amount using correct decimals for deposit token
+      const depositDecimals = selectedETF.depositDecimals || 18
+      const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
+      const [integerPart = "0", fractionalPart = ""] = buyAmount.split(".")
+      const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
+      const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+
+      await approveToken({
+        tokenAddress: selectedETF.depositToken,
+        spenderAddress: selectedETF.vault,
+        amount: amountWei
+      })
+
+      toast.success("Token approved successfully!")
+      // Recheck allowance after approval
+      const hasAllowance = await checkAllowance(
+        selectedETF.depositToken,
+        selectedETF.vault,
+        amountWei
+      )
+      setDepositTokenAllowance(hasAllowance)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Approval failed"
+      toast.error(errorMessage)
     }
-    router.push(`/etf-mint?etfId=${etf.id}&symbol=${etf.symbol}`)
   }
 
-  const handleWithdraw = (etf: ETF) => {
+  const handleConfirmBuy = async () => {
+    if (!selectedETF) return
+
+    if (!buyAmount || parseFloat(buyAmount) <= 0) {
+      toast.error("Please enter a valid amount")
+      return
+    }
+
+    if (!minSharesOut || parseFloat(minSharesOut) < 0) {
+      toast.error("Please enter a valid minimum shares out")
+      return
+    }
+
+    try {
+      // Convert amount using correct decimals for deposit token
+      const depositDecimals = selectedETF.depositDecimals || 18
+      const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
+      // Convert human-readable amount to wei: multiply by 10^decimals
+      // Handle decimal numbers by splitting integer and fractional parts
+      const [integerPart = "0", fractionalPart = ""] = buyAmount.split(".")
+      const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
+      const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+      
+      // For shares, assume 18 decimals (standard for ERC20)
+      const sharesDecimals = 18
+      const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
+      const [sharesInteger = "0", sharesFractional = ""] = minSharesOut.split(".")
+      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
+      const minSharesOutWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+
+      const result = await deposit({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        depositToken: selectedETF.depositToken,
+        amount: amountWei,
+        minSharesOut: minSharesOutWei
+      })
+
+      // Convert shares back from wei to human-readable
+      const sharesReceived = Number(result.sharesOut) / Number(sharesMultiplier)
+
+      toast.success(
+        `Successfully deposited! Received ${sharesReceived.toFixed(6)} shares`
+      )
+      setBuyModalOpen(false)
+      setBuyAmount("")
+      setMinSharesOut("")
+      setSelectedETF(null)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Deposit failed"
+      toast.error(errorMessage)
+    }
+  }
+
+  const handleApproveSell = async () => {
+    if (!selectedETF) return
+
+    if (!sellShares || parseFloat(sellShares) <= 0) {
+      toast.error("Please enter a valid number of shares")
+      return
+    }
+
+    try {
+      // Convert shares to wei (assuming 18 decimals for share token)
+      const sharesDecimals = 18
+      const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
+      const [sharesInteger = "0", sharesFractional = ""] = sellShares.split(".")
+      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
+      const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+
+      await approveToken({
+        tokenAddress: selectedETF.shareToken,
+        spenderAddress: selectedETF.vault,
+        amount: sharesWei
+      })
+
+      toast.success("Token approved successfully!")
+      // Recheck allowance after approval
+      const hasAllowance = await checkAllowance(
+        selectedETF.shareToken,
+        selectedETF.vault,
+        sharesWei
+      )
+      setShareTokenAllowance(hasAllowance)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Approval failed"
+      toast.error(errorMessage)
+    }
+  }
+
+  const handleConfirmSell = async () => {
+    if (!selectedETF) return
+
+    if (!sellShares || parseFloat(sellShares) <= 0) {
+      toast.error("Please enter a valid number of shares")
+      return
+    }
+
+    if (!minOut || parseFloat(minOut) < 0) {
+      toast.error("Please enter a valid minimum output")
+      return
+    }
+
+    try {
+      // Convert shares to wei (assuming 18 decimals for share token)
+      const sharesDecimals = 18
+      const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
+      const [sharesInteger = "0", sharesFractional = ""] = sellShares.split(".")
+      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
+      const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+      
+      // Convert minOut using correct decimals for deposit token
+      const depositDecimals = selectedETF.depositDecimals || 18
+      const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
+      const [minOutInteger = "0", minOutFractional = ""] = minOut.split(".")
+      const paddedMinOutFractional = minOutFractional.padEnd(depositDecimals, "0").slice(0, depositDecimals)
+      const minOutWei = (BigInt(minOutInteger) * depositMultiplier + BigInt(paddedMinOutFractional)).toString()
+
+      const result = await redeem({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        shareToken: selectedETF.shareToken,
+        shares: sharesWei,
+        minOut: minOutWei
+      })
+
+      // Format the received amount using correct decimals
+      const receivedAmount = Number(result.depositOut) / Number(depositMultiplier)
+      const depositSymbol = selectedETF.depositSymbol || selectedETF.depositToken
+
+      toast.success(
+        `Successfully redeemed! Received ${receivedAmount.toFixed(6)} ${depositSymbol} tokens`
+      )
+      setSellModalOpen(false)
+      setSellShares("")
+      setMinOut("")
+      setSelectedETF(null)
+      setShareTokenAllowance(false)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Redeem failed"
+      toast.error(errorMessage)
+    }
+  }
+
+  const handleRebalance = async (etf: ETF) => {
     if (!isWalletConnected) {
       toast.error("Please connect your wallet first")
       return
     }
-    if (!isEthereumNetwork) {
-      toast.error("Please switch to Ethereum network")
+    if (!isETFChainMatch(etf)) {
+      toast.error(`Please switch to the correct network (Chain ID: ${etf.chain})`)
       return
     }
-    router.push(`/etf-withdraw?etfId=${etf.id}&symbol=${etf.symbol}`)
+
+    try {
+      await rebalance({ vault: etf.vault })
+      toast.success(`Successfully rebalanced ${etf.symbol}`)
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Rebalance failed"
+      toast.error(errorMessage)
+    }
   }
 
   const getRiskColor = (risk: string) => {
@@ -393,7 +586,19 @@ export default function ETFList() {
             </div>
           </div>
 
-          {filteredAndSortedETFs.length === 0 ? (
+          {isLoading ? (
+            <div className={s.emptyState}>
+              <Icon icon="hugeicons:loading-01" className={clsx(s.emptyIcon, s.loading)} />
+              <h3>Loading ETFs...</h3>
+              <p>Please wait while we fetch the data</p>
+            </div>
+          ) : error ? (
+            <div className={s.emptyState}>
+              <Icon icon="hugeicons:alert-circle" className={s.emptyIcon} />
+              <h3>Error Loading ETFs</h3>
+              <p>{error}</p>
+            </div>
+          ) : filteredAndSortedETFs.length === 0 ? (
             <div className={s.emptyState}>
               <Icon icon="hugeicons:inbox-01" className={s.emptyIcon} />
               <h3>No ETFs Found</h3>
@@ -441,30 +646,52 @@ export default function ETFList() {
                   </div>
                 </div>
 
-                <div className={s.composition}>
-                  <h4>Composition ({etf.tokens.length} tokens)</h4>
-                  <div className={s.tokens}>
-                    {etf.tokens.map((token) => (
-                      <div key={token.symbol} className={s.token}>
-                        <span className={s.tokenSymbol}>{token.symbol}</span>
-                        <div className={s.percentageBar}>
-                          <div
-                            className={s.percentageFill}
-                            style={{ width: `${token.percentage}%` }}
-                          />
+                {etf.tokens.length > 0 ? (
+                  <div className={s.composition}>
+                    <h4>Composition ({etf.tokens.length} tokens)</h4>
+                    <div className={s.tokens}>
+                      {etf.tokens.map((token) => (
+                        <div key={token.symbol} className={s.token}>
+                          <span className={s.tokenSymbol}>{token.symbol}</span>
+                          <div className={s.percentageBar}>
+                            <div
+                              className={s.percentageFill}
+                              style={{ width: `${token.percentage}%` }}
+                            />
+                          </div>
+                          <span className={s.percentage}>{token.percentage}%</span>
                         </div>
-                        <span className={s.percentage}>{token.percentage}%</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className={s.composition}>
+                    <h4>ETF Details</h4>
+                    <div className={s.tokens}>
+                      <div className={s.token}>
+                        <span className={s.tokenSymbol}>Vault</span>
+                        <div className={s.percentageBar}>
+                          <div className={s.percentageFill} style={{ width: "100%" }} />
+                        </div>
+                        <span className={s.percentage}>{etf.vault.slice(0, 6)}...{etf.vault.slice(-4)}</span>
+                      </div>
+                      <div className={s.token}>
+                        <span className={s.tokenSymbol}>Share Token</span>
+                        <div className={s.percentageBar}>
+                          <div className={s.percentageFill} style={{ width: "100%" }} />
+                        </div>
+                        <span className={s.percentage}>{etf.shareToken.slice(0, 6)}...{etf.shareToken.slice(-4)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className={s.actions}>
                   <Button
                     variant="primary"
                     size="small"
                     onClick={() => handleBuy(etf)}
-                    disabled={!isWalletConnected || !isEthereumNetwork}
+                    disabled={!isWalletConnected || !isETFChainMatch(etf) || isContractLoading}
                     iconLeft="hugeicons:download-01"
                   >
                     Buy
@@ -473,7 +700,7 @@ export default function ETFList() {
                     variant="secondary"
                     size="small"
                     onClick={() => handleSell(etf)}
-                    disabled={!isWalletConnected || !isEthereumNetwork}
+                    disabled={!isWalletConnected || !isETFChainMatch(etf) || isContractLoading}
                     iconLeft="hugeicons:upload-01"
                   >
                     Sell
@@ -481,20 +708,11 @@ export default function ETFList() {
                   <Button
                     variant="secondary"
                     size="small"
-                    onClick={() => handleMint(etf)}
-                    disabled={!isWalletConnected || !isEthereumNetwork}
-                    iconLeft="hugeicons:plus-circle"
+                    onClick={() => handleRebalance(etf)}
+                    disabled={!isWalletConnected || !isETFChainMatch(etf) || isContractLoading}
+                    iconLeft="hugeicons:refresh-01"
                   >
-                    Mint
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    onClick={() => handleWithdraw(etf)}
-                    disabled={!isWalletConnected || !isEthereumNetwork}
-                    iconLeft="hugeicons:minus-circle"
-                  >
-                    Withdraw
+                    Rebalance
                   </Button>
                 </div>
               </Card>
@@ -502,6 +720,231 @@ export default function ETFList() {
           </div>
         )}
         </Card>
+
+        {/* Buy Modal */}
+        <Modal
+          open={buyModalOpen}
+          onClose={() => {
+            setBuyModalOpen(false)
+            setSelectedETF(null)
+            setBuyAmount("")
+            setMinSharesOut("")
+            setDepositTokenAllowance(false)
+          }}
+          title={`Buy ${selectedETF?.symbol || ""}`}
+        >
+          <div className={s.modalContent}>
+            <p className={s.modalDescription}>
+              Deposit {selectedETF?.depositSymbol || "tokens"} to receive ETF shares
+            </p>
+            <Input
+              label={`Amount to Deposit (${selectedETF?.depositSymbol || "TOKEN"})`}
+              type="text"
+              inputMode="decimal"
+              placeholder="0.0"
+              value={buyAmount}
+              onChange={async (e) => {
+                const validatedValue = validateDecimalInput(e.target.value, selectedETF?.depositDecimals || 18)
+                setBuyAmount(validatedValue)
+                // Check allowance when amount changes
+                if (selectedETF && validatedValue && parseFloat(validatedValue) > 0) {
+                  const depositDecimals = selectedETF.depositDecimals || 18
+                  const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
+                  const [integerPart = "0", fractionalPart = ""] = validatedValue.split(".")
+                  const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
+                  const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+                  
+                  setIsCheckingAllowance(true)
+                  const hasAllowance = await checkAllowance(
+                    selectedETF.depositToken,
+                    selectedETF.vault,
+                    amountWei
+                  )
+                  setDepositTokenAllowance(hasAllowance)
+                  setIsCheckingAllowance(false)
+                } else {
+                  setDepositTokenAllowance(false)
+                }
+              }}
+              icon="hugeicons:wallet-01"
+              balance={depositTokenBalance ?? undefined}
+              showMaxButton={!!depositTokenBalance && depositTokenBalance > 0}
+              onMaxClick={async () => {
+                if (depositTokenBalance !== null) {
+                  const maxValue = formatNumberToString(depositTokenBalance, selectedETF?.depositDecimals || 18)
+                  setBuyAmount(maxValue)
+                  // Check allowance after setting max
+                  if (selectedETF) {
+                    const depositDecimals = selectedETF.depositDecimals || 18
+                    const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
+                    const [integerPart = "0", fractionalPart = ""] = maxValue.split(".")
+                    const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
+                    const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+                    
+                    setIsCheckingAllowance(true)
+                    const hasAllowance = await checkAllowance(
+                      selectedETF.depositToken,
+                      selectedETF.vault,
+                      amountWei
+                    )
+                    setDepositTokenAllowance(hasAllowance)
+                    setIsCheckingAllowance(false)
+                  }
+                }
+              }}
+            />
+            <Input
+              label="Minimum Shares Out"
+              type="text"
+              inputMode="decimal"
+              placeholder="0.0"
+              value={minSharesOut}
+              onChange={(e) => {
+                const validatedValue = validateDecimalInput(e.target.value, 18)
+                setMinSharesOut(validatedValue)
+              }}
+              icon="hugeicons:chart-01"
+              helperText="Minimum shares you're willing to accept"
+            />
+            <div className={s.modalActions}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setBuyModalOpen(false)
+                  setSelectedETF(null)
+                  setBuyAmount("")
+                  setMinSharesOut("")
+                }}
+              >
+                Cancel
+              </Button>
+              {depositTokenAllowance ? (
+                <Button
+                  variant="primary"
+                  onClick={handleConfirmBuy}
+                  disabled={isContractLoading || !buyAmount || !minSharesOut}
+                  iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:checkmark-circle-02"}
+                >
+                  {isContractLoading ? "Processing..." : "Confirm Buy"}
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={handleApproveBuy}
+                  disabled={isContractLoading || isCheckingAllowance || !buyAmount}
+                  iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:lock-01"}
+                >
+                  {isContractLoading ? "Processing..." : "Approve"}
+                </Button>
+              )}
+            </div>
+          </div>
+        </Modal>
+
+        {/* Sell Modal */}
+        <Modal
+          open={sellModalOpen}
+          onClose={() => {
+            setSellModalOpen(false)
+            setSelectedETF(null)
+            setSellShares("")
+            setMinOut("")
+            setShareTokenAllowance(false)
+          }}
+          title={`Sell ${selectedETF?.symbol || ""}`}
+        >
+          <div className={s.modalContent}>
+            <p className={s.modalDescription}>
+              Redeem ETF shares to receive {selectedETF?.depositSymbol || "tokens"}
+            </p>
+            <Input
+              label="Shares to Redeem"
+              type="text"
+              inputMode="decimal"
+              placeholder="0.0"
+              value={sellShares}
+              onChange={async (e) => {
+                const validatedValue = validateDecimalInput(e.target.value, 18)
+                setSellShares(validatedValue)
+                // Check allowance when shares change
+                if (selectedETF && validatedValue && parseFloat(validatedValue) > 0) {
+                  const sharesDecimals = 18
+                  const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
+                  const [sharesInteger = "0", sharesFractional = ""] = validatedValue.split(".")
+                  const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
+                  const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+                  
+                  setIsCheckingAllowance(true)
+                  const hasAllowance = await checkAllowance(
+                    selectedETF.shareToken,
+                    selectedETF.vault,
+                    sharesWei
+                  )
+                  setShareTokenAllowance(hasAllowance)
+                  setIsCheckingAllowance(false)
+                } else {
+                  setShareTokenAllowance(false)
+                }
+              }}
+              icon="hugeicons:chart-01"
+              balance={shareTokenBalance ?? undefined}
+              showMaxButton={!!shareTokenBalance && shareTokenBalance > 0}
+              onMaxClick={async () => {
+                if (shareTokenBalance !== null) {
+                  const maxValue = formatNumberToString(shareTokenBalance, 18)
+                  setSellShares(maxValue)
+                  // Check allowance after setting max
+                  if (selectedETF) {
+                    const sharesDecimals = 18
+                    const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
+                    const [sharesInteger = "0", sharesFractional = ""] = maxValue.split(".")
+                    const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
+                    const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+                    
+                    setIsCheckingAllowance(true)
+                    const hasAllowance = await checkAllowance(
+                      selectedETF.shareToken,
+                      selectedETF.vault,
+                      sharesWei
+                    )
+                    setShareTokenAllowance(hasAllowance)
+                    setIsCheckingAllowance(false)
+                  }
+                }
+              }}
+            />
+            <Input
+              label={`Minimum Output (${selectedETF?.depositSymbol || "TOKEN"})`}
+              type="number"
+              placeholder="0.0"
+              value={minOut}
+              onChange={(e) => setMinOut(e.target.value)}
+              icon="hugeicons:wallet-01"
+              helperText={`Minimum ${selectedETF?.depositSymbol || "tokens"} you're willing to accept`}
+            />
+            <div className={s.modalActions}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSellModalOpen(false)
+                  setSelectedETF(null)
+                  setSellShares("")
+                  setMinOut("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleConfirmSell}
+                disabled={isContractLoading || !sellShares || !minOut}
+                iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:checkmark-circle-02"}
+              >
+                {isContractLoading ? "Processing..." : "Confirm Sell"}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   )

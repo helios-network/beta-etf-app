@@ -96,5 +96,200 @@ export const etfFactoryAbi = [
     ],
     stateMutability: "nonpayable",
     type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "minSharesOut",
+        type: "uint256"
+      }
+    ],
+    name: "deposit",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "shares",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "minOut",
+        type: "uint256"
+      }
+    ],
+    name: "redeem",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      }
+    ],
+    name: "rebalance",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "user",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "depositAmount",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "sharesOut",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventNonce",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventHeight",
+        type: "uint256"
+      }
+    ],
+    name: "Deposit",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "user",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "sharesIn",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "depositOut",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventNonce",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventHeight",
+        type: "uint256"
+      }
+    ],
+    name: "Redeem",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "fromIndex",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "toIndex",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "moveValue",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventNonce",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventHeight",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "bought",
+        type: "uint256"
+      }
+    ],
+    name: "Rebalance",
+    type: "event"
   }
 ]
+

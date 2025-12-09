@@ -15,6 +15,7 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_NODE_ENV: z.enum(["development", "production", "test"]),
     NEXT_PUBLIC_BASE_URL: z.string().url().default("http://localhost:3000"),
+    NEXT_PUBLIC_BASE_API_URL: z.string().url().optional(),
     NEXT_PUBLIC_INFURA_KEY: z.string(),
     NEXT_PUBLIC_PROJECT_ID: z.string()
   },
@@ -27,6 +28,7 @@ export const env = createEnv({
   runtimeEnv: {
     NEXT_PUBLIC_NODE_ENV: process.env.NEXT_PUBLIC_NODE_ENV,
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_BASE_API_URL: process.env.NEXT_PUBLIC_BASE_API_URL,
     NEXT_PUBLIC_INFURA_KEY: process.env.NEXT_PUBLIC_INFURA_KEY,
     NEXT_PUBLIC_PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID
   }

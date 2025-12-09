@@ -71,14 +71,28 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, Props>(
 
     return (
       <div className={clsx(s.wrapper, className)}>
-        {label && (
-          <label className={s.label}>
-            {label}
-            {balance !== undefined && (
-              <small>Balance: {formatNumber(balance, 6)}</small>
-            )}
-          </label>
-        )}
+        <div className={s.header}>
+          {label && <label className={s.label}>{label}</label>}
+          {(balance !== undefined || showMaxButton) && (
+            <div className={s.balanceContainer}>
+              {balance !== undefined && (
+                <small className={s.balance}>
+                  Balance: {formatNumber(balance, 6)}
+                </small>
+              )}
+              {showMaxButton && (
+                <Button
+                  className={s.max}
+                  onClick={onMaxClick}
+                  variant="secondary"
+                  size="xsmall"
+                >
+                  Max
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
         <div
           className={clsx(s.input, type === "textarea" && s.textarea)}
           onClick={handleFocusInput}
@@ -105,16 +119,6 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, Props>(
             />
           )}
           {endAdornment}
-          {showMaxButton && (
-            <Button
-              className={s.max}
-              onClick={onMaxClick}
-              variant="secondary"
-              size="xsmall"
-            >
-              Max
-            </Button>
-          )}
         </div>
         {(error || helperText) && (
           <span

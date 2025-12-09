@@ -102,22 +102,33 @@
   }
 }
 
-.label {
+.header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.65em;
+}
+
+.label {
   @include ellipsis;
-  text-align: right;
   font-size: var(--size-3-5);
   color: var(--text-secondary);
   cursor: pointer;
-  padding-bottom: 0.65em;
+}
 
-  small {
-    display: block;
-    font-size: 0.6em;
-    margin-top: 0.25em;
-  }
+.balanceContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2);
+}
+
+.balance {
+  font-size: var(--size-3);
+  color: var(--text-tertiary);
+}
+
+.max {
+  font-weight: 700 !important;
 }
 
 .helper {
