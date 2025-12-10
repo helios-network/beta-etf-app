@@ -3,7 +3,8 @@ export const routes = {
   etfList: "/etf-list",
   etfCreate: "/etf-creator",
   etfMint: "/etf-mint",
-  etfWithdraw: "/etf-withdraw"
+  etfWithdraw: "/etf-withdraw",
+  leaderboard: "/leaderboard"
 }
 
 export default routes

@@ -1,0 +1,25 @@
+.button {
+  --btn-bg: var(--primary-medium);
+  --btn-color: var(--color-light-50);
+  --btn-hover-bg: var(--primary-low);
+  --btn-border: transparent;
+  gap: 0.5em;
+}
+
+.content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+
+.icon {
+  width: 1.2em;
+  height: 1.2em;
+  flex-shrink: 0;
+}
+
+.text {
+  font-weight: 600;
+  font-size: 0.95em;
+}

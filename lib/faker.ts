@@ -180,3 +180,34 @@ export const generateVotes = (count: number): VoteProps[] => {
     ]) as VoteVote
   }))
 }
+
+export const generateEthereumAddress = (): string => {
+  return "0x" + faker.string.hexadecimal({ length: 40 }).replace("0x", "")
+}
+
+export const generateLeaderboardData = (count: number) => {
+  faker.seed(42)
+
+  return Array.from({ length: count }, (_, i) => ({
+    rank: i + 1,
+    address: generateEthereumAddress(),
+    totalPointsAccrued: faker.number.float({
+      min: 100,
+      max: 2500000,
+      fractionDigits: 2
+    }),
+    feesGenerated: "$" + faker.number.float({
+      min: 10,
+      max: 50000,
+      fractionDigits: 2
+    }).toFixed(2),
+    volumeTraded: "$" + faker.number.float({
+      min: 1000,
+      max: 50000000,
+      fractionDigits: 2
+    }).toFixed(2),
+    transactionsPerformed: faker.number.int({ min: 1, max: 500 }),
+    referralPoints: faker.number.int({ min: 0, max: 2500000 }),
+    iaaStPoints: faker.number.int({ min: 0, max: 50000 })
+  }))
+}

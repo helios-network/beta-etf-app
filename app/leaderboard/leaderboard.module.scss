@@ -1,0 +1,333 @@
+.leaderboard {
+  width: 100%;
+  padding: 2rem 1.5rem;
+  min-height: 100vh;
+
+  @media (max-width: 1024px) {
+    padding: 2rem 1rem;
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem 0.75rem;
+  }
+}
+
+.container {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.mainCard {
+  padding: 2.5rem !important;
+  background-color: var(--background-low) !important;
+
+  @media (max-width: 1024px) {
+    padding: 2rem !important;
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.5rem !important;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem !important;
+  }
+}
+
+.headingWrapper {
+  margin-bottom: 2rem;
+
+  @media (max-width: 1024px) {
+    margin-bottom: 2.5rem;
+  }
+
+  @media (max-width: 768px) {
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 1.5rem;
+  }
+}
+
+.tabsContainer {
+  width: 100%;
+  border-bottom: 1px solid var(--color-light-200);
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filterCardContent {
+  background: var(--background-low);
+  border-radius: 12px;
+  border: 1px solid var(--color-light-200);
+
+  @media (max-width: 1024px) {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: 2fr;
+  gap: 1.25rem;
+  align-items: flex-end;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.searchWrapper {
+  width: 100%;
+}
+
+.tab {
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.25s var(--cubic);
+
+  &:hover {
+    color: var(--text-primary);
+  }
+
+  &.active {
+    color: var(--primary-medium);
+    border-bottom-color: var(--primary-medium);
+  }
+}
+
+.seasonLabel {
+  font-weight: 600;
+}
+
+.status {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  font-weight: 400;
+
+  &.active {
+    opacity: 1;
+    color: var(--primary-medium);
+    font-weight: 500;
+  }
+}
+
+.searchInput {
+  width: 100%;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-light-200);
+  border-radius: 12px;
+  background: var(--color-light-50);
+  margin-bottom: 2rem;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  thead {
+    background: var(--color-light-100);
+    border-bottom: 1px solid var(--color-light-200);
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--color-light-200);
+      transition: background-color var(--transition-link);
+
+      &:hover {
+        background: var(--color-light-100);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: 1rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+  }
+}
+
+.rankCol {
+  width: 60px;
+  text-align: center;
+}
+
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--primary-lowest);
+  color: var(--primary-high);
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.addressCol {
+  min-width: 120px;
+}
+
+.address {
+  font-family: monospace;
+  color: var(--primary-medium);
+  font-weight: 500;
+}
+
+.pointsCol {
+  min-width: 140px;
+}
+
+.points {
+  font-weight: 600;
+  color: var(--primary-medium);
+}
+
+.feesCol {
+  min-width: 120px;
+}
+
+.volumeCol {
+  min-width: 150px;
+}
+
+.transactionsCol {
+  min-width: 140px;
+  text-align: center;
+}
+
+.referralCol {
+  min-width: 120px;
+  text-align: center;
+}
+
+.iaaStCol {
+  min-width: 100px;
+  text-align: center;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 0 0 0;
+  border-top: 1px solid var(--color-light-200);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pageButton {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: var(--color-light-100);
+  border: 1px solid var(--color-light-200);
+  border-radius: var(--radius-rounded);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-link);
+
+  &:hover {
+    background: var(--color-light-200);
+    border-color: var(--color-light-300);
+  }
+
+  &.active {
+    background: var(--primary-medium);
+    color: var(--color-light-50);
+    border-color: var(--primary-medium);
+  }
+}
+
+.ellipsis {
+  color: var(--text-secondary);
+  padding: 0 0.25rem;
+}
+
+.pageSize {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-light-200);
+}
+
+.pageSizeLabel {
+  font-weight: 500;
+}
+
+.pageSizeIcon {
+  width: 1em;
+  height: 1em;
+}
