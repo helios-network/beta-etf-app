@@ -31,6 +31,11 @@ export const Nav = () => {
       icon: "hugeicons:package",
       label: "Create ETF",
       href: routes.etfCreate
+    },
+    {
+      icon: "hugeicons:star",
+      label: "Leaderboard",
+      href: routes.leaderboard
     }
   ]
 

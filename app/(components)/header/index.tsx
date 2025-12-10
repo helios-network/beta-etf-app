@@ -4,6 +4,8 @@ import { Link } from "@/components/link"
 import { Logotype } from "@/components/logotype"
 import { Button } from "@/components/button"
 import { SettingsModal } from "@/components/settings-modal"
+import { PointsButton } from "@/components/points-button"
+import { PointsModal } from "@/components/points-modal"
 import routes from "@/config/routes"
 import { Chains } from "../chains"
 import { Nav } from "../nav"
@@ -13,6 +15,7 @@ import { useState } from "react"
 
 export const Header = () => {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [pointsModalOpen, setPointsModalOpen] = useState(false)
 
   const handleSettingsOpen = () => {
     setSettingsOpen(true)
@@ -21,6 +24,16 @@ export const Header = () => {
   const handleSettingsClose = () => {
     setSettingsOpen(false)
   }
+
+  const handlePointsModalOpen = () => {
+    setPointsModalOpen(true)
+  }
+
+  const handlePointsModalClose = () => {
+    setPointsModalOpen(false)
+  }
+
+  const currentPoints = 2261.01
 
   return (
     <>
@@ -38,11 +51,20 @@ export const Header = () => {
             title="Settings"
           />
           <Chains />
+          <PointsButton 
+            points={currentPoints} 
+            onClick={handlePointsModalOpen}
+          />
           <Wallet />
         </div>
       </header>
 
       <SettingsModal open={settingsOpen} onClose={handleSettingsClose} />
+      <PointsModal 
+        open={pointsModalOpen} 
+        onClose={handlePointsModalClose}
+        points={currentPoints}
+      />
     </>
   )
 }
