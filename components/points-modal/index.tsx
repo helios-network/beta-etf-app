@@ -90,8 +90,7 @@ export const PointsModal = ({ open, onClose, points }: PointsModalProps) => {
 
         <div className={s.termsSection}>
           <Button variant="secondary" border isNav={true}>
-            <Icon icon="hugeicons:arrow-up-right-01" />
-            <span>Terms and Service</span>
+            <span>Terms and Service ↗</span>
           </Button>
         </div>
       </div>

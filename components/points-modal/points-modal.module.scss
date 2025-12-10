@@ -122,4 +122,31 @@
   justify-content: center;
   padding-top: 0.75rem;
   border-top: 1px solid var(--color-light-200);
+
+  button {
+    --btn-bg: transparent !important;
+    --btn-border: transparent !important;
+    --btn-hover-bg: transparent !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    height: auto !important;
+    color: var(--primary-high) !important;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    transition: color var(--transition-link);
+
+    &:hover {
+      color: var(--primary-medium);
+    }
+
+    svg {
+      width: 0.9em;
+      height: 0.9em;
+    }
+  }
 }

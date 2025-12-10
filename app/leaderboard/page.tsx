@@ -98,7 +98,7 @@ export default function LeaderboardPage() {
               <table className={s.table}>
                 <thead>
                   <tr>
-                    <th className={s.rankCol}>#</th>
+                    <th className={s.rankCol}>Rank</th>
                     <th className={s.addressCol}>Address</th>
                     <th className={s.pointsCol}>Total Points accrued</th>
                     <th className={s.feesCol}>Fees generated</th>
