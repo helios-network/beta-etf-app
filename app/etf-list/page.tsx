@@ -20,6 +20,8 @@ import { Modal } from "@/components/modal"
 import clsx from "clsx"
 import s from "./page.module.scss"
 import { formatTokenAmount } from "@/lib/utils/number"
+import { useQuery } from "@tanstack/react-query"
+import { fetchCGTokenData } from "@/utils/price"
 
 interface ETF {
   factory: string
@@ -131,6 +133,25 @@ export default function ETFList() {
   const isETFChainMatch = (etf: ETF) => {
     return chainId === etf.chain
   }
+
+  // Fetch token data for all unique symbols
+  const allTokenSymbols = useMemo(() => {
+    const symbols = new Set<string>()
+    etfs.forEach(etf => {
+      etf.tokens.forEach(token => {
+        symbols.add(token.symbol.toLowerCase())
+      })
+    })
+    return Array.from(symbols)
+  }, [etfs])
+
+  const { data: tokenData = {} } = useQuery({
+    queryKey: ['tokenData', allTokenSymbols],
+    queryFn: () => fetchCGTokenData(allTokenSymbols),
+    enabled: allTokenSymbols.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
+  })
 
   // Format number to string without scientific notation
   const formatNumberToString = (num: number, maxDecimals: number = 18): string => {
@@ -655,7 +676,31 @@ export default function ETFList() {
                 <Card key={etf.id} className={s.etfCard}>
                 <div className={s.cardHeader}>
                   <div className={s.etfTitle}>
+                    <div className={s.titleRow}>
+                      {etf.tokens.length > 0 && (
+                        <div className={s.tokenLogos}>
+                          {etf.tokens.slice(0, 4).map((token, index) => {
+                            const logo = tokenData[token.symbol.toLowerCase()]?.logo
+                            return logo ? (
+                              <img
+                                key={token.symbol}
+                                src={logo}
+                                alt={token.symbol}
+                                className={s.tokenLogo}
+                                style={{ zIndex: 4 - index }}
+                                title={token.symbol}
+                              />
+                            ) : null
+                          })}
+                          {etf.tokens.length > 4 && (
+                            <div className={s.moreLogos} style={{ zIndex: 0 }}>
+                              +{etf.tokens.length - 4}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     <h3>{etf.name}</h3>
+                    </div>
                     <span className={s.symbol}>{etf.symbol}</span>
                   </div>
                   <div className={s.badges}>
@@ -714,9 +759,20 @@ export default function ETFList() {
                         : 0
                       const targetPercentage = token.percentage
                       
+                      const logo = tokenData[token.symbol.toLowerCase()]?.logo
+                      
                       return (
                       <div key={token.symbol} className={s.token}>
+                        <div className={s.tokenInfo}>
+                          {logo && (
+                            <img
+                              src={logo}
+                              alt={token.symbol}
+                              className={s.tokenLogoSmall}
+                            />
+                          )}
                         <span className={s.tokenSymbol}>{token.symbol}</span>
+                        </div>
                         <div className={s.percentageBar}>
                           <div
                             className={s.percentageFill}
@@ -727,17 +783,17 @@ export default function ETFList() {
                               className={s.currentMarker}
                               style={{ left: `${currentPercentage}%` }}
                               title={`Current: ${currentPercentage.toFixed(2)}%`}
-                            />
-                          </div>
+                          />
+                        </div>
                           <span className={s.percentage}>{targetPercentage}%</span>
                           <div className={s.tokenTooltip}>
                             <div className={s.tooltipContent}>
                               <div>Target: {targetPercentage.toFixed(2)}%</div>
                               <div>Current: {currentPercentage.toFixed(2)}%</div>
                               <div>TVL: ${formatTokenAmount(token.tvl)}</div>
-                            </div>
-                          </div>
-                        </div>
+                      </div>
+                  </div>
+                </div>
                       )
                     })}
                   </div>
@@ -970,8 +1026,8 @@ export default function ETFList() {
               disabled={isEstimatingShares}
             />
             <div className={s.modalActions}>
-              <Button
-                variant="secondary"
+                  <Button
+                    variant="secondary"
                 onClick={() => {
                   setBuyModalOpen(false)
                   setSelectedETF(null)
@@ -980,7 +1036,7 @@ export default function ETFList() {
                 }}
               >
                 Cancel
-              </Button>
+                  </Button>
               {depositTokenAllowance ? (
                 <Button
                   variant="primary"
@@ -1000,7 +1056,7 @@ export default function ETFList() {
                   {isContractLoading ? "Processing..." : "Approve"}
                 </Button>
               )}
-            </div>
+                </div>
           </div>
         </Modal>
 
