@@ -1,25 +1,49 @@
 .button {
-  --btn-bg: var(--primary-medium);
+  --btn-bg: transparent;
   --btn-color: var(--color-light-50);
-  --btn-hover-bg: var(--primary-low);
-  --btn-border: transparent;
-  gap: 0.5em;
+  --btn-hover-bg: rgba(135, 163, 238, 0.15);
+  --btn-border: var(--primary-medium);
+  --btn-hover-border: var(--primary-medium);
+  --btn-radius: 0.9em;
+  border-width: 1.5px;
+  align-items: flex-end;
+  align-self: flex-end;
+  transition: background-color var(--transition-link), border-color var(--transition-link);
+
+  &:hover,
+  &.hovering {
+    background-color: var(--btn-hover-bg, rgba(34, 97, 51, 0.15));
+    border-color: var(--btn-hover-border, var(--primary-medium));
+  }
 }
 
 .content {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5em;
   white-space: nowrap;
 }
 
 .icon {
-  width: 1.2em;
-  height: 1.2em;
+  width: 1em;
+  height: 1em;
   flex-shrink: 0;
 }
 
 .text {
   font-weight: 600;
-  font-size: 0.95em;
+  font-size: 1.25em;
+  color: var(--primary-medium);
+}
+
+.multiplier {
+  background: var(--foreground-low);
+  border: 1px solid var(--primary-medium);
+  border-radius: 0.5em;
+  padding: 0.25em 0.6em;
+  font-weight: 600;
+  font-size: 0.85em;
+  color: var(--primary-medium);
+  white-space: nowrap;
+  margin-left: 0.1em;
 }

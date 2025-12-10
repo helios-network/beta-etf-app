@@ -80,13 +80,22 @@
   }
 }
 
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  position: relative;
+}
+
 .close {
   position: absolute;
-  right: calc(var(--modal-padding) / 3);
-  top: calc(var(--modal-padding) / 3);
+  right: 0;
+  flex-shrink: 0;
 }
 
 .title {
   font-size: var(--size-6);
   font-weight: bold;
+  margin: 0;
 }

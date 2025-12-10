@@ -51,8 +51,8 @@ export const Header = () => {
             title="Settings"
           />
           <Chains />
-          <PointsButton 
-            points={currentPoints} 
+          <PointsButton
+            points={currentPoints}
             onClick={handlePointsModalOpen}
           />
           <Wallet />
@@ -60,8 +60,8 @@ export const Header = () => {
       </header>
 
       <SettingsModal open={settingsOpen} onClose={handleSettingsClose} />
-      <PointsModal 
-        open={pointsModalOpen} 
+      <PointsModal
+        open={pointsModalOpen}
         onClose={handlePointsModalClose}
         points={currentPoints}
       />

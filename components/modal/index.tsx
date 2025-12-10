@@ -99,20 +99,24 @@ export function Modal({
           e.stopPropagation()
         }}
       >
-        {closeButton && (
-          <Button
-            icon="mdi:close"
-            onClick={handleClose}
-            variant="secondary"
-            size="xsmall"
-            border
-            className={s.close}
-          />
-        )}
-        {title && (
-          <h2 id="modal-title" className={s.title}>
-            {title}
-          </h2>
+        {(closeButton || title) && (
+          <div className={s.header}>
+            {closeButton && (
+              <Button
+                icon="mdi:close"
+                onClick={handleClose}
+                variant="secondary"
+                size="xsmall"
+                border
+                className={s.close}
+              />
+            )}
+            {title && (
+              <h2 id="modal-title" className={s.title}>
+                {title}
+              </h2>
+            )}
+          </div>
         )}
         {children}
       </div>
