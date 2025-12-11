@@ -6,7 +6,8 @@ import { Input } from "@/components/input"
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import { Heading } from "@/components/heading"
-import { fetchLeaderboard, type LeaderboardEntry } from "@/helpers/request"
+import { fetchLeaderboard } from "@/helpers/request"
+import type { LeaderboardEntry } from "@/types/points"
 import { truncateAddress } from "@/lib/utils"
 import s from "./leaderboard.module.scss"
 
@@ -130,9 +131,10 @@ export default function LeaderboardPage() {
                       <th className={s.rankCol}>Rank</th>
                       <th className={s.addressCol}>Address</th>
                       <th className={s.pointsCol}>Total Points accrued</th>
-                      <th className={s.feesCol}>Fees generated</th>
                       <th className={s.volumeCol}>Volume traded</th>
                       <th className={s.transactionsCol}>Transactions performed</th>
+                      <th className={s.tvlCol}>TVL</th>
+                      <th className={s.lastActivityCol}>Last Activity</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,17 +148,11 @@ export default function LeaderboardPage() {
                         </td>
                         <td className={s.pointsCol}>
                           <span className={s.points}>
-                            {parseFloat(entry.totalPointsAccrued).toLocaleString("en-US", {
+                            {Number(entry.totalPointsAccrued).toLocaleString("en-US", {
                               minimumFractionDigits: 0,
                               maximumFractionDigits: 2
                             })}
                           </span>
-                        </td>
-                        <td className={s.feesCol}>
-                          {parseFloat(entry.feesGenerated).toLocaleString("en-US", {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2
-                          })}
                         </td>
                         <td className={s.volumeCol}>
                           {parseFloat(entry.volumeTraded).toLocaleString("en-US", {
@@ -165,6 +161,21 @@ export default function LeaderboardPage() {
                           })}
                         </td>
                         <td className={s.transactionsCol}>{entry.transactionsPerformed}</td>
+                        <td className={s.tvlCol}>
+                          {entry.tvl ? `$${entry.tvl.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2
+                          })}` : "-"}
+                        </td>
+                        <td className={s.lastActivityCol}>
+                          {entry.lastActivity 
+                            ? new Date(entry.lastActivity).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric"
+                              })
+                            : "-"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

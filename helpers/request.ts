@@ -1,6 +1,7 @@
 import { RPC_URL_DEFAULT } from "@/config/app"
 import { getRpcUrl } from "@/config/rpc"
 import { env } from "@/env"
+import { LeaderboardEntry } from "@/types/points"
 
 async function requestWithRpcUrl<T>(rpcUrl: string, method: string, params: any[]): Promise<T | null> { 
   const response = await fetch(rpcUrl, {
@@ -119,15 +120,6 @@ async function fetchETFs(page: number = 1, size: number = 10): Promise<ETFsApiRe
   return data
 }
 
-interface LeaderboardEntry {
-  rank: number
-  address: string
-  totalPointsAccrued: string
-  feesGenerated: string
-  volumeTraded: string
-  transactionsPerformed: number
-}
-
 interface LeaderboardApiResponse {
   success: boolean
   data: LeaderboardEntry[]
@@ -150,7 +142,7 @@ async function fetchLeaderboard(page: number = 1, size: number = 25): Promise<Le
 
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
-  const url = `${baseUrl}/api/leaderBoard?page=${page}&size=${size}`
+  const url = `${baseUrl}/api/leaderBoard?page=${page}&limit=${size}`
   
   const response = await fetch(url, {
     method: "GET",
@@ -173,4 +165,4 @@ async function fetchLeaderboard(page: number = 1, size: number = 25): Promise<Le
 }
 
 export { request, requestWithRpcUrl, fetchETFs, fetchLeaderboard }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, LeaderboardEntry, LeaderboardApiResponse }
+export type { ETFResponse, ETFsApiResponse, ETFAsset, LeaderboardApiResponse }

@@ -13,4 +13,8 @@ export interface LeaderboardEntry {
   transactionsPerformed: number
   referralPoints: number
   iaaStPoints: number
+  tvl: number
+  avgTransactionSize: string
+  pointsPerTransaction: string
+  lastActivity: string | null
 }

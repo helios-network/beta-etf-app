@@ -193,9 +193,10 @@
         text-align: center;
       }
 
+      &:nth-child(4),
+      &:nth-child(5),
       &:nth-child(6),
-      &:nth-child(7),
-      &:nth-child(8) {
+      &:nth-child(7) {
         text-align: center;
       }
     }
@@ -261,17 +262,25 @@
   color: var(--primary-medium);
 }
 
-.feesCol {
-  min-width: 120px;
-}
-
 .volumeCol {
   min-width: 150px;
+  text-align: center;
 }
 
 .transactionsCol {
   min-width: 140px;
   text-align: center;
+}
+
+.tvlCol {
+  min-width: 120px;
+  text-align: center;
+}
+
+.lastActivityCol {
+  min-width: 130px;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
 .referralCol {
