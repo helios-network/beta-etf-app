@@ -1,0 +1,66 @@
+@use "@/styles/mixins" as *;
+
+.modal {
+  --modal-padding: var(--size-8);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-6);
+}
+
+.slippageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4);
+
+  .slippageLabel {
+    font-size: var(--size-5);
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .slippageButtons {
+    display: flex;
+    gap: var(--size-3);
+    flex-wrap: wrap;
+
+    .slippageButton {
+      flex: 1;
+      min-width: 80px;
+      padding: var(--size-4) var(--size-5);
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-m);
+      color: var(--text-primary);
+      font-size: var(--size-5);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: rgba(var(--blue-rgb), 0.1);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+
+      &.active {
+        background-color: rgba(var(--blue-rgb), 0.1);
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+    }
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--size-4);
+  justify-content: flex-end;
+  margin-top: var(--size-2);
+
+  &Button {
+    // Styles pour les boutons dans actions
+  }
+}

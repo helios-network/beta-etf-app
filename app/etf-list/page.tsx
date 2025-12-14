@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/badge"
+import { BorderAnimate } from "@/components/border-animate"
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import { DataState } from "@/components/data-state"
@@ -20,7 +21,9 @@ import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import { createPortal } from "react-dom"
 import { toast } from "sonner"
+import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
 import s from "./page.module.scss"
 
@@ -49,6 +52,88 @@ interface ETF {
   depositDecimals: number
   chain: number
 }
+
+// Données de test pour tester le tableau
+const MOCK_ETFS: ETF[] = [
+  {
+    id: "mock-etf-1",
+    factory: "0x1234567890123456789012345678901234567890",
+    name: "DeFi Blue Chip ETF",
+    symbol: "DEFI-BC",
+    description: "DeFi Blue Chip ETF basket",
+    tvl: "$2,450,000",
+    sharePrice: "1.245",
+    apy: "12.5%",
+    change24h: 5.2,
+    riskLevel: "medium",
+    category: "DeFi",
+    tokens: [
+      { symbol: "ETH", percentage: 40, tvl: "980000" },
+      { symbol: "USDC", percentage: 30, tvl: "735000" },
+      { symbol: "WBTC", percentage: 20, tvl: "490000" },
+      { symbol: "UNI", percentage: 10, tvl: "245000" }
+    ],
+    price: "$1.245",
+    vault: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+    shareToken: "0x1111111111111111111111111111111111111111",
+    depositToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    depositSymbol: "WETH",
+    depositDecimals: 18,
+    chain: ETHEREUM_NETWORK_ID
+  },
+  {
+    id: "mock-etf-2",
+    factory: "0x2345678901234567890123456789012345678901",
+    name: "Stablecoin Yield ETF",
+    symbol: "STABLE-Y",
+    description: "Stablecoin Yield ETF basket",
+    tvl: "$1,850,000",
+    sharePrice: "0.998",
+    apy: "8.3%",
+    change24h: 0.5,
+    riskLevel: "low",
+    category: "Stablecoin",
+    tokens: [
+      { symbol: "USDC", percentage: 50, tvl: "925000" },
+      { symbol: "USDT", percentage: 30, tvl: "555000" },
+      { symbol: "DAI", percentage: 20, tvl: "370000" }
+    ],
+    price: "$0.998",
+    vault: "0xbcdefabcdefabcdefabcdefabcdefabcdefabcde",
+    shareToken: "0x2222222222222222222222222222222222222222",
+    depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    depositSymbol: "USDC",
+    depositDecimals: 6,
+    chain: ETHEREUM_NETWORK_ID
+  },
+  {
+    id: "mock-etf-3",
+    factory: "0x3456789012345678901234567890123456789012",
+    name: "High Risk DeFi ETF",
+    symbol: "HR-DEFI",
+    description: "High Risk DeFi ETF basket",
+    tvl: "$850,000",
+    sharePrice: "0.756",
+    apy: "25.8%",
+    change24h: -3.2,
+    riskLevel: "high",
+    category: "DeFi",
+    tokens: [
+      { symbol: "SUSHI", percentage: 35, tvl: "297500" },
+      { symbol: "AAVE", percentage: 30, tvl: "255000" },
+      { symbol: "ETH", percentage: 20, tvl: "127500" },
+      { symbol: "COMP", percentage: 15, tvl: "170000" },
+      { symbol: "MKR", percentage: 10, tvl: "127500" }
+    ],
+    price: "$0.756",
+    vault: "0xcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+    shareToken: "0x3333333333333333333333333333333333333333",
+    depositToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+    depositSymbol: "WETH",
+    depositDecimals: 18,
+    chain: ETHEREUM_NETWORK_ID
+  }
+]
 
 function formatETFResponse(etf: ETFResponse): ETF {
   // Convert assets from API to tokens format
@@ -83,10 +168,18 @@ function formatETFResponse(etf: ETFResponse): ETF {
   }
 }
 
+// Constante pour basculer entre données de test et API réelle
+const USE_MOCK_DATA = true // Mettre à false pour utiliser l'API réelle
+
 export default function ETFList() {
   const chainId = useChainId()
   const { address } = useAccount()
   const router = useRouter()
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEventListener("mousemove", (e: MouseEvent) => {
+    setMousePosition({ x: e.clientX, y: e.clientY })
+  })
 
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -126,6 +219,11 @@ export default function ETFList() {
     useState<boolean>(false)
   const [shareTokenAllowance, setShareTokenAllowance] = useState<boolean>(false)
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
+  const [hoveredToken, setHoveredToken] = useState<{
+    targetPercentage: number
+    currentPercentage: number
+    tvl: string
+  } | null>(null)
 
   const {
     deposit,
@@ -278,10 +376,24 @@ export default function ETFList() {
       setIsLoading(true)
       setError(null)
       try {
-        const response = await fetchETFs(currentPage, pageSize)
-        const formattedETFs = response.data.map(formatETFResponse)
-        setEtfs(formattedETFs)
-        setPagination(response.pagination)
+        if (USE_MOCK_DATA) {
+          // Données de test
+          setEtfs(MOCK_ETFS)
+          setPagination({
+            page: 1,
+            size: 10,
+            total: MOCK_ETFS.length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false
+          })
+        } else {
+          // API réelle
+          const response = await fetchETFs(currentPage, pageSize)
+          const formattedETFs = response.data.map(formatETFResponse)
+          setEtfs(formattedETFs)
+          setPagination(response.pagination)
+        }
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to load ETFs"
@@ -659,7 +771,7 @@ export default function ETFList() {
   }
 
   return (
-    <>
+    <div className={s.page}>
       <div className={s.statsHeader}>
         <div className={s.stat}>
           <span className={s.label}>Total ETFs</span>
@@ -763,11 +875,21 @@ export default function ETFList() {
         <div className={s.etfsGrid}>
           {filteredAndSortedETFs.map((etf) => (
             <Card key={etf.id} className={s.etfCard}>
-              <div className={s.cardHeader}>
+              <BorderAnimate className={s.hover} />
+              <Card className={s.cardHeader}>
                 <div className={s.etfTitle}>
                   <div className={s.titleRow}>
                     {etf.tokens.length > 0 && (
-                      <div className={s.tokenLogos}>
+                      <div
+                        className={clsx(
+                          s.tokenLogos,
+                          etf.tokens.length > 4 && s.moreLogos
+                        )}
+                        data-nb-tokens={etf.tokens.length}
+                        data-more-tokens={
+                          etf.tokens.length > 4 ? etf.tokens.length - 4 : 0
+                        }
+                      >
                         {etf.tokens.slice(0, 4).map((token, index) => {
                           const logo =
                             tokenData[token.symbol.toLowerCase()]?.logo
@@ -782,17 +904,17 @@ export default function ETFList() {
                             />
                           ) : null
                         })}
-                        {etf.tokens.length > 4 && (
-                          <div className={s.moreLogos} style={{ zIndex: 0 }}>
-                            +{etf.tokens.length - 4}
-                          </div>
-                        )}
                       </div>
                     )}
-                    <h3>{etf.name}</h3>
+                    <div className={s.titleRowRight}>
+                      <h3>{etf.name}</h3>
+                      <p className={s.description}>{etf.description}</p>
+                    </div>
                   </div>
-                  <span className={s.symbol}>{etf.symbol}</span>
                 </div>
+                <span className={s.symbol}>
+                  {etf.symbol} <BorderAnimate />
+                </span>
                 <div className={s.badges}>
                   <Badge status={getRiskColor(etf.riskLevel)}>
                     {etf.riskLevel.toUpperCase()}
@@ -806,48 +928,47 @@ export default function ETFList() {
                     title={`View on ${getChainName(etf.chain)} explorer`}
                   >
                     <Icon icon="hugeicons:link-square-01" />
-                    <span>{getChainName(etf.chain)}</span>
+                    {getChainName(etf.chain)}
                   </a>
                 </div>
-              </div>
-
-              <p className={s.description}>{etf.description}</p>
-
-              <div className={s.metricsGrid}>
-                <div className={s.metric}>
-                  <span className={s.metricLabel}>TVL</span>
-                  <span className={s.metricValue}>
-                    {"$" + formatTokenAmount(etf.tvl)}
-                  </span>
+                <div className={s.metricsGrid}>
+                  <Card className={s.metric}>
+                    <span className={s.metricLabel}>TVL</span>
+                    <span className={s.metricValue}>
+                      {"$" + formatTokenAmount(etf.tvl)}
+                    </span>
+                  </Card>
+                  <Card className={s.metric}>
+                    <span className={s.metricLabel}>APY</span>
+                    <span className={`${s.metricValue} ${s.positive}`}>
+                      {etf.apy}
+                    </span>
+                  </Card>
+                  <Card className={s.metric}>
+                    <span className={s.metricLabel}>24h Change</span>
+                    <span
+                      className={`${s.metricValue} ${
+                        etf.change24h >= 0 ? s.positive : s.negative
+                      }`}
+                    >
+                      {etf.change24h >= 0 ? "+" : ""}
+                      {etf.change24h.toFixed(2)}%
+                    </span>
+                  </Card>
+                  <Card className={s.metric}>
+                    <span className={s.metricLabel}>Price</span>
+                    <span className={s.metricValue}>
+                      {"$" + formatTokenAmount(etf.sharePrice)}
+                    </span>
+                  </Card>
                 </div>
-                <div className={s.metric}>
-                  <span className={s.metricLabel}>APY</span>
-                  <span className={`${s.metricValue} ${s.positive}`}>
-                    {etf.apy}
-                  </span>
-                </div>
-                <div className={s.metric}>
-                  <span className={s.metricLabel}>24h Change</span>
-                  <span
-                    className={`${s.metricValue} ${
-                      etf.change24h >= 0 ? s.positive : s.negative
-                    }`}
-                  >
-                    {etf.change24h >= 0 ? "+" : ""}
-                    {etf.change24h.toFixed(2)}%
-                  </span>
-                </div>
-                <div className={s.metric}>
-                  <span className={s.metricLabel}>Price</span>
-                  <span className={s.metricValue}>
-                    {"$" + formatTokenAmount(etf.sharePrice)}
-                  </span>
-                </div>
-              </div>
+              </Card>
 
               {etf.tokens.length > 0 ? (
                 <div className={s.composition}>
-                  <h4>Composition ({etf.tokens.length} tokens)</h4>
+                  <h4>
+                    Composition <span>{etf.tokens.length} tokens</span>
+                  </h4>
                   <div className={s.tokens}>
                     {etf.tokens.map((token) => {
                       // Calculate total TVL of all assets
@@ -865,7 +986,20 @@ export default function ETFList() {
                       const logo = tokenData[token.symbol.toLowerCase()]?.logo
 
                       return (
-                        <div key={token.symbol} className={s.token}>
+                        <div
+                          key={token.symbol}
+                          className={s.token}
+                          onMouseEnter={() => {
+                            setHoveredToken({
+                              targetPercentage,
+                              currentPercentage,
+                              tvl: token.tvl
+                            })
+                          }}
+                          onMouseLeave={() => {
+                            setHoveredToken(null)
+                          }}
+                        >
                           <div className={s.tokenInfo}>
                             {logo && (
                               <img
@@ -897,15 +1031,6 @@ export default function ETFList() {
                           <span className={s.percentage}>
                             {targetPercentage}%
                           </span>
-                          <div className={s.tokenTooltip}>
-                            <div className={s.tooltipContent}>
-                              <div>Target: {targetPercentage.toFixed(2)}%</div>
-                              <div>
-                                Current: {currentPercentage.toFixed(2)}%
-                              </div>
-                              <div>TVL: ${formatTokenAmount(token.tvl)}</div>
-                            </div>
-                          </div>
                         </div>
                       )
                     })}
@@ -944,10 +1069,22 @@ export default function ETFList() {
                 </div>
               )}
 
-              <div className={s.actions}>
+              <Card className={s.actions}>
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={() => handleRebalance(etf)}
+                  disabled={
+                    !isWalletConnected ||
+                    !isETFChainMatch(etf) ||
+                    isContractLoading
+                  }
+                  iconLeft="hugeicons:reload"
+                />
                 <Button
                   variant="primary"
                   size="small"
+                  className={s.buyAction}
                   onClick={() => handleBuy(etf)}
                   disabled={
                     !isWalletConnected ||
@@ -967,24 +1104,9 @@ export default function ETFList() {
                     !isETFChainMatch(etf) ||
                     isContractLoading
                   }
-                  iconLeft="hugeicons:upload-01"
-                >
-                  Sell
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  onClick={() => handleRebalance(etf)}
-                  disabled={
-                    !isWalletConnected ||
-                    !isETFChainMatch(etf) ||
-                    isContractLoading
-                  }
-                  iconLeft="hugeicons:refresh-01"
-                >
-                  Rebalance
-                </Button>
-              </div>
+                  icon="hugeicons:upload-01"
+                />
+              </Card>
             </Card>
           ))}
         </div>
@@ -1527,6 +1649,33 @@ export default function ETFList() {
           </div>
         </div>
       </Modal>
-    </>
+
+      {hoveredToken &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            className={s.tokenTooltipFixed}
+            style={{
+              left: `${mousePosition.x + 10}px`,
+              top: `${mousePosition.y + 10}px`
+            }}
+          >
+            <div className={s.tooltipContent}>
+              <div>
+                Target:{" "}
+                <strong>{hoveredToken.targetPercentage.toFixed(2)}%</strong>
+              </div>
+              <div>
+                Current:{" "}
+                <strong>{hoveredToken.currentPercentage.toFixed(2)}%</strong>
+              </div>
+              <div>
+                TVL: <strong>${formatTokenAmount(hoveredToken.tvl)}</strong>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+    </div>
   )
 }

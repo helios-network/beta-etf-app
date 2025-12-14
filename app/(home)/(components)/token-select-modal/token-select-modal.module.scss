@@ -1,0 +1,130 @@
+@use "@/styles/mixins" as *;
+
+.modal {
+  --modal-padding: var(--size-8);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-6);
+  flex: 1;
+  min-height: 0;
+}
+
+.search {
+  flex-shrink: 0;
+
+  & > * {
+    width: 100%;
+  }
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2);
+  @include no-scrollbar;
+}
+
+.item {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-m);
+  padding: var(--size-5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    background-color: rgba(var(--blue-rgb), 0.1);
+    border-color: var(--blue);
+
+    .arrow {
+      opacity: 1;
+    }
+
+    .symbol {
+      color: var(--blue);
+    }
+  }
+
+  &:active,
+  &.active {
+    background-color: rgba(var(--blue-rgb), 0.1);
+    border-color: var(--blue);
+
+    .arrow {
+      opacity: 1;
+    }
+
+    .symbol {
+      color: var(--blue);
+    }
+  }
+
+  .itemContent {
+    display: flex;
+    align-items: center;
+    gap: var(--size-4);
+    position: relative;
+
+    .icon {
+      flex-shrink: 0;
+      width: var(--size-8);
+      height: var(--size-8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img {
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      & > * {
+        border-radius: 50%;
+        object-fit: cover;
+      }
+    }
+
+    .text {
+      display: flex;
+      flex-direction: column;
+      gap: var(--size-1);
+      flex: 1;
+
+      .symbol {
+        font-size: var(--size-5);
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: color 0.2s ease;
+      }
+
+      .name {
+        font-size: var(--size-4);
+        color: var(--text-secondary);
+      }
+    }
+
+    .arrow {
+      margin-left: auto;
+      flex-shrink: 0;
+      opacity: 0.5;
+      transition: opacity 0.2s ease;
+    }
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: var(--size-10);
+  color: var(--text-secondary);
+  font-size: var(--size-5);
+}
