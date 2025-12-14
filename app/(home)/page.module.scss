@@ -1,0 +1,142 @@
+@use "@/styles/mixins" as *;
+
+.header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  justify-content: center;
+
+  .sub {
+    margin: calc(24px + 8 * (100vw - 320px) / 1080) auto 0;
+
+    strong {
+      color: var(--blue);
+      font-weight: bold;
+      font-style: italic;
+    }
+  }
+
+  h1 {
+    font-size: calc(32px + 16 * (100vw - 320px) / 1080);
+    font-weight: 200;
+    letter-spacing: -0.015em;
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  p {
+    font-size: calc(14px + 2 * (100vw - 320px) / 1080);
+    font-weight: 300;
+    letter-spacing: -0.015em;
+    line-height: 1.4;
+    color: var(--text-secondary);
+    text-wrap: balance;
+  }
+}
+
+.form {
+  --card-padding: var(--spacing-xs);
+  --card-gap: calc(var(--card-padding) / 2);
+  margin: calc(32px + 8 * (100vw - 320px) / 1080) auto 0;
+  width: calc(450px + 75 * (100vw - 320px) / 1080);
+  max-width: 100%;
+
+  &::before {
+    content: "";
+    position: absolute;
+    background: radial-gradient(
+      rgba(var(--blue-rgb), 0.75) 0%,
+      transparent 70%
+    );
+    filter: blur(60px);
+    pointer-events: none;
+    @include performance;
+    inset: -20%;
+    pointer-events: none;
+  }
+
+  .start {
+    --btn-height: calc(64px + 4 * (100vw - 320px) / 1080);
+    --btn-size: calc(18px + 4 * (100vw - 320px) / 1080);
+    --btn-radius: var(--radius-m);
+  }
+}
+
+.field {
+  --field-padding: calc(var(--spacing-s) / 1.2);
+  background-color: var(--card-bg);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border-medium);
+  padding: calc(var(--field-padding) / 1.25) var(--field-padding);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 5;
+  position: relative;
+
+  label,
+  .bottom {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+}
+
+.middle {
+  display: flex;
+
+  input {
+    flex: 1;
+    font-size: calc(32px + 4 * (100vw - 320px) / 1080);
+    font-weight: 200;
+    position: relative;
+    left: -2px;
+    width: auto;
+    min-width: 0;
+    padding-right: 1em;
+  }
+
+  & > [data-variant="secondary"] {
+    --btn-color: var(--text-primary);
+    --btn-padding-x: 1.1em;
+    --btn-bg: var(--card-bg) !important;
+    --btn-hover-color: var(--text-primary);
+
+    svg {
+      opacity: 0.5;
+    }
+  }
+}
+
+.actions {
+  --btn-color: var(--text-primary);
+  --btn-height: calc(32px + 2 * (100vw - 320px) / 1080);
+  --btn-bg: var(--card-bg);
+  --btn-radius: var(--radius-xs);
+  --btn-hover-color: var(--text-primary);
+  padding-inline: calc(var(--card-padding) / 1.25);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 0;
+
+  button {
+    & > svg {
+      width: 50% !important;
+    }
+  }
+
+  .tunnel {
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    height: calc(100% + var(--card-gap) * 2 + 2px);
+    top: 50%;
+    left: 50%;
+    width: auto;
+    max-width: 94%;
+    aspect-ratio: 454 / 58;
+    transform: translate(-50%, -50%);
+  }
+}

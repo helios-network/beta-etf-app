@@ -2,22 +2,25 @@
 
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
-import s from "./points-button.module.scss"
+import { useAppStore } from "@/stores/app"
 import { BorderAnimate } from "../border-animate"
+import s from "./points-button.module.scss"
 
-interface PointsButtonProps {
-  points: number
-  multiplier?: number
-  onClick: () => void
-}
+export const PointsButton = () => {
+  const { setPointsModalOpen, points } = useAppStore()
+  const multiplier = 1.1
 
-export const PointsButton = ({
-  points,
-  multiplier = 1.1,
-  onClick
-}: PointsButtonProps) => {
+  const handleOpenPointsModal = () => {
+    setPointsModalOpen(true)
+  }
+
   return (
-    <Button className={s.button} onClick={onClick} variant="secondary">
+    <Button
+      className={s.button}
+      onClick={handleOpenPointsModal}
+      variant="secondary"
+      data-button-points
+    >
       <div className={s.content}>
         <Icon icon="hugeicons:trophy" className={s.icon} />
         <span className={s.text}>

@@ -1,8 +1,9 @@
 @use "sass:list";
 @use "sass:meta";
 
-$responsiveNav: 1200px;
+$responsiveNav: 1250px;
 $responsiveMobile: 700px;
+$responsivePointsModal: 850px;
 
 @mixin max($width) {
   @media screen and (max-width: $width) {
@@ -186,11 +187,10 @@ $responsiveMobile: 700px;
   border: 1px solid var(--card-border, var(--background-low));
   min-height: 100%;
   @include backdrop(32px);
-
-  @include max(700px) {
-    padding: var(--size-8);
-    gap: calc(var(--size-8) / 1.5);
-  }
+  // @include max(700px) {
+  //   padding: var(--size-8);
+  //   gap: calc(var(--size-8) / 1.5);
+  // }
 }
 
 @mixin block(

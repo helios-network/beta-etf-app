@@ -13,6 +13,10 @@ export const GAS_PRICE_MULTIPLIERS = {
 interface AppStore {
   nav: boolean
   setNav: (nav: boolean) => void
+  setPointsModalOpen: (modalOpen: boolean) => void
+  points: number
+  setPoints: (points: number) => void
+  pointsModalOpen: boolean
   debugMode: boolean
   setDebugMode: (debugMode: boolean) => void
   hasHydrated: boolean
@@ -28,6 +32,10 @@ export const useAppStore = create<AppStore>()(
     (set, get) => ({
       nav: false,
       setNav: (nav) => set({ nav }),
+      points: 2261.01,
+      setPoints: (points) => set({ points }),
+      pointsModalOpen: false,
+      setPointsModalOpen: (pointsModalOpen) => set({ pointsModalOpen }),
       debugMode: false,
       setDebugMode: (debugMode) => set({ debugMode }),
       hasHydrated: false,

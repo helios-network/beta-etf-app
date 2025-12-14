@@ -1,8 +1,10 @@
+@use "@/styles/mixins" as *;
+
 .etfMint {
   width: 100%;
   padding: 2rem 1rem;
 
-  @media (max-width: 768px) {
+  @include max(768px) {
     padding: 1.5rem 1rem;
   }
 }
@@ -22,16 +24,16 @@
   gap: 2rem;
   align-items: start;
 
-  @media (max-width: 1200px) {
+  @include max(1200px) {
     grid-template-columns: 1.3fr 0.7fr;
   }
 
-  @media (max-width: 1024px) {
+  @include max(1024px) {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 
-  @media (max-width: 768px) {
+  @include max(768px) {
     gap: 1.5rem;
   }
 }
@@ -134,7 +136,7 @@
   position: sticky;
   top: 2rem;
 
-  @media (max-width: 1024px) {
+  @include max(1024px) {
     position: static;
     height: auto;
   }
@@ -230,7 +232,7 @@
   padding: 1rem;
   overflow-y: auto;
 
-  @media (max-width: 768px) {
+  @include max(768px) {
     padding: 1rem;
     align-items: flex-end;
   }
@@ -242,7 +244,7 @@
   position: relative;
   margin: auto;
 
-  @media (max-width: 768px) {
+  @include max(768px) {
     max-width: none;
     border-radius: 12px 12px 0 0;
   }

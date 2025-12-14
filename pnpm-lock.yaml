@@ -8,6 +8,9 @@ dependencies:
   '@faker-js/faker':
     specifier: ^9.6.0
     version: 9.6.0
+  '@gsap/react':
+    specifier: ^2.1.2
+    version: 2.1.2(gsap@3.14.2)(react@19.2.1)
   '@iconify/react':
     specifier: ^5.2.0
     version: 5.2.0(react@19.2.1)
@@ -44,6 +47,9 @@ dependencies:
   ethers:
     specifier: ^6.13.5
     version: 6.13.5
+  gsap:
+    specifier: ^3.14.2
+    version: 3.14.2
   moment:
     specifier: ^2.30.1
     version: 2.30.1
@@ -325,6 +331,16 @@ packages:
 
   /@floating-ui/utils@0.2.10:
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
+    dev: false
+
+  /@gsap/react@2.1.2(gsap@3.14.2)(react@19.2.1):
+    resolution: {integrity: sha512-JqliybO1837UcgH2hVOM4VO+38APk3ECNrsuSM4MuXp+rbf+/2IG2K1YJiqfTcXQHH7XlA0m3ykniFYstfq0Iw==}
+    peerDependencies:
+      gsap: ^3.12.5
+      react: '>=17'
+    dependencies:
+      gsap: 3.14.2
+      react: 19.2.1
     dev: false
 
   /@humanfs/core@0.19.1:
@@ -4540,6 +4556,10 @@ packages:
   /graphemer@1.4.0:
     resolution: {integrity: sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==}
     dev: true
+
+  /gsap@3.14.2:
+    resolution: {integrity: sha512-P8/mMxVLU7o4+55+1TCnQrPmgjPKnwkzkXOK1asnR9Jg2lna4tEY5qBJjMmAaOBDDZWtlRjBXjLa0w53G/uBLA==}
+    dev: false
 
   /h3@1.15.1:
     resolution: {integrity: sha512-+ORaOBttdUm1E2Uu/obAyCguiI7MbBvsLTndc3gyK3zU+SYLoZXlyCP9Xgy0gikkGufFLTZXCXD6+4BsufnmHA==}

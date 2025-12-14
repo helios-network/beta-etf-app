@@ -2,12 +2,13 @@
 
 import { Button } from "@/components/button"
 import { Dropdown } from "@/components/dropdown"
+import { PointsButton } from "@/components/points-button"
 import { truncateAddress } from "@/lib/utils"
-import { toast } from "sonner"
-import s from "./wallet.module.scss"
 import { useAppKit } from "@reown/appkit/react"
-import { useAccount, useDisconnect } from "wagmi"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
+import { useAccount, useDisconnect } from "wagmi"
+import s from "./wallet.module.scss"
 
 export const Wallet = () => {
   const { open: openLoginModal, close: closeLoginModal } = useAppKit()
@@ -61,11 +62,9 @@ export const Wallet = () => {
         position="bottom-right"
       >
         <ul>
-          {/* <li>
-            <Button iconLeft="hugeicons:user" isNav={true}>
-              Account
-            </Button>
-          </li> */}
+          <li>
+            <PointsButton />
+          </li>
           <li>
             <Button
               iconLeft="hugeicons:logout-03"

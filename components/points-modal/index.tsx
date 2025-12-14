@@ -1,27 +1,29 @@
 "use client"
 
-import { Modal } from "@/components/modal"
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
+import { Modal } from "@/components/modal"
+import { SeasonTabs } from "@/components/season-tabs"
+import { useAppStore } from "@/stores/app"
 import Link from "next/link"
 import { useState } from "react"
+import { BorderAnimate } from "../border-animate"
 import s from "./points-modal.module.scss"
 
-interface PointsModalProps {
-  open: boolean
-  onClose: () => void
-  points: number
-}
+export const PointsModal = () => {
+  const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
+    "season1"
+  )
 
-export const PointsModal = ({ open, onClose, points }: PointsModalProps) => {
-  const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">("season1")
+  const { points, setPointsModalOpen, pointsModalOpen } = useAppStore()
 
   const seasonData = {
     season1: {
       label: "Season 1",
       status: "Active",
       points: points,
-      description: "Season 1 is now complete. View the leaderboard to see final rankings."
+      description:
+        "Season 1 is now complete. View the leaderboard to see final rankings."
     },
     season2: {
       label: "Season 2",
@@ -37,31 +39,28 @@ export const PointsModal = ({ open, onClose, points }: PointsModalProps) => {
     }
   }
 
+  const seasonLabels = {
+    season1: { label: "Season 1", status: "Active" },
+    season2: { label: "Season 2", status: "Not Started" },
+    season3: { label: "Season 3", status: "Not Started" }
+  }
+
   const currentSeason = seasonData[activeTab]
 
+  const handleClose = () => {
+    setPointsModalOpen(false)
+  }
+
   return (
-    <Modal open={open} onClose={onClose} title="deBridge points">
+    <Modal open={pointsModalOpen} onClose={handleClose} title="deBridge points">
       <div className={s.content}>
-        <div className={s.tabsContainer}>
-          <div className={s.tabs}>
-            {(["season1", "season2", "season3"] as const).map((season) => {
-              const isDisabled = season !== "season1"
-              return (
-                <button
-                  key={season}
-                  className={`${s.tab} ${activeTab === season ? s.active : ""} ${isDisabled ? s.disabled : ""}`}
-                  onClick={() => !isDisabled && setActiveTab(season)}
-                  disabled={isDisabled}
-                >
-                  <span className={s.seasonLabel}>{seasonData[season].label}</span>
-                  {seasonData[season].status && (
-                    <span className={s.status}>{seasonData[season].status}</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </div>
+        <SeasonTabs
+          seasons={seasonLabels}
+          activeSeason={activeTab}
+          onSeasonChange={(season) => setActiveTab(season as typeof activeTab)}
+          disabledSeasons={["season2", "season3"]}
+          className={s.seasonTabs}
+        />
 
         <div className={s.seasonContent}>
           <div className={s.pointsSection}>
@@ -72,15 +71,19 @@ export const PointsModal = ({ open, onClose, points }: PointsModalProps) => {
                 maximumFractionDigits: 2
               })}
             </div>
+            <BorderAnimate />
           </div>
-
           <div className={s.descriptionSection}>
             <p className={s.description}>{currentSeason.description}</p>
           </div>
         </div>
 
         <div className={s.footer}>
-          <Link href="/leaderboard" className={s.leaderboardLink} onClick={onClose}>
+          <Link
+            href="/leaderboard"
+            className={s.leaderboardLink}
+            onClick={handleClose}
+          >
             <Button variant="primary" className={s.leaderboardButton}>
               <Icon icon="hugeicons:trophy-01" />
               <span>Leaderboard</span>

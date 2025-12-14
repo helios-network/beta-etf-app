@@ -1,5 +1,8 @@
+import { PointsModal } from "@/components/points-modal"
+import { TunnelDefs } from "@/components/tunnel"
 import NextTopLoader from "nextjs-toploader"
 import { Toaster } from "sonner"
+import { Footer } from "../footer"
 import { Header } from "../header"
 import s from "./wrapper.module.scss"
 
@@ -12,6 +15,7 @@ export const Wrapper = ({ children }: WrapperProps) => {
     <>
       <Header />
       <main className={s.main}>{children}</main>
+      <Footer />
       <NextTopLoader
         color="var(--primary-medium)"
         height={2}
@@ -25,6 +29,10 @@ export const Wrapper = ({ children }: WrapperProps) => {
           className: s.toast
         }}
       />
+      <PointsModal />
+      <svg className={s.defs} width="0" height="0" aria-hidden>
+        <TunnelDefs />
+      </svg>
       <div id="modal-root" />
       <div className={s.bg} />
     </>

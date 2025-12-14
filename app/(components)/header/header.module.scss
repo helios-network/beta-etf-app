@@ -1,6 +1,7 @@
 @use "styles/mixins" as *;
 
 .header {
+  --header-padding: calc(32px + 16 * (100vw - 320px) / 1080);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,7 +10,7 @@
   top: 0;
   position: sticky;
   pointer-events: none;
-  padding: calc(32px + 16 * (100vw - 320px) / 1080) 0;
+  padding: var(--header-padding) 0;
 
   button,
   a {
@@ -28,7 +29,7 @@
     transform: translateX(-50%);
   }
 
-  [data-variant="secondary"] {
+  [data-variant] {
     @include backdrop(16px);
   }
 }
@@ -40,6 +41,20 @@
   width: var(--container-width);
   max-width: var(--container-max);
   margin: auto;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    background: radial-gradient(var(--primary-medium) 0%, transparent 70%);
+    width: 40%;
+    bottom: 50%;
+    left: -50px;
+    filter: blur(60px);
+    top: -150px;
+    pointer-events: none;
+    @include performance;
+  }
 }
 
 .logotype {
@@ -47,7 +62,6 @@
   margin-bottom: var(--size-1-5);
   overflow: visible;
   display: block;
-  margin-left: var(--size-2);
 
   svg {
     height: 100%;
@@ -63,4 +77,10 @@
   display: flex;
   margin-left: auto;
   gap: var(--size-1-5);
+
+  @include max($responsivePointsModal) {
+    & > [data-button-points] {
+      display: none;
+    }
+  }
 }

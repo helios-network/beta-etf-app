@@ -2,6 +2,7 @@
 
 import { Icon } from "@/components/icon"
 import { formatNumber } from "@/lib/utils/number"
+import { Variants } from "@/types/feedback"
 import { clsx } from "clsx"
 import {
   forwardRef,
@@ -11,7 +12,6 @@ import {
 } from "react"
 import { Button } from "../button"
 import s from "./input.module.scss"
-import { Variants } from "@/types/feedback"
 
 interface BaseInputProps {
   label?: string
@@ -71,28 +71,30 @@ export const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, Props>(
 
     return (
       <div className={clsx(s.wrapper, className)}>
-        <div className={s.header}>
-          {label && <label className={s.label}>{label}</label>}
-          {(balance !== undefined || showMaxButton) && (
-            <div className={s.balanceContainer}>
-              {balance !== undefined && (
-                <small className={s.balance}>
-                  Balance: {formatNumber(balance, 6)}
-                </small>
-              )}
-              {showMaxButton && (
-                <Button
-                  className={s.max}
-                  onClick={onMaxClick}
-                  variant="secondary"
-                  size="xsmall"
-                >
-                  Max
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+        {(label || balance !== undefined || showMaxButton) && (
+          <div className={s.header}>
+            {label && <label className={s.label}>{label}</label>}
+            {(balance !== undefined || showMaxButton) && (
+              <div className={s.balanceContainer}>
+                {balance !== undefined && (
+                  <small className={s.balance}>
+                    Balance: {formatNumber(Number(balance), 6)}
+                  </small>
+                )}
+                {showMaxButton && (
+                  <Button
+                    className={s.max}
+                    onClick={onMaxClick}
+                    variant="secondary"
+                    size="xsmall"
+                  >
+                    Max
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         <div
           className={clsx(s.input, type === "textarea" && s.textarea)}
           onClick={handleFocusInput}

@@ -1,50 +1,19 @@
-.leaderboard {
-  width: 100%;
-  padding: 2rem 1.5rem;
-  min-height: 100vh;
-
-  @media (max-width: 1024px) {
-    padding: 2rem 1rem;
-  }
-
-  @media (max-width: 768px) {
-    padding: 1.5rem 1rem;
-  }
-
-  @media (max-width: 480px) {
-    padding: 1rem 0.75rem;
-  }
-}
-
-.container {
-  max-width: 1600px;
-  margin: 0 auto;
-}
+@use "@/styles/mixins" as *;
 
 .headingWrapper {
   margin-bottom: 2rem;
 
-  @media (max-width: 1024px) {
+  @include max(1024px) {
     margin-bottom: 2.5rem;
   }
 
-  @media (max-width: 768px) {
+  @include max(768px) {
     margin-bottom: 2rem;
   }
 
-  @media (max-width: 480px) {
+  @include max(480px) {
     margin-bottom: 1.5rem;
   }
-}
-
-.tabsContainer {
-  width: 100%;
-  border-bottom: 1px solid var(--color-light-200);
-}
-
-.tabs {
-  display: flex;
-  gap: 0;
 }
 
 .content {
@@ -55,22 +24,18 @@
 
 .filterCardContent {
   background: var(--background-low);
-  border-radius: 12px;
-  border: 1px solid var(--color-light-200);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border-light);
+  margin-top: var(--size-6);
+  padding: 2rem;
+  @include backdrop;
 
-  @media (max-width: 1024px) {
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  @media (max-width: 768px) {
+  @include max(768px) {
     padding: 1.25rem;
-    margin-bottom: 1.5rem;
   }
 
-  @media (max-width: 480px) {
+  @include max(480px) {
     padding: 1rem;
-    margin-bottom: 1rem;
   }
 }
 
@@ -80,7 +45,7 @@
   gap: 1.25rem;
   align-items: flex-end;
 
-  @media (max-width: 1024px) {
+  @include max(1024px) {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
@@ -90,73 +55,24 @@
   width: 100%;
 }
 
-.tab {
-  padding: 1rem 3rem;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.95rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  transition: all 0.25s var(--cubic);
-
-  &:hover {
-    color: var(--text-primary);
-  }
-
-  &.active {
-    color: var(--primary-medium);
-    border-bottom-color: var(--primary-medium);
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      transparent 10%,
-      var(--background-high) 100%
-    );
-  }
-
-  &.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    color: var(--text-secondary);
-
-    &:hover {
-      color: var(--text-secondary);
-    }
-  }
-}
-
-.seasonLabel {
-  font-weight: 600;
-}
-
-.status {
-  font-size: 0.75rem;
-  opacity: 0.7;
-  font-weight: 400;
-
-  &.active {
-    opacity: 1;
-    color: var(--primary-medium);
-    font-weight: 500;
-  }
-}
-
 .searchInput {
   width: 100%;
 }
 
 .tableWrapper {
   overflow-x: auto;
-  border: 1px solid var(--color-light-200);
-  border-radius: 12px;
-  background: var(--color-light-50);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-m);
+  background: var(--background-lowest);
   margin-bottom: 0.5rem;
+  @include backdrop;
+
+  @include max(768px) {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
 }
 
 .table {
@@ -165,8 +81,12 @@
   font-size: 0.95rem;
 
   thead {
-    background: var(--color-light-100);
-    border-bottom: 1px solid var(--color-light-200);
+    background: var(--background-lower);
+    border-bottom: 1px solid var(--border-light);
+
+    @include max(768px) {
+      display: none;
+    }
 
     th {
       padding: 1rem;
@@ -181,10 +101,9 @@
         text-align: center;
       }
 
-      &:nth-child(4),
-      &:nth-child(5),
       &:nth-child(6),
-      &:nth-child(7) {
+      &:nth-child(7),
+      &:nth-child(8) {
         text-align: center;
       }
     }
@@ -192,15 +111,39 @@
 
   tbody {
     tr {
-      border-bottom: 1px solid var(--color-light-200);
+      border-bottom: 1px solid var(--border-light);
       transition: background-color var(--transition-link);
 
+      @include max(768px) {
+        display: block;
+        border-radius: var(--radius-m);
+        margin-bottom: 1rem;
+        background: var(--background-low);
+        padding: 1.25rem;
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        &:hover {
+          background: var(--background-medium);
+          border-color: var(--border-medium);
+          box-shadow: var(--shadow-m);
+        }
+      }
+
       &:hover {
-        background: var(--color-light-100);
+        background: var(--background-lower);
       }
 
       &:last-child {
         border-bottom: none;
+
+        @include max(768px) {
+          border-bottom: none;
+        }
       }
     }
 
@@ -209,6 +152,46 @@
       color: var(--text-primary);
       white-space: nowrap;
       font-weight: 500;
+
+      @include max(768px) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.875rem 0;
+        border-bottom: 1px solid var(--border-light);
+        white-space: normal;
+        gap: 1rem;
+
+        &:first-child {
+          padding-top: 0;
+        }
+
+        &:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        &::before {
+          content: attr(data-th) ":";
+          font-weight: 600;
+          color: var(--text-secondary);
+          font-size: 0.875rem;
+          flex-shrink: 0;
+          min-width: fit-content;
+        }
+
+        > * {
+          text-align: right;
+          flex: 1;
+        }
+
+        &.rankCol {
+          > * {
+            text-align: left;
+            flex: 0;
+          }
+        }
+      }
     }
   }
 }
@@ -216,6 +199,15 @@
 .rankCol {
   width: 60px;
   text-align: center;
+
+  @include max(768px) {
+    width: auto;
+    text-align: left;
+
+    > * {
+      text-align: left;
+    }
+  }
 }
 
 .rankBadge {
@@ -225,10 +217,16 @@
   width: 2rem;
   height: 2rem;
   background: var(--foreground-lower);
-  color: var(--color-dark-50);
+  color: var(--text-secondary);
   border-radius: 50%;
   font-weight: 500;
   font-size: 1rem;
+
+  @include max(768px) {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.9rem;
+  }
 }
 
 .addressCol {
@@ -258,6 +256,10 @@
 .transactionsCol {
   min-width: 140px;
   text-align: center;
+
+  @include max(768px) {
+    text-align: right;
+  }
 }
 
 .tvlCol {
@@ -274,11 +276,19 @@
 .referralCol {
   min-width: 120px;
   text-align: center;
+
+  @include max(768px) {
+    text-align: right;
+  }
 }
 
 .iaaStCol {
   min-width: 100px;
   text-align: center;
+
+  @include max(768px) {
+    text-align: right;
+  }
 }
 
 .pagination {
@@ -286,10 +296,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0 0 0;
-  border-top: 1px solid var(--color-light-200);
+  padding: 0.5rem 0;
 
-  @media (max-width: 768px) {
+  @include max(768px) {
     flex-direction: column;
     gap: 1rem;
   }
@@ -305,8 +314,8 @@
   min-width: 2.5rem;
   height: 2.5rem;
   padding: 0;
-  background: var(--color-light-100);
-  border: 1px solid var(--color-light-200);
+  background: var(--background-lower);
+  border: 1px solid var(--border-light);
   border-radius: var(--radius-rounded);
   color: var(--text-primary);
   font-weight: 500;
@@ -314,14 +323,14 @@
   transition: all var(--transition-link);
 
   &:hover {
-    background: var(--color-light-200);
-    border-color: var(--color-light-300);
+    background: var(--background-low);
+    border-color: var(--border-medium);
   }
 
   &.active {
-    background: var(--primary-medium);
-    color: var(--color-light-50);
-    border-color: var(--primary-medium);
+    background: var(--blue);
+    color: var(--white);
+    border-color: var(--blue);
   }
 }
 
@@ -338,7 +347,7 @@
   color: var(--text-secondary);
   font-size: 0.9rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--color-light-200);
+  border-top: 1px solid var(--border-light);
 }
 
 .pageSizeLabel {
@@ -348,54 +357,4 @@
 .pageSizeIcon {
   width: 1em;
   height: 1em;
-}
-
-.loadingState,
-.errorState,
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  gap: 1rem;
-  color: var(--text-secondary);
-
-  p {
-    font-size: 1rem;
-    font-weight: 500;
-  }
-
-  :global(.icon) {
-    width: 3rem;
-    height: 3rem;
-    color: var(--text-secondary);
-    opacity: 0.6;
-  }
-}
-
-.loadingState {
-  :global(.icon) {
-    animation: spin 1s linear infinite;
-  }
-}
-
-.errorState {
-  :global(.icon) {
-    color: var(--error-medium);
-    opacity: 1;
-  }
-
-  p {
-    color: var(--error-medium);
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }

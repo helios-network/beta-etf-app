@@ -245,15 +245,14 @@
   gap: 1.5rem;
   max-width: 550px;
   width: 100%;
+  background-color: var(--background-medium);
 
-  :global(.card) {
+  .previewCard,
+  .successCard,
+  .infoCard {
     background: transparent;
     box-shadow: none;
     border: none;
-  }
-
-  :global(.modal) {
-    background-color: var(--background-medium);
   }
 }
 

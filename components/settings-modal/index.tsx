@@ -3,6 +3,7 @@
 import { Button } from "@/components/button"
 import { Input } from "@/components/input/input"
 import { Modal } from "@/components/modal"
+import { useTheme } from "@/context/ThemeContext"
 import { GasPriceOption, useAppStore } from "@/stores/app"
 import { useState, useEffect, useRef } from "react"
 import { toast } from "sonner"
@@ -28,6 +29,7 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
 
   const { address, isConnected } = useAccount()
   const web3Provider = useWeb3Provider()
+  const { theme, toggleTheme } = useTheme()
 
   // Initialize local state from the current store values
   // Using useEffect to ensure we always have the latest values from the store
@@ -275,6 +277,30 @@ export const SettingsModal = ({ open, onClose }: SettingsModalProps) => {
       responsiveBottom
     >
       <div className={s.content}>
+        <div className={s.section}>
+          <h3 className={s.sectionTitle}>Theme</h3>
+          <p className={s.sectionDescription}>
+            Switch between light and dark mode for the application interface.
+          </p>
+
+          <div className={s.toggleGroup}>
+            <label className={s.toggle}>
+              <input
+                type="checkbox"
+                checked={theme === "dark"}
+                onChange={toggleTheme}
+                className={s.toggleInput}
+              />
+              <span className={s["toggle-track"]}>
+                <span className={s["toggle-thumb"]}></span>
+              </span>
+              <span className={s.toggleLabel}>
+                {theme === "dark" ? "Dark Mode" : "Light Mode"}
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div className={s.section}>
           <h3 className={s.sectionTitle}>Debug Mode</h3>
           <p className={s.sectionDescription}>

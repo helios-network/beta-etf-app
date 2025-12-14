@@ -4,63 +4,13 @@
   gap: 1.5rem;
 }
 
-.tabsContainer {
-  width: 100%;
-  border-bottom: 1px solid var(--color-light-200);
-}
-
-.tabs {
-  display: flex;
-  gap: 0;
-  width: 100%;
-}
-
-.tab {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 1rem;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all var(--transition-link);
-
-  &:hover {
-    color: var(--text-primary);
-  }
-
-  &.active {
-    color: var(--primary-medium);
-    border-bottom-color: var(--primary-medium);
-    background: linear-gradient(to bottom, transparent 0%, var(--background-medium) 100%);
-  }
-
-  &.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    color: var(--text-secondary);
-
-    &:hover {
-      color: var(--text-secondary);
-    }
-  }
-}
-
-.seasonLabel {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.status {
-  font-size: 0.75rem;
-  opacity: 0.7;
-  font-weight: 400;
+.seasonTabs {
+  width: calc(100% + var(--size-10) * 2);
+  margin-left: calc(var(--size-10) * -1);
+  margin-right: calc(var(--size-10) * -1);
+  margin-top: calc(var(--size-10) * -1);
+  margin-bottom: var(--size-6);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
 }
 
 .seasonContent {
@@ -72,21 +22,58 @@
 .pointsSection {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  padding: 2rem;
+  background: linear-gradient(
+    to bottom,
+    rgba(var(--blue-rgb), 0) rgba(var(--blue-rgb), 0.25)
+  );
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-l);
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 50% 0%,
+      rgba(var(--blue-rgb), 0.15),
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 .sectionTitle {
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text-secondary);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 2;
 }
 
 .pointsValue {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--primary-medium);
-  line-height: 1.2;
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(
+    135deg,
+    var(--primary-medium),
+    var(--primary-high),
+    var(--secondary)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 0 20px rgba(var(--blue-rgb), 0.4));
 }
 
 .descriptionSection {
@@ -121,7 +108,6 @@
   display: flex;
   justify-content: center;
   padding-top: 0.75rem;
-  border-top: 1px solid var(--color-light-200);
 
   button {
     --btn-bg: transparent !important;

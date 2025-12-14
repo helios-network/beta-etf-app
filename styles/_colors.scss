@@ -82,15 +82,6 @@ $primitive: (
 );
 
 $colors: (
-  background: (
-    lowest: var(--color-light-50),
-    lower: var(--color-light-100),
-    low: var(--color-light-200),
-    medium: var(--color-light-300),
-    high: var(--color-light-400),
-    higher: var(--color-light-500),
-    highest: var(--color-light-600)
-  ),
   primary: (
     lowest: var(--color-blue-200),
     lower: var(--color-blue-300),
@@ -120,17 +111,6 @@ $colors: (
     low: var(--color-orange-400),
     medium: var(--color-orange-500),
     high: var(--color-orange-600)
-  ),
-  text: (
-    primary: var(--color-dark-600),
-    secondary: var(--color-dark-50),
-    tertiary: #828db3
-  ),
-  other: (
-    apy: var(--color-blue-500),
-    reputation: #00aaff,
-    uptime: #7733ff,
-    commission: #ac09ed
   )
 );
 
@@ -171,7 +151,9 @@ $status-colors: (
   }
 }
 
-:root {
+// Light theme (default)
+:root,
+[data-theme="light"] {
   $colorsForge: (
     body: "4, 8, 28",
     blue: "0, 45, 203",
@@ -185,21 +167,121 @@ $status-colors: (
     --#{$color}: rgb(var(--#{$color}-rgb));
   }
 
+  // Background levels - using card-bg principle with different opacities
+  --background-lowest: rgba(var(--tertiary-rgb), 0.02);
+  --background-lower: rgba(var(--tertiary-rgb), 0.03);
+  --background-low: rgba(var(--tertiary-rgb), 0.05);
+  --background-medium: rgba(var(--tertiary-rgb), 0.08);
+  --background-high: rgba(var(--tertiary-rgb), 0.1);
+  --background-higher: rgba(var(--tertiary-rgb), 0.12);
+  --background-highest: rgba(var(--tertiary-rgb), 0.15);
+
+  // Border levels - using tertiary with opacity
+  --border-light: rgba(var(--tertiary-rgb), 0.05);
+  --border-medium: rgba(var(--tertiary-rgb), 0.08);
+  --border-dark: rgba(var(--tertiary-rgb), 0.12);
+  --border-low: rgba(var(--tertiary-rgb), 0.03);
+
+  // Foreground
+  --foreground-lower: rgba(var(--tertiary-rgb), 0.03);
+
+  // Text colors
   --text-primary: var(--primary);
   --text-secondary: rgb(var(--secondary-rgb), 0.5);
-  --stroke: rgba(var(--tertiary-rgb), 0.05);
-  --btn-border-secondary: rgba(var(--tertiary-rgb), 0.15);
+  --text-tertiary: #828db3;
+
+  // Stroke and buttons
+  --stroke: var(--border-light);
+  --btn-border-secondary: var(--border-medium);
   --btn-color-secondary: var(--text-secondary);
-  --card-bg: rgba(var(--tertiary-rgb), 0.05);
-  --card-border: rgba(var(--tertiary-rgb), 0.05);
+
+  // Card components - using background variables
+  --card-bg: var(--background-low);
+  --card-border: var(--border-light);
   --card-shadow: 0 0 32px rgba(255, 255, 255, 0.1) inset;
-  --input-bg: var(--card-bg);
-  --input-border: var(--card-border);
+
+  // Input components - using background variables
+  --input-bg: var(--background-low);
+  --input-border: var(--border-light);
+
+  // Modal components - using background variables
   --modal-overlay: rgba(var(--body-rgb), 0.85);
-  --modal-bg: var(--card-bg);
-  --modal-border: var(--card-border);
+  --modal-bg: var(--background-medium);
+  --modal-border: var(--border-light);
   --modal-shadow: 0 0 32px rgba(var(--dark-rgb), 0.1) inset;
-  --dropdown-bg: var(--card-bg);
-  --dropdown-border: var(--card-border);
+
+  // Dropdown components - using background variables
+  --dropdown-bg: var(--background-medium);
+  --dropdown-border: var(--border-light);
   --dropdown-shadow: 0 0 24px rgba(var(--dark-rgb), 0.25) inset;
+
+  // Body background
+  --body: rgb(var(--body-rgb));
+}
+
+// Dark theme
+[data-theme="dark"] {
+  $colorsForgeDark: (
+    body: "4, 8, 28",
+    blue: "0, 45, 203",
+    primary: "213, 222, 240",
+    secondary: "161, 192, 255",
+    tertiary: "129, 171, 255"
+  );
+
+  @each $color, $rgb in $colorsForgeDark {
+    --#{$color}-rgb: #{$rgb};
+    --#{$color}: rgb(var(--#{$color}-rgb));
+  }
+
+  // Background levels - using card-bg principle with different opacities
+  --background-lowest: rgba(var(--tertiary-rgb), 0.03);
+  --background-lower: rgba(var(--tertiary-rgb), 0.05);
+  --background-low: rgba(var(--tertiary-rgb), 0.06);
+  --background-medium: rgba(var(--tertiary-rgb), 0.07);
+  --background-high: rgba(var(--tertiary-rgb), 0.15);
+  --background-higher: rgba(var(--tertiary-rgb), 0.18);
+  --background-highest: rgba(var(--tertiary-rgb), 0.22);
+
+  // Border levels - using tertiary with opacity
+  --border-light: rgba(var(--tertiary-rgb), 0.1);
+  --border-medium: rgba(var(--tertiary-rgb), 0.15);
+  --border-dark: rgba(var(--tertiary-rgb), 0.2);
+  --border-low: rgba(var(--tertiary-rgb), 0.08);
+
+  // Foreground
+  --foreground-lower: rgba(var(--tertiary-rgb), 0.05);
+
+  // Text colors
+  --text-primary: var(--primary);
+  --text-secondary: rgb(var(--secondary-rgb), 0.5);
+  --text-tertiary: rgb(var(--secondary-rgb), 0.4);
+
+  // Stroke and buttons
+  --stroke: var(--border-light);
+  --btn-border-secondary: var(--border-medium);
+  --btn-color-secondary: var(--text-secondary);
+
+  // Card components - using background variables
+  --card-bg: var(--background-low);
+  --card-border: var(--border-light);
+  --card-shadow: 0 0 32px rgba(0, 0, 0, 0.3) inset;
+
+  // Input components - using background variables
+  --input-bg: var(--background-low);
+  --input-border: var(--border-light);
+
+  // Modal components - using background variables
+  --modal-overlay: rgba(var(--body-rgb), 0.9);
+  --modal-bg: var(--background-medium);
+  --modal-border: var(--border-light);
+  --modal-shadow: 0 0 32px rgba(0, 0, 0, 0.5) inset;
+
+  // Dropdown components - using background variables
+  --dropdown-bg: var(--background-medium);
+  --dropdown-border: var(--border-light);
+  --dropdown-shadow: 0 0 24px rgba(0, 0, 0, 0.4) inset;
+
+  // Body background
+  --body: rgb(var(--body-rgb));
 }

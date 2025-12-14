@@ -57,7 +57,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@include max(768px) {
   .icon {
     padding: 0.45rem 1rem;
     font-size: 0.95rem;
@@ -117,7 +117,7 @@
   background-color: #002dcb;
 }
 
-@media (max-width: 768px) {
+@include max(768px) {
   .container {
     position: relative;
     flex-direction: column;

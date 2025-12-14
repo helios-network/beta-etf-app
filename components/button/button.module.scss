@@ -91,15 +91,13 @@
   }
 
   &[data-variant="secondary"] {
-    --btn-base-bg: var(--background-higher);
+    --btn-base-bg: transparent;
     --btn-base-color: var(--btn-color-secondary);
     --btn-base-border: var(--btn-border-secondary);
     --btn-base-border-color: var(--text-secondary);
     --btn-base-hover-border: var(--blue);
     --btn-base-hover-color: var(--btn-color-secondary);
-    --btn-base-hover-bg: transparent;
-
-    background: transparent !important;
+    --btn-base-hover-bg: rgba(var(--blue-rgb), 0.1);
   }
 
   &[data-variant="danger"] {

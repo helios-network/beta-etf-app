@@ -10,7 +10,7 @@
   box-shadow: 0 4px 24px rgba(16, 30, 54, 0.12),
     0 1.5px 4px rgba(16, 30, 54, 0.08);
 
-  @media (max-width: 600px) {
+  @include max(600px) {
     padding: 0.5rem 0.75rem;
   }
 }

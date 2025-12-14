@@ -51,7 +51,7 @@
 .toggle-track {
   width: 48px;
   height: 24px;
-  background: #cbd5e1; // <-- grey for disabled/off
+  background: var(--background-highest);
   border-radius: 9999px;
   position: relative;
   transition: background 0.2s;
@@ -59,13 +59,13 @@
 
 // Blue when checked
 .toggleInput:checked + .toggle-track {
-  background: #0a40d9; // <-- blue for enabled/on
+  background: var(--blue);
 }
 
 .toggle-thumb {
   width: 20px;
   height: 20px;
-  background: #fff;
+  background: var(--white);
   border-radius: 50%;
   position: absolute;
   left: 2px;
@@ -102,18 +102,19 @@
 }
 
 .toggleInput:checked + .toggleSlider {
-  background: var(--primary-medium);
-  border-color: var(--primary-medium);
+  background: var(--blue);
+  border-color: var(--blue);
 
   &::before {
     transform: translateX(24px);
-    background: white;
+    background: var(--white);
   }
 }
 
 // Move thumb when checked
 .toggleInput:checked + .toggle-track .toggle-thumb {
   left: 26px; // 48px (track width) - 20px (thumb width) - 2px (left margin)
+  background: var(--white);
 }
 
 .toggleLabel {
@@ -209,12 +210,25 @@
   top: calc(100% + 4px);
   left: 0;
   width: 100%;
-  background-color: var(--background-medium);
-  border: 1px solid var(--border-medium);
+  background: linear-gradient(
+      var(--background-medium),
+      var(--background-medium)
+    ),
+    linear-gradient(var(--body), var(--body));
+  border: 1px solid var(--border-high);
   border-radius: var(--radius-s);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10;
   overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    border-radius: inherit;
+    box-shadow: 0 0 0 1px var(--border-medium) inset;
+  }
 }
 
 .gasPriceDropdownItem {
@@ -282,7 +296,7 @@
   align-items: center;
   gap: var(--size-3);
 
-  @media (max-width: 600px) {
+  @include max(600px) {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--size-1);
@@ -302,7 +316,7 @@
   font-family: monospace;
   word-break: break-all;
 
-  @media (max-width: 600px) {
+  @include max(600px) {
     font-size: 0.75rem;
   }
 }
@@ -317,7 +331,7 @@
 .resetNonceButton {
   align-self: flex-start;
 
-  @media (max-width: 600px) {
+  @include max(600px) {
     width: 100%;
   }
 }
@@ -337,11 +351,8 @@
   display: flex;
   gap: var(--size-3);
   justify-content: flex-end;
-  margin-top: var(--size-4);
-  padding-top: var(--size-4);
-  border-top: 1px solid var(--border-low);
 
-  @media (max-width: 600px) {
+  @include max(600px) {
     flex-direction: column;
 
     button {

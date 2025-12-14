@@ -15,7 +15,7 @@
     flex-wrap: wrap;
   }
 
-  @media (max-width: 375px) {
+  @include max(375px) {
     gap: 0.4em;
   }
 }
@@ -69,7 +69,7 @@
     flex-shrink: 0;
   }
 
-  @media (max-width: 375px) {
+  @include max(375px) {
     font-size: var(--heading-icon, var(--size-10));
     flex-shrink: 0;
   }
@@ -91,7 +91,7 @@
     --btn-height: var(--button-small-height);
   }
 
-  @media (max-width: 375px) {
+  @include max(375px) {
     margin-top: 0.5em;
     width: 100%;
     justify-content: flex-start;

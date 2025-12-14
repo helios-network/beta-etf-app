@@ -1,3 +1,5 @@
+@use "@/styles/mixins" as *;
+
 .tabContainer {
   align-items: center;
   width: 100%;
@@ -14,7 +16,7 @@
   width: 100%;
   padding-top: 1rem;
 
-  @media (max-width: 640px) {
+  @include max(640px) {
     grid-template-columns: 1fr;
   }
 }
@@ -42,7 +44,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
-  @media (max-width: 640px) {
+  @include max(640px) {
     padding: 0.4rem 0.8rem;
     font-size: 0.875rem;
   }
@@ -53,7 +55,7 @@
   display: flex;
   align-items: center;
 
-  @media (max-width: 640px) {
+  @include max(640px) {
     font-size: 1rem;
   }
 }

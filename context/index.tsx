@@ -18,6 +18,7 @@ import { createAppKit } from "@reown/appkit/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { type ReactNode } from "react"
 import { cookieToInitialState, WagmiProvider, type Config } from "wagmi"
+import { ThemeProvider } from "./ThemeContext"
 
 const queryClient = new QueryClient()
 queryClient.setDefaultOptions({
@@ -81,7 +82,9 @@ function ContextProvider({ children, cookies }: ContextProviderProps) {
       config={wagmiAdapter.wagmiConfig as Config}
       initialState={initialState}
     >
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </QueryClientProvider>
     </WagmiProvider>
   )
 }
