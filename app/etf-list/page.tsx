@@ -417,8 +417,8 @@ export default function ETFList() {
       } else if (sortBy === "change24h") {
         return b.change24h - a.change24h
       } else if (sortBy === "tvl") {
-        const tvlA = parseFloat(a.tvl.replace(/[^0-9.]/g, ""))
-        const tvlB = parseFloat(b.tvl.replace(/[^0-9.]/g, ""))
+        const tvlA = Number(a.tvl)
+        const tvlB = Number(b.tvl)
         return tvlB - tvlA
       }
       return 0
@@ -1296,6 +1296,16 @@ export default function ETFList() {
                 onClick={() => setSlippageBuy(1)}
               >
                 1%
+              </button>
+              <button
+                type="button"
+                className={clsx(
+                  s.slippageButton,
+                  slippageBuy === 5 && s.active
+                )}
+                onClick={() => setSlippageBuy(5)}
+              >
+                5%
               </button>
             </div>
           </div>

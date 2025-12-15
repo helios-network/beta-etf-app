@@ -17,7 +17,25 @@ export const etfFactoryAbi = [
         type: "address"
       },
       {
-        indexed: true,
+        indexed: false,
+        internalType: "uint256",
+        name: "eventNonce",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventHeight",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "etfNonce",
+        type: "uint256"
+      },
+      {
+        indexed: false,
         internalType: "address",
         name: "shareToken",
         type: "address"
@@ -42,7 +60,7 @@ export const etfFactoryAbi = [
     inputs: [
       {
         internalType: "address[]",
-        name: "depositTokenAndDepositFeedAndRouter",
+        name: "config",
         type: "address[]"
       },
       {
@@ -61,24 +79,14 @@ export const etfFactoryAbi = [
         type: "uint16[]"
       },
       {
-        internalType: "address[][]",
-        name: "depositPaths",
-        type: "address[][]"
+        internalType: "bytes[]",
+        name: "swapPathsData",
+        type: "bytes[]"
       },
       {
-        internalType: "address[][]",
-        name: "withdrawPaths",
-        type: "address[][]"
-      },
-      {
-        internalType: "string",
-        name: "name",
-        type: "string"
-      },
-      {
-        internalType: "string",
-        name: "symbol",
-        type: "string"
+        internalType: "string[]",
+        name: "params",
+        type: "string[]"
       }
     ],
     name: "createETF",
@@ -91,6 +99,11 @@ export const etfFactoryAbi = [
       {
         internalType: "address",
         name: "shareTokenAddr",
+        type: "address"
+      },
+      {
+        internalType: "address",
+        name: "pricerAddr",
         type: "address"
       }
     ],

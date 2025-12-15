@@ -9,21 +9,24 @@ import { getErrorMessage } from "@/utils/string"
 import { EventLog } from "web3"
 
 interface CreateETFParams {
+  factoryAddress: string
   depositToken: string
   depositFeed: string
   router: string
+  quoter: string
   assetTokens: string[]
   priceFeeds: string[]
   targetWeightsBps: number[]
-  depositPaths: string[][]
-  withdrawPaths: string[][]
+  swapPathsData: string[]
   name: string
   symbol: string
+  pricingMode: number
 }
 
 interface CreateETFResult {
   vault: string
   shareToken: string
+  pricer: string
   txHash: string
   blockNumber: number
 }
@@ -100,33 +103,42 @@ export const useETFContract = () => {
       }
 
       try {
-        const factoryAddress = ETF_FACTORY_ADDRESS[chainId as keyof typeof ETF_FACTORY_ADDRESS]
-        if (!factoryAddress) {
-          throw new Error("No factory contract found for chain id: " + chainId)
-        }
         const factoryContract = new web3Provider.eth.Contract(
           factoryAbi as any,
-          factoryAddress
+          params.factoryAddress
         )
 
-        // Prepare the depositTokenAndDepositFeedAndRouter array
-        const depositTokenAndDepositFeedAndRouter = [
+        // Prepare the config array: [depositToken, depositFeed, router]
+        const config = [
           params.depositToken,
           params.depositFeed,
-          params.router
+          params.router,
+          params.quoter
         ]
+
+        // Prepare ETF params array: [name, symbol, pricingMode as string]
+        const etfParams = [
+          params.name,
+          params.symbol,
+          params.pricingMode.toString()
+        ]
+
+        console.log("config", config)
+        console.log("assetTokens", params.assetTokens)
+        console.log("priceFeeds", params.priceFeeds)
+        console.log("targetWeightsBps", params.targetWeightsBps)
+        console.log("swapPathsData", params.swapPathsData)
+        console.log("etfParams", etfParams)
 
         // Simulate the transaction
         const resultOfSimulation = await factoryContract.methods
           .createETF(
-            depositTokenAndDepositFeedAndRouter,
+            config,
             params.assetTokens,
             params.priceFeeds,
             params.targetWeightsBps,
-            params.depositPaths,
-            params.withdrawPaths,
-            params.name,
-            params.symbol
+            params.swapPathsData,
+            etfParams
           )
           .call({
             from: address
@@ -139,14 +151,12 @@ export const useETFContract = () => {
         // Estimate gas
         const gasEstimate = await factoryContract.methods
           .createETF(
-            depositTokenAndDepositFeedAndRouter,
+            config,
             params.assetTokens,
             params.priceFeeds,
             params.targetWeightsBps,
-            params.depositPaths,
-            params.withdrawPaths,
-            params.name,
-            params.symbol
+            params.swapPathsData,
+            etfParams
           )
           .estimateGas({
             from: address
@@ -163,17 +173,15 @@ export const useETFContract = () => {
           web3Provider.eth
             .sendTransaction({
               from: address,
-              to: factoryAddress,
+              to: params.factoryAddress,
               data: factoryContract.methods
                 .createETF(
-                  depositTokenAndDepositFeedAndRouter,
+                  config,
                   params.assetTokens,
                   params.priceFeeds,
                   params.targetWeightsBps,
-                  params.depositPaths,
-                  params.withdrawPaths,
-                  params.name,
-                  params.symbol
+                  params.swapPathsData,
+                  etfParams
                 )
                 .encodeABI(),
               gas: gasLimit.toString(),
@@ -208,11 +216,12 @@ export const useETFContract = () => {
           throw new Error("Could not find ETFCreated event in transaction receipt")
         }
 
-        const { vault, shareToken } = etfCreatedEvent.args
+        const { vault, shareToken, pricer } = etfCreatedEvent.args
 
         return {
           vault: vault,
           shareToken: shareToken,
+          pricer: pricer,
           txHash: receipt.transactionHash,
           blockNumber: Number(receipt.blockNumber)
         }

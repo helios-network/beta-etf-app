@@ -7,38 +7,33 @@ import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
 import { HELIOS_NETWORK_ID } from "@/config/app"
-import { erc20Abi } from "@/constant/helios-contracts"
 import { useRecentETFsContext } from "@/context/RecentETFsContext"
 import { useETFContract } from "@/hooks/useETFContract"
-import { useWeb3Provider } from "@/hooks/useWeb3Provider"
+import { verifyETF, VerifyETFResponse } from "@/helpers/request"
 import { ChangeEvent, useState } from "react"
 import { toast } from "sonner"
 import { useAccount, useChainId } from "wagmi"
 import s from "./interface.module.scss"
+import { getChainConfig } from "@/config/chain-config"
 
-type TokenInBasket = {
-  address: string
-  symbol: string
-  percentage: number
-  priceFeed: string
-  depositPath: string
-  withdrawPath: string
+type TokenComponent = {
+  token: string
+  weight: number
 }
 
 type ETFForm = {
   name: string
   symbol: string
-  depositToken: string
-  depositFeed: string
-  router: string
-  tokens: TokenInBasket[]
+  components: TokenComponent[]
   currentTokenAddress: string
-  currentTokenSymbol: string
-  currentTokenPercentage: string
-  currentTokenPriceFeed: string
-  currentTokenDepositPath: string
-  currentTokenWithdrawPath: string
+  currentTokenWeight: string
   rebalancingMode: "automatic" | "manual" | "no-rebalancing" | null
+}
+
+type VerifyState = {
+  status: "idle" | "loading" | "error" | "success"
+  errorMessage: string | null
+  backendResult: VerifyETFResponse | null
 }
 
 export const ETFCreatorInterface = () => {
@@ -56,22 +51,20 @@ export const ETFCreatorInterface = () => {
   const [form, setForm] = useState<ETFForm>({
     name: "",
     symbol: "",
-    depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-    depositFeed: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6", // Chainlink USDC/USD
-    router: "",
-    tokens: [],
+    components: [],
     currentTokenAddress: "",
-    currentTokenSymbol: "",
-    currentTokenPercentage: "",
-    currentTokenPriceFeed: "",
-    currentTokenDepositPath: "",
-    currentTokenWithdrawPath: "",
+    currentTokenWeight: "",
     rebalancingMode: null
+  })
+
+  const [verifyState, setVerifyState] = useState<VerifyState>({
+    status: "idle",
+    errorMessage: null,
+    backendResult: null
   })
 
   const { addETF } = useRecentETFsContext()
   const { createETF, isLoading: isCreatingETF } = useETFContract()
-  const web3Provider = useWeb3Provider()
   const isLoadingDeploy = isLoading || isCreatingETF
 
   const handleInputChange =
@@ -79,13 +72,13 @@ export const ETFCreatorInterface = () => {
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = e.target.value
 
-      if (field === "currentTokenPercentage") {
-        const percentageValue = parseFloat(value)
+      if (field === "currentTokenWeight") {
+        const weightValue = parseFloat(value)
         if (
           value !== "" &&
-          (isNaN(percentageValue) ||
-            percentageValue < 0 ||
-            percentageValue > 100)
+          (isNaN(weightValue) ||
+            weightValue < 0 ||
+            weightValue > 100)
         ) {
           return
         }
@@ -95,132 +88,57 @@ export const ETFCreatorInterface = () => {
         ...prev,
         [field]: value
       }))
-
-      // Auto-fetch symbol when token address changes
-      if (field === "currentTokenAddress" && value && web3Provider) {
-        fetchTokenSymbol(value)
-      }
     }
 
-  const fetchTokenSymbol = async (tokenAddress: string) => {
-    if (!web3Provider || !tokenAddress) return
-
-    try {
-      const tokenContract = new web3Provider.eth.Contract(
-        erc20Abi as any,
-        tokenAddress
-      )
-      const tokenSymbol = (await tokenContract.methods
-        .symbol()
-        .call()) as string
-      setForm((prev) => ({
-        ...prev,
-        currentTokenSymbol: tokenSymbol.toUpperCase()
-      }))
-    } catch (error) {
-      // If symbol fetch fails, clear the symbol field
-      setForm((prev) => ({
-        ...prev,
-        currentTokenSymbol: ""
-      }))
-    }
-  }
-
-  const handleAddToken = async () => {
+  const handleAddToken = () => {
     if (
       !form.currentTokenAddress ||
-      !form.currentTokenPercentage ||
-      !form.currentTokenPriceFeed ||
-      !form.currentTokenDepositPath ||
-      !form.currentTokenWithdrawPath
+      !form.currentTokenWeight
     ) {
-      toast.error("Please fill in all token fields")
+      toast.error("Please fill in token address and weight")
       return
     }
 
-    if (!web3Provider) {
-      toast.error("Web3 provider not available")
-      return
-    }
+    const weight = parseFloat(form.currentTokenWeight)
+    const currentTotal = form.components.reduce((sum, c) => sum + c.weight, 0)
 
-    const percentage = parseFloat(form.currentTokenPercentage)
-    const currentTotal = form.tokens.reduce((sum, t) => sum + t.percentage, 0)
-
-    if (currentTotal + percentage > 100) {
-      toast.error("Total percentage cannot exceed 100%")
+    if (currentTotal + weight > 100) {
+      toast.error("Total weight cannot exceed 100%")
       return
     }
 
     // Check if token already exists
     if (
-      form.tokens.some(
-        (t) =>
-          t.address.toLowerCase() === form.currentTokenAddress.toLowerCase()
+      form.components.some(
+        (c) =>
+          c.token.toLowerCase() === form.currentTokenAddress.toLowerCase()
       )
     ) {
       toast.error("Token already added to basket")
       return
     }
 
-    // Parse deposit and withdraw paths (comma-separated addresses)
-    const depositPathArray = form.currentTokenDepositPath
-      .split(",")
-      .map((addr) => addr.trim())
-      .filter((addr) => addr.length > 0)
-    const withdrawPathArray = form.currentTokenWithdrawPath
-      .split(",")
-      .map((addr) => addr.trim())
-      .filter((addr) => addr.length > 0)
-
-    if (depositPathArray.length === 0 || withdrawPathArray.length === 0) {
-      toast.error(
-        "Deposit and withdraw paths must contain at least one address"
-      )
-      return
+    const newComponent: TokenComponent = {
+      token: form.currentTokenAddress,
+      weight: weight
     }
 
-    try {
-      // Use existing symbol if available, otherwise fetch it
-      let tokenSymbol = form.currentTokenSymbol
+    setForm((prev) => ({
+      ...prev,
+      components: [...prev.components, newComponent],
+      currentTokenAddress: "",
+      currentTokenWeight: ""
+    }))
 
-      if (!tokenSymbol) {
-        // Fetch token symbol from ERC20 contract
-        const tokenContract = new web3Provider.eth.Contract(
-          erc20Abi as any,
-          form.currentTokenAddress
-        )
-        tokenSymbol = (await tokenContract.methods.symbol().call()) as string
-      }
+    // Reset verification when components change
+    setVerifyState({
+      status: "idle",
+      errorMessage: null,
+      backendResult: null
+    })
 
-      const newToken: TokenInBasket = {
-        address: form.currentTokenAddress,
-        symbol: tokenSymbol.toUpperCase(),
-        percentage: percentage,
-        priceFeed: form.currentTokenPriceFeed,
-        depositPath: form.currentTokenDepositPath,
-        withdrawPath: form.currentTokenWithdrawPath
-      }
-
-      setForm((prev) => ({
-        ...prev,
-        tokens: [...prev.tokens, newToken],
-        currentTokenAddress: "",
-        currentTokenSymbol: "",
-        currentTokenPercentage: "",
-        currentTokenPriceFeed: "",
-        currentTokenDepositPath: "",
-        currentTokenWithdrawPath: ""
-      }))
-
-      setShowAddTokenModal(false)
-      toast.success(`${newToken.symbol} added to basket`)
-    } catch (error: any) {
-      toast.error(
-        error?.message ||
-          "Failed to fetch token symbol. Please check the token address."
-      )
-      console.error("Error fetching token symbol:", error)
-    }
+    setShowAddTokenModal(false)
+    toast.success("Token added to basket")
   }
 
   const handleCloseAddTokenModal = () => {
@@ -228,24 +146,72 @@ export const ETFCreatorInterface = () => {
     setForm((prev) => ({
       ...prev,
       currentTokenAddress: "",
-      currentTokenSymbol: "",
-      currentTokenPercentage: "",
-      currentTokenPriceFeed: "",
-      currentTokenDepositPath: "",
-      currentTokenWithdrawPath: ""
+      currentTokenWeight: ""
     }))
   }
 
-  const handleRemoveToken = (address: string) => {
+  const handleRemoveToken = (token: string) => {
     setForm((prev) => ({
       ...prev,
-      tokens: prev.tokens.filter((t) => t.address !== address)
+      components: prev.components.filter((c) => c.token !== token)
     }))
+    // Reset verification when components change
+    setVerifyState({
+      status: "idle",
+      errorMessage: null,
+      backendResult: null
+    })
     toast.info("Token removed from basket")
   }
 
-  const getTotalPercentage = () => {
-    return form.tokens.reduce((sum, t) => sum + t.percentage, 0)
+  const getTotalWeight = () => {
+    return form.components.reduce((sum, c) => sum + c.weight, 0)
+  }
+
+  const handleVerify = async () => {
+    setVerifyState({
+      status: "loading",
+      errorMessage: null,
+      backendResult: null
+    })
+
+    try {
+      const data = await verifyETF({
+        chainId: 1, // Ethereum mainnet
+        depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+        components: form.components
+      })
+
+      if (data.status === "ERROR") {
+        setVerifyState({
+          status: "error",
+          errorMessage: data.errorMessage || "Verification failed",
+          backendResult: data
+        })
+        toast.error(data.errorMessage || "Verification failed")
+      } else if (data.status === "OK" && data.readyForCreation) {
+        setVerifyState({
+          status: "success",
+          errorMessage: null,
+          backendResult: data
+        })
+        toast.success("Verification successful! Ready to create ETF.")
+      } else {
+        setVerifyState({
+          status: "error",
+          errorMessage: "Backend returned unexpected status",
+          backendResult: data
+        })
+        toast.error("Backend returned unexpected status")
+      }
+    } catch (error: any) {
+      setVerifyState({
+        status: "error",
+        errorMessage: error?.message || "Failed to verify with backend",
+        backendResult: null
+      })
+      toast.error(error?.message || "Failed to verify with backend")
+    }
   }
 
   const handlePreview = () => {
@@ -253,57 +219,69 @@ export const ETFCreatorInterface = () => {
   }
 
   const handleDeploy = async () => {
+    if (!verifyState.backendResult || verifyState.status !== "success") {
+      toast.error("Please verify liquidity & paths first")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      // Validate required fields
-      if (!form.depositToken || !form.depositFeed || !form.router) {
-        toast.error("Please fill in deposit token, deposit feed, and router")
-        setIsLoading(false)
-        return
+      const backendData = verifyState.backendResult
+
+      // Extract data from backend response
+      const assetTokens = backendData.components!.map((c) => c.tokenAddress)
+      const priceFeeds = backendData.components!.map((c) => c.feed)
+      const targetWeightsBps = form.components.map((c) => Math.round(c.weight * 100))
+      const swapPathsData = backendData.components!.map((c) => c.depositPath.encoded)
+
+      // Determine pricing mode from first component
+      const pricingModeMap: { [key: string]: number } = {
+        "V2_PLUS_FEED": 0,
+        "V3_PLUS_FEED": 1,
+        "V2_PLUS_V2": 2,
+        "V3_PLUS_V3": 3
+      }
+      const pricingMode = pricingModeMap[backendData.components![0].pricingMode] ?? 0
+
+
+      let router = ""
+      let quoter = ""
+      if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
+        router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" // Uniswap V2 Router
+        quoter = "0x0000000000000000000000000000000000000000" // None
+      } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
+        router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
+        quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
       }
 
-      // Convert percentages to basis points (multiply by 100, so 50% = 5000 bps)
-      const targetWeightsBps = form.tokens.map((token) =>
-        Math.round(token.percentage * 100)
-      )
-
-      // Prepare arrays
-      const assetTokens = form.tokens.map((token) => token.address)
-      const priceFeeds = form.tokens.map((token) => token.priceFeed)
-
-      // Parse deposit and withdraw paths
-      const depositPaths = form.tokens.map((token) =>
-        token.depositPath
-          .split(",")
-          .map((addr) => addr.trim())
-          .filter((addr) => addr.length > 0)
-      )
-      const withdrawPaths = form.tokens.map((token) =>
-        token.withdrawPath
-          .split(",")
-          .map((addr) => addr.trim())
-          .filter((addr) => addr.length > 0)
-      )
-
-      // Call the createETF function
+      // Call the createETF function with new parameters
       const result = await createETF({
-        depositToken: form.depositToken,
-        depositFeed: form.depositFeed,
-        router: form.router,
+        factoryAddress: backendData.factoryAddress,
+        depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+        depositFeed: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6", // USDC/USD feed
+        router: router,
+        quoter: quoter,
         assetTokens,
-        priceFeeds,
+        priceFeeds: priceFeeds.map((feed) => feed == undefined ? "0x0000000000000000000000000000000000000000" : feed),
         targetWeightsBps,
-        depositPaths,
-        withdrawPaths,
+        swapPathsData,
         name: form.name,
-        symbol: form.symbol.toUpperCase()
+        symbol: form.symbol.toUpperCase(),
+        pricingMode
       })
+
+      // Transform components to TokenInBasket format with symbols from backend
+      const tokensWithSymbols = form.components.map((comp, idx) => ({
+        address: comp.token,
+        symbol: verifyState.backendResult!.components![idx].symbol,
+        percentage: comp.weight
+      }))
 
       const newETF = {
         name: form.name,
         symbol: form.symbol.toUpperCase(),
-        tokens: form.tokens,
+        tokens: tokensWithSymbols,
         address: result.vault,
         shareToken: result.shareToken,
         txHash: result.txHash,
@@ -327,17 +305,15 @@ export const ETFCreatorInterface = () => {
     setForm({
       name: "",
       symbol: "",
-      depositToken: "",
-      depositFeed: "",
-      router: "",
-      tokens: [],
+      components: [],
       currentTokenAddress: "",
-      currentTokenSymbol: "",
-      currentTokenPercentage: "",
-      currentTokenPriceFeed: "",
-      currentTokenDepositPath: "",
-      currentTokenWithdrawPath: "",
+      currentTokenWeight: "",
       rebalancingMode: null
+    })
+    setVerifyState({
+      status: "idle",
+      errorMessage: null,
+      backendResult: null
     })
     setDeployedETF(null)
     setShowSuccess(false)
@@ -348,15 +324,13 @@ export const ETFCreatorInterface = () => {
   const isFormValid =
     form.name &&
     form.symbol &&
-    form.depositToken &&
-    form.depositFeed &&
-    form.router &&
-    form.tokens.length > 0 &&
-    getTotalPercentage() === 100 &&
+    form.components.length > 0 &&
+    getTotalWeight() === 100 &&
     form.rebalancingMode !== null
 
-  const isHeliosNetwork = chainId === HELIOS_NETWORK_ID
   const isWalletConnected = !!address
+  const canVerify = isFormValid && !verifyState.backendResult
+  const canDeploy = isFormValid && verifyState.status === "success"
 
   return (
     <>
@@ -369,6 +343,18 @@ export const ETFCreatorInterface = () => {
 
         <div className={s.content}>
           <div className={s.form}>
+            {/* ETF Symbol */}
+            <Input
+              label="ETF Symbol"
+              icon="hugeicons:tag-01"
+              type="text"
+              value={form.symbol}
+              placeholder="e.g., DEFI"
+              onChange={handleInputChange("symbol")}
+              maxLength={20}
+              style={{ textTransform: "uppercase" }}
+            />
+
             {/* ETF Name */}
             <Input
               label="ETF Basket Name"
@@ -378,49 +364,6 @@ export const ETFCreatorInterface = () => {
               placeholder="e.g., DeFi Blue Chip Basket"
               onChange={handleInputChange("name")}
               maxLength={50}
-            />
-
-            {/* ETF Symbol */}
-            <Input
-              label="ETF Symbol"
-              icon="hugeicons:tag-01"
-              type="text"
-              value={form.symbol}
-              placeholder="e.g., DEFI"
-              onChange={handleInputChange("symbol")}
-              maxLength={10}
-              style={{ textTransform: "uppercase" }}
-            />
-
-            {/* Deposit Token */}
-            <Input
-              label="Deposit Token Address"
-              icon="hugeicons:link-01"
-              type="text"
-              value={form.depositToken}
-              disabled={true}
-              placeholder="0x..."
-              onChange={handleInputChange("depositToken")}
-            />
-
-            {/* Deposit Feed */}
-            <Input
-              label="Deposit Token Price Feed"
-              icon="hugeicons:chart-01"
-              type="text"
-              value={form.depositFeed}
-              placeholder="0x..."
-              onChange={handleInputChange("depositFeed")}
-            />
-
-            {/* Router */}
-            <Input
-              label="Router Address (Uniswap V2)"
-              icon="hugeicons:coins-swap"
-              type="text"
-              value={form.router}
-              placeholder="0x..."
-              onChange={handleInputChange("router")}
             />
 
             {/* Rebalancing Mode Selection */}
@@ -528,13 +471,13 @@ export const ETFCreatorInterface = () => {
               </div>
             </div>
 
-            {/* Token Selection Section */}
+            {/* Token Composition Section */}
             <div className={s.tokenSection}>
               <div className={s.sectionHeader}>
-                <h3>Add Tokens to Basket</h3>
+                <h3>Token Composition</h3>
                 <div className={s.headerActions}>
                   <span className={s.totalPercentage}>
-                    Total: {getTotalPercentage()}%
+                    Total: {getTotalWeight()}%
                   </span>
                   <Button
                     variant="secondary"
@@ -548,25 +491,24 @@ export const ETFCreatorInterface = () => {
                 </div>
               </div>
 
-              {/* Token List */}
-              {form.tokens.length > 0 ? (
+              {/* Component List */}
+              {form.components.length > 0 ? (
                 <div className={s.tokenList}>
-                  {form.tokens.map((token) => (
-                    <div key={token.address} className={s.tokenItem}>
+                  {form.components.map((component) => (
+                    <div key={component.token} className={s.tokenItem}>
                       <div className={s.tokenInfo}>
                         <span className={s.tokenAddress}>
-                          {token.address.slice(0, 6)}...
-                          {token.address.slice(-4)}
+                          {component.token.slice(0, 6)}...
+                          {component.token.slice(-4)}
                         </span>
                       </div>
                       <div className={s.tokenPercentage}>
-                        {token.percentage}%
+                        {component.weight}%
                       </div>
-                      <div className={s.tokenSymbol}>{token.symbol}</div>
                       <Button
                         variant="secondary"
                         size="xsmall"
-                        onClick={() => handleRemoveToken(token.address)}
+                        onClick={() => handleRemoveToken(component.token)}
                         iconLeft="hugeicons:delete-02"
                         className={s.removeBtn}
                       />
@@ -579,14 +521,43 @@ export const ETFCreatorInterface = () => {
                 </div>
               )}
 
-              {getTotalPercentage() !== 100 && form.tokens.length > 0 && (
+              {getTotalWeight() !== 100 && form.components.length > 0 && (
                 <div className={s.percentageWarning}>
                   <Icon icon="hugeicons:alert-02" />
-                  Total percentage must equal 100% (currently{" "}
-                  {getTotalPercentage()}%)
+                  Total weight must equal 100% (currently{" "}
+                  {getTotalWeight()}%)
                 </div>
               )}
             </div>
+
+            {/* Verification Results */}
+            {verifyState.status === "success" && verifyState.backendResult && (
+              <div className={s.verificationResults}>
+                <h3>
+                  <Icon icon="hugeicons:check-circle" />
+                  Verification Successful
+                </h3>
+                {verifyState.backendResult.components?.map((comp, idx) => (
+                  <div key={idx} className={s.verifiedComponent}>
+                    <div className={s.compHeader}>
+                      <span className={s.compSymbol}>{comp.symbol}</span>
+                      <span className={s.compMode}>{comp.pricingMode}</span>
+                    </div>
+                    <div className={s.compDetails}>
+                      <span>Liquidity: ${comp.liquidityUSD.toLocaleString()}</span>
+                      <span>Decimals: {comp.decimals}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {verifyState.status === "error" && (
+              <div className={s.verificationError}>
+                <Icon icon="hugeicons:alert-02" />
+                {verifyState.errorMessage}
+              </div>
+            )}
 
             {/* Wallet Connection Warning */}
             {!isWalletConnected && (
@@ -596,40 +567,35 @@ export const ETFCreatorInterface = () => {
               </div>
             )}
 
-            {/* Network Warning */}
-            {isWalletConnected && !isHeliosNetwork && (
-              <div className={s.warning}>
-                <Icon icon="hugeicons:alert-02" />
-                Please switch to Helios network to create ETF baskets
-              </div>
-            )}
-
             {/* Action Buttons */}
             <div className={s.actions}>
               <Button
                 variant="secondary"
-                onClick={handlePreview}
+                onClick={handleVerify}
                 disabled={
-                  !isFormValid ||
-                  !isHeliosNetwork ||
+                  !canVerify ||
                   !isWalletConnected ||
+                  verifyState.status === "loading" ||
                   isLoadingDeploy
                 }
-                className={s.previewBtn}
+                className={s.verifyBtn}
               >
-                Preview Basket
+                {verifyState.status === "loading"
+                  ? "Verifying..."
+                  : "Verify Liquidity & Paths"}
               </Button>
               <Button
                 onClick={handleDeploy}
                 disabled={
-                  !isFormValid ||
-                  !isHeliosNetwork ||
+                  !canDeploy ||
                   !isWalletConnected ||
                   isLoadingDeploy
                 }
                 className={s.deployBtn}
               >
-                {isLoadingDeploy ? "Creating..." : "Create Basket"}
+                {isLoadingDeploy
+                  ? "Creating..."
+                  : `Confirm Create ${form.symbol.toUpperCase() || "ETF"}`}
               </Button>
             </div>
           </div>
@@ -657,16 +623,18 @@ export const ETFCreatorInterface = () => {
             </div>
             <div className={s.previewItem}>
               <span className={s.previewLabel}>Total Tokens:</span>
-              <span className={s.previewValue}>{form.tokens.length}</span>
+              <span className={s.previewValue}>{form.components.length}</span>
             </div>
 
             <div className={s.previewTokens}>
               <h4>Token Allocation:</h4>
-              {form.tokens.map((token) => (
-                <div key={token.address} className={s.previewTokenItem}>
-                  <span className={s.previewTokenSymbol}>{token.symbol}</span>
+              {form.components.map((component) => (
+                <div key={component.token} className={s.previewTokenItem}>
+                  <span className={s.previewTokenSymbol}>
+                    {component.token.slice(0, 6)}...{component.token.slice(-4)}
+                  </span>
                   <span className={s.previewTokenPercentage}>
-                    {token.percentage}%
+                    {component.weight}%
                   </span>
                 </div>
               ))}
@@ -755,7 +723,7 @@ export const ETFCreatorInterface = () => {
             <Button
               onClick={() => {
                 window.open(
-                  `https://explorer.helioschainlabs.org/address/${deployedETF?.address}`,
+                  `${getChainConfig(chainId)?.explorerUrl}/address/${deployedETF?.address}`,
                   "_blank"
                 )
               }}
@@ -905,51 +873,14 @@ export const ETFCreatorInterface = () => {
           />
 
           <Input
-            label="Symbol"
-            icon="hugeicons:coins-01"
-            type="text"
-            value={form.currentTokenSymbol}
-            placeholder="Auto-filled from token address"
-            onChange={handleInputChange("currentTokenSymbol")}
-            disabled={true}
-          />
-
-          <Input
-            label="Percentage (%)"
+            label="Weight (%)"
             icon="hugeicons:percent"
             type="number"
-            value={form.currentTokenPercentage}
+            value={form.currentTokenWeight}
             placeholder="e.g., 25"
-            onChange={handleInputChange("currentTokenPercentage")}
+            onChange={handleInputChange("currentTokenWeight")}
             min={0}
             max={100}
-          />
-
-          <Input
-            label="Price Feed Address"
-            icon="hugeicons:chart-01"
-            type="text"
-            value={form.currentTokenPriceFeed}
-            placeholder="0x..."
-            onChange={handleInputChange("currentTokenPriceFeed")}
-          />
-
-          <Input
-            label="Deposit Path (comma-separated addresses)"
-            icon="hugeicons:arrow-right-01"
-            type="text"
-            value={form.currentTokenDepositPath}
-            placeholder="e.g., 0x..., 0x..."
-            onChange={handleInputChange("currentTokenDepositPath")}
-          />
-
-          <Input
-            label="Withdraw Path (comma-separated addresses)"
-            icon="hugeicons:arrow-left-01"
-            type="text"
-            value={form.currentTokenWithdrawPath}
-            placeholder="e.g., 0x..., 0x..."
-            onChange={handleInputChange("currentTokenWithdrawPath")}
           />
         </div>
         <div className={s.modalActions}>

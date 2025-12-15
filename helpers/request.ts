@@ -164,5 +164,77 @@ async function fetchLeaderboard(page: number = 1, size: number = 25): Promise<Le
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchLeaderboard }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, LeaderboardApiResponse }
+interface VerifyETFRequest {
+  chainId: number
+  depositToken: string
+  components: Array<{
+    token: string
+    weight: number
+  }>
+}
+
+interface VerifyETFComponent {
+  token: string
+  tokenAddress: string
+  symbol: string
+  decimals: number
+  pricingMode: string
+  feed: string
+  depositPath: {
+    type: string
+    encoded: string
+    path: string[]
+  }
+  withdrawPath: {
+    type: string
+    encoded: string
+    path: string[]
+  }
+  liquidityUSD: number
+}
+
+interface VerifyETFResponse {
+  status: "OK" | "ERROR"
+  readyForCreation?: boolean
+  errorMessage?: string
+  factoryAddress: string
+  components?: VerifyETFComponent[]
+}
+
+async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+  
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  // Remove trailing slash if present to avoid double slashes
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/verify`
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(request)
+  })
+
+  if (!response.ok) {
+
+    const data = await response.json()
+
+    if (data?.details?.message) {
+      throw new Error(`Failed to verify ETF: ${data?.details?.message}`)
+    }
+
+    throw new Error(`Failed to verify ETF: ${response.statusText}`)
+  }
+
+  const data: VerifyETFResponse = await response.json()
+
+  return data
+}
+
+export { request, requestWithRpcUrl, fetchETFs, fetchLeaderboard, verifyETF }
+export type { ETFResponse, ETFsApiResponse, ETFAsset, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent }
