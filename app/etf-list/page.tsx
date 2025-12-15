@@ -19,7 +19,6 @@ import { formatTokenAmount } from "@/lib/utils/number"
 import { fetchCGTokenData } from "@/utils/price"
 import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
-import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "sonner"
@@ -52,88 +51,6 @@ interface ETF {
   depositDecimals: number
   chain: number
 }
-
-// Données de test pour tester le tableau
-const MOCK_ETFS: ETF[] = [
-  {
-    id: "mock-etf-1",
-    factory: "0x1234567890123456789012345678901234567890",
-    name: "DeFi Blue Chip ETF",
-    symbol: "DEFI-BC",
-    description: "DeFi Blue Chip ETF basket",
-    tvl: "$2,450,000",
-    sharePrice: "1.245",
-    apy: "12.5%",
-    change24h: 5.2,
-    riskLevel: "medium",
-    category: "DeFi",
-    tokens: [
-      { symbol: "ETH", percentage: 40, tvl: "980000" },
-      { symbol: "USDC", percentage: 30, tvl: "735000" },
-      { symbol: "WBTC", percentage: 20, tvl: "490000" },
-      { symbol: "UNI", percentage: 10, tvl: "245000" }
-    ],
-    price: "$1.245",
-    vault: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-    shareToken: "0x1111111111111111111111111111111111111111",
-    depositToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    depositSymbol: "WETH",
-    depositDecimals: 18,
-    chain: ETHEREUM_NETWORK_ID
-  },
-  {
-    id: "mock-etf-2",
-    factory: "0x2345678901234567890123456789012345678901",
-    name: "Stablecoin Yield ETF",
-    symbol: "STABLE-Y",
-    description: "Stablecoin Yield ETF basket",
-    tvl: "$1,850,000",
-    sharePrice: "0.998",
-    apy: "8.3%",
-    change24h: 0.5,
-    riskLevel: "low",
-    category: "Stablecoin",
-    tokens: [
-      { symbol: "USDC", percentage: 50, tvl: "925000" },
-      { symbol: "USDT", percentage: 30, tvl: "555000" },
-      { symbol: "DAI", percentage: 20, tvl: "370000" }
-    ],
-    price: "$0.998",
-    vault: "0xbcdefabcdefabcdefabcdefabcdefabcdefabcde",
-    shareToken: "0x2222222222222222222222222222222222222222",
-    depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    depositSymbol: "USDC",
-    depositDecimals: 6,
-    chain: ETHEREUM_NETWORK_ID
-  },
-  {
-    id: "mock-etf-3",
-    factory: "0x3456789012345678901234567890123456789012",
-    name: "High Risk DeFi ETF",
-    symbol: "HR-DEFI",
-    description: "High Risk DeFi ETF basket",
-    tvl: "$850,000",
-    sharePrice: "0.756",
-    apy: "25.8%",
-    change24h: -3.2,
-    riskLevel: "high",
-    category: "DeFi",
-    tokens: [
-      { symbol: "SUSHI", percentage: 35, tvl: "297500" },
-      { symbol: "AAVE", percentage: 30, tvl: "255000" },
-      { symbol: "ETH", percentage: 20, tvl: "127500" },
-      { symbol: "COMP", percentage: 15, tvl: "170000" },
-      { symbol: "MKR", percentage: 10, tvl: "127500" }
-    ],
-    price: "$0.756",
-    vault: "0xcdefabcdefabcdefabcdefabcdefabcdefabcdef",
-    shareToken: "0x3333333333333333333333333333333333333333",
-    depositToken: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    depositSymbol: "WETH",
-    depositDecimals: 18,
-    chain: ETHEREUM_NETWORK_ID
-  }
-]
 
 function formatETFResponse(etf: ETFResponse): ETF {
   // Convert assets from API to tokens format
@@ -168,13 +85,9 @@ function formatETFResponse(etf: ETFResponse): ETF {
   }
 }
 
-// Constante pour basculer entre données de test et API réelle
-const USE_MOCK_DATA = true // Mettre à false pour utiliser l'API réelle
-
 export default function ETFList() {
   const chainId = useChainId()
   const { address } = useAccount()
-  const router = useRouter()
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEventListener("mousemove", (e: MouseEvent) => {
@@ -188,9 +101,9 @@ export default function ETFList() {
   const [etfs, setEtfs] = useState<ETF[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, ] = useState(1)
   const [pageSize] = useState(10)
-  const [pagination, setPagination] = useState({
+  const [, setPagination] = useState({
     page: 1,
     size: 10,
     total: 0,
@@ -214,7 +127,7 @@ export default function ETFList() {
   const [shareTokenBalance, setShareTokenBalance] = useState<string | null>(
     null
   )
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [, setIsLoadingBalance] = useState(false)
   const [depositTokenAllowance, setDepositTokenAllowance] =
     useState<boolean>(false)
   const [shareTokenAllowance, setShareTokenAllowance] = useState<boolean>(false)

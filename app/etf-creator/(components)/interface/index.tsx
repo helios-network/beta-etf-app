@@ -6,7 +6,6 @@ import { Heading } from "@/components/heading"
 import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
-import { HELIOS_NETWORK_ID } from "@/config/app"
 import { useRecentETFsContext } from "@/context/RecentETFsContext"
 import { useETFContract } from "@/hooks/useETFContract"
 import { verifyETF, VerifyETFResponse } from "@/helpers/request"
@@ -212,10 +211,6 @@ export const ETFCreatorInterface = () => {
       })
       toast.error(error?.message || "Failed to verify with backend")
     }
-  }
-
-  const handlePreview = () => {
-    setShowPreview(true)
   }
 
   const handleDeploy = async () => {
@@ -517,7 +512,7 @@ export const ETFCreatorInterface = () => {
                 </div>
               ) : (
                 <div className={s.emptyTokenList}>
-                  <p>No tokens added yet. Click "Add Token" to get started.</p>
+                  <p>No tokens added yet. Click &quot;Add Token&quot; to get started.</p>
                 </div>
               )}
 
