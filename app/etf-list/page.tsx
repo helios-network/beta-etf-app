@@ -34,6 +34,7 @@ interface ETF {
   symbol: string
   description: string
   tvl: string
+  volumeTradedUSD: number
   totalSupply: string
   sharePrice: string
   apy: string
@@ -73,6 +74,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     tvl: etf.tvl,
     totalSupply: etf.totalSupply || "0.000",
     sharePrice: etf.sharePrice || "0.00",
+    volumeTradedUSD: etf.volumeTradedUSD || 0,
     apy: "0%", // Not available in API response
     change24h: 0, // Not available in API response
     riskLevel: "medium" as const, // Default value
@@ -693,15 +695,15 @@ export default function ETFList() {
           </span>
         </div>
         <div className={s.stat}>
-          <span className={s.label}>Avg APY</span>
+          <span className={s.label}>Total Daily Volume</span>
           <span className={s.statValue}>
             {(
               filteredAndSortedETFs.reduce(
-                (sum, etf) => sum + parseFloat(etf.apy),
+                (sum, etf) => sum + etf.volumeTradedUSD,
                 0
-              ) / filteredAndSortedETFs.length || 0
+              )
             ).toFixed(2)}
-            %
+            $
           </span>
         </div>
       </div>
