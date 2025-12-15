@@ -33,7 +33,7 @@ interface ETF {
   name: string
   symbol: string
   description: string
-  tvl: string
+  tvl: number
   volumeTradedUSD: number
   totalSupply: string
   sharePrice: string
@@ -691,7 +691,6 @@ export default function ETFList() {
                 0
               )
               .toFixed(2)}
-            M
           </span>
         </div>
         <div className={s.stat}>

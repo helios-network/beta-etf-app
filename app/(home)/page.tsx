@@ -597,8 +597,8 @@ export default function Home() {
         </Sub>
         <h1>Create, Mint, and Evolve ETFs.</h1>
         <p>
-          Experience the future of ETF token trading Ethereum. Create, Mint and
-          Manage diversified token baskets.
+          Experience the ETF token trading on Arbitrum Chain. Create, Mint and
+          Manage a diversified token baskets portfolio. Powered by Helios Chain.
         </p>
       </div>
       <Card className={s.form}>
