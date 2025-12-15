@@ -90,7 +90,7 @@ interface ETFsApiResponse {
   }
 }
 
-async function fetchETFs(page: number = 1, size: number = 10): Promise<ETFsApiResponse> {
+async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string): Promise<ETFsApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
   
   if (!apiUrl) {
@@ -99,7 +99,16 @@ async function fetchETFs(page: number = 1, size: number = 10): Promise<ETFsApiRe
 
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
-  const url = `${baseUrl}/api/etfs?page=${page}&size=${size}`
+  const params = new URLSearchParams({
+    page: page.toString(),
+    size: size.toString()
+  })
+  
+  if (depositToken) {
+    params.append("depositToken", depositToken)
+  }
+  
+  const url = `${baseUrl}/api/etfs?${params.toString()}`
   
   const response = await fetch(url, {
     method: "GET",
@@ -113,6 +122,48 @@ async function fetchETFs(page: number = 1, size: number = 10): Promise<ETFsApiRe
   }
 
   const data: ETFsApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error("API returned unsuccessful response")
+  }
+
+  return data
+}
+
+interface DepositToken {
+  address: string
+  symbol: string
+  decimals: number
+}
+
+interface DepositTokensApiResponse {
+  success: boolean
+  data: DepositToken[]
+}
+
+async function fetchDepositTokens(): Promise<DepositTokensApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+  
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  // Remove trailing slash if present to avoid double slashes
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/deposit-tokens`
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch deposit tokens: ${response.statusText}`)
+  }
+
+  const data: DepositTokensApiResponse = await response.json()
 
   if (!data.success) {
     throw new Error("API returned unsuccessful response")
@@ -237,5 +288,5 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchLeaderboard, verifyETF }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent }
+export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF }
+export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent }
