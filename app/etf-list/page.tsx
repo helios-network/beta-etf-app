@@ -34,6 +34,7 @@ interface ETF {
   symbol: string
   description: string
   tvl: string
+  totalSupply: string
   sharePrice: string
   apy: string
   change24h: number
@@ -70,6 +71,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     symbol: etf.symbol,
     description: `${etf.name} ETF basket`,
     tvl: etf.tvl,
+    totalSupply: etf.totalSupply || "0.000",
     sharePrice: etf.sharePrice || "0.00",
     apy: "0%", // Not available in API response
     change24h: 0, // Not available in API response
@@ -842,7 +844,7 @@ export default function ETFList() {
                   </Card>
                   <Card className={s.metric}>
                     <span className={s.metricLabel}>Supply</span>
-                    <span className={s.metricValue}>0.000</span>
+                    <span className={s.metricValue}>{ etf.totalSupply ?? "0.000" }</span>
                   </Card>
                   <Card className={s.metric}>
                     <span className={s.metricLabel}>24h Change</span>
