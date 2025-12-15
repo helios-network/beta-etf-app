@@ -697,13 +697,12 @@ export default function ETFList() {
         <div className={s.stat}>
           <span className={s.label}>Total Daily Volume</span>
           <span className={s.statValue}>
-            {(
+            ${(
               filteredAndSortedETFs.reduce(
                 (sum, etf) => sum + etf.volumeTradedUSD,
                 0
               )
             ).toFixed(2)}
-            $
           </span>
         </div>
       </div>
