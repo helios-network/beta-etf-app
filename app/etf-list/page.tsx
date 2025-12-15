@@ -24,6 +24,7 @@ import { createPortal } from "react-dom"
 import { toast } from "sonner"
 import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
+import Image from "next/image"
 import s from "./page.module.scss"
 
 interface ETF {
@@ -789,20 +790,22 @@ export default function ETFList() {
                           etf.tokens.length > 4 ? etf.tokens.length - 4 : 0
                         }
                       >
-                        {etf.tokens.slice(0, 4).map((token, index) => {
-                          const logo =
-                            tokenData[token.symbol.toLowerCase()]?.logo
-                          return logo ? (
-                            <img
-                              key={token.symbol}
-                              src={logo}
-                              alt={token.symbol}
-                              className={s.tokenLogo}
-                              style={{ zIndex: 4 - index }}
-                              title={token.symbol}
-                            />
-                          ) : null
-                        })}
+                      {etf.tokens.slice(0, 4).map((token, index) => {
+                        const logo =
+                          tokenData[token.symbol.toLowerCase()]?.logo
+                        return logo ? (
+                          <Image
+                            key={token.symbol}
+                            src={logo}
+                            alt={token.symbol}
+                            className={s.tokenLogo}
+                            style={{ zIndex: 4 - index }}
+                            title={token.symbol}
+                            width={32}
+                            height={32}
+                          />
+                        ) : null
+                      })}
                       </div>
                     )}
                     <div className={s.titleRowRight}>
@@ -897,18 +900,20 @@ export default function ETFList() {
                             setHoveredToken(null)
                           }}
                         >
-                          <div className={s.tokenInfo}>
-                            {logo && (
-                              <img
-                                src={logo}
-                                alt={token.symbol}
-                                className={s.tokenLogoSmall}
-                              />
-                            )}
-                            <span className={s.tokenSymbol}>
-                              {token.symbol}
-                            </span>
-                          </div>
+                        <div className={s.tokenInfo}>
+                          {logo && (
+                            <Image
+                              src={logo}
+                              alt={token.symbol}
+                              className={s.tokenLogoSmall}
+                              width={24}
+                              height={24}
+                            />
+                          )}
+                          <span className={s.tokenSymbol}>
+                            {token.symbol}
+                          </span>
+                        </div>
                           <div className={s.percentageBar}>
                             <div
                               className={s.percentageFill}
