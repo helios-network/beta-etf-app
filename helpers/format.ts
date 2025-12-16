@@ -193,7 +193,7 @@ export const formatTokenSupply = (
 
         return result
     } catch (error) {
-
+        console.error("Error formatting token supply:", error)
         return String(totalSupply)
     }
 }

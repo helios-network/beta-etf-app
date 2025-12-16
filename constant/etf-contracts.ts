@@ -139,6 +139,16 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "sharesOutRet",
         type: "uint256"
+      },
+      {
+        internalType: "uint256[]",
+        name: "amountsOut",
+        type: "uint256[]"
+      },
+      {
+        internalType: "uint256[]",
+        name: "valuesPerAsset",
+        type: "uint256[]"
       }
     ],
     stateMutability: "nonpayable",
@@ -173,6 +183,11 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "depositOutRet",
         type: "uint256"
+      },
+      {
+        internalType: "uint256[]",
+        name: "soldAmounts",
+        type: "uint256[]"
       }
     ],
     stateMutability: "nonpayable",
@@ -220,6 +235,18 @@ export const etfFactoryAbi = [
       },
       {
         indexed: false,
+        internalType: "uint256[]",
+        name: "amountsOut",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "valuesPerAsset",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
         internalType: "uint256",
         name: "eventNonce",
         type: "uint256"
@@ -263,6 +290,12 @@ export const etfFactoryAbi = [
       },
       {
         indexed: false,
+        internalType: "uint256[]",
+        name: "soldAmounts",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
         internalType: "uint256",
         name: "eventNonce",
         type: "uint256"
@@ -284,6 +317,12 @@ export const etfFactoryAbi = [
         indexed: true,
         internalType: "address",
         name: "vault",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "user",
         type: "address"
       },
       {
@@ -324,6 +363,49 @@ export const etfFactoryAbi = [
       }
     ],
     name: "Rebalance",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "imbalanceThresholdBps",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "maxPriceStaleness",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "hlsBalance",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventNonce",
+        type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "eventHeight",
+        type: "uint256"
+      }
+    ],
+    name: "ParamsUpdated",
     type: "event"
   }
 ]

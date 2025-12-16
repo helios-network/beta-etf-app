@@ -52,7 +52,7 @@ export const PointsModal = () => {
   }
 
   return (
-    <Modal open={pointsModalOpen} onClose={handleClose} title="deBridge points">
+    <Modal open={pointsModalOpen} onClose={handleClose} title="Helios points">
       <div className={s.content}>
         <SeasonTabs
           seasons={seasonLabels}

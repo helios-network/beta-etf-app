@@ -61,7 +61,7 @@ export default function LeaderboardPage() {
         <Heading
           icon="hugeicons:star"
           title="Points Leaderboard"
-          description="Top performers in deBridge points accumulation"
+          description="Top performers in Helios points accumulation"
         />
       </div>
 
