@@ -114,9 +114,9 @@ export default function LeaderboardPage() {
                 <tr>
                   <th className={s.rankCol}>Rank</th>
                   <th className={s.addressCol}>Address</th>
-                  <th className={s.pointsCol}>Total Points accrued</th>
+                  <th className={s.pointsCol}>Total Points</th>
                   <th className={s.volumeCol}>Volume traded</th>
-                  <th className={s.transactionsCol}>Transactions performed</th>
+                  <th className={s.transactionsCol}>Transactions</th>
                   <th className={s.tvlCol}>TVL</th>
                   <th className={s.lastActivityCol}>Last Activity</th>
                 </tr>
@@ -137,9 +137,9 @@ export default function LeaderboardPage() {
                         {truncateAddress(entry.address)}
                       </span>
                     </td>
-                    <td className={s.pointsCol} data-th="Total Points accrued">
+                    <td className={s.pointsCol} data-th="Total Points">
                       <span className={s.points}>
-                        {Number(entry.totalPointsAccrued).toLocaleString(
+                        {Number(entry.totalPoints).toLocaleString(
                           "en-US",
                           {
                             minimumFractionDigits: 0,
@@ -165,9 +165,14 @@ export default function LeaderboardPage() {
                     </td>
                     <td
                       className={s.transactionsCol}
-                      data-th="Transactions performed"
+                      data-th="Transactions"
                     >
-                      {entry.transactionsPerformed}
+                      {entry.transactionCounts
+                        ? Object.values(entry.transactionCounts).reduce(
+                            (sum, count) => sum + count,
+                            0
+                          )
+                        : entry.transactionsPerformed}
                     </td>
                     <td className={s.tvlCol} data-th="TVL">
                       {entry.tvl

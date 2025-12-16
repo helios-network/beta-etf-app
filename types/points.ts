@@ -4,10 +4,23 @@ export interface PointsData {
   season3: number
 }
 
+export interface TransactionCounts {
+  createEtf: number
+  deposit: number
+  redeem: number
+  rebalance: number
+}
+
+export interface PointsByType {
+  createEtf: number
+  deposit: number
+  redeem: number
+  rebalance: number
+}
+
 export interface LeaderboardEntry {
   rank: number
   address: string
-  totalPointsAccrued: number
   feesGenerated: string
   volumeTradedUSD: string
   transactionsPerformed: number
@@ -17,4 +30,7 @@ export interface LeaderboardEntry {
   avgTransactionSize: string
   pointsPerTransaction: string
   lastActivity: string | null
+  transactionCounts?: TransactionCounts
+  pointsByType?: PointsByType
+  totalPoints?: number
 }

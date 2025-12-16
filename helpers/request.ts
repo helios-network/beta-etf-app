@@ -1,7 +1,7 @@
 import { RPC_URL_DEFAULT } from "@/config/app"
 import { getRpcUrl } from "@/config/rpc"
 import { env } from "@/env"
-import { LeaderboardEntry } from "@/types/points"
+import { LeaderboardEntry, TransactionCounts, PointsByType } from "@/types/points"
 
 async function requestWithRpcUrl<T>(rpcUrl: string, method: string, params: any[]): Promise<T | null> { 
   const response = await fetch(rpcUrl, {
@@ -452,5 +452,52 @@ async function fetchPortfolioSummary(
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolio, fetchPortfolioAssets, fetchPortfolioSummary }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation }
+interface UserTotalPointsData {
+  address: string
+  totalPoints: number
+  pointsByType: PointsByType
+  transactionCounts: TransactionCounts
+}
+
+interface UserTotalPointsResponse {
+  success: boolean
+  data: UserTotalPointsData
+  message?: string
+}
+
+async function fetchUserTotalPoints(
+  address: string
+): Promise<UserTotalPointsResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/rewards/${address}/total-points`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user total points: ${response.statusText}`)
+  }
+
+  const data: UserTotalPointsResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
+export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolio, fetchPortfolioAssets, fetchPortfolioSummary, fetchUserTotalPoints }
+export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, UserTotalPointsResponse, UserTotalPointsData }
