@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
+import { Icon } from "@/components/icon"
 import { Sub } from "@/components/sub"
 import { Symbol } from "@/components/symbol"
 import { Tunnel } from "@/components/tunnel"
@@ -61,6 +62,11 @@ export default function Home() {
   // Loading states
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
   const [isEstimating, setIsEstimating] = useState(false)
+  
+  // Estimation details
+  const [estimatedAmountsOut, setEstimatedAmountsOut] = useState<string[]>([])
+  const [estimatedValuesPerAsset, setEstimatedValuesPerAsset] = useState<string[]>([])
+  const [estimatedSoldAmounts, setEstimatedSoldAmounts] = useState<string[]>([])
   
   const {
     deposit,
@@ -203,6 +209,9 @@ export default function Home() {
     setBuyAmount("")
     setDepositTokenAllowance(false)
     setShareTokenAllowance(false)
+    setEstimatedAmountsOut([])
+    setEstimatedValuesPerAsset([])
+    setEstimatedSoldAmounts([])
   }
 
   const handleETFSelect = async (etf: ETFResponse) => {
@@ -211,6 +220,9 @@ export default function Home() {
     setBuyAmount("")
     setDepositTokenAllowance(false)
     setShareTokenAllowance(false)
+    setEstimatedAmountsOut([])
+    setEstimatedValuesPerAsset([])
+    setEstimatedSoldAmounts([])
     
     // In reversed mode, set the deposit token from the ETF
     if (isReversed && etf.depositToken) {
@@ -244,6 +256,9 @@ export default function Home() {
     setShareTokenAllowance(false)
     setDepositTokenBalance(null)
     setShareTokenBalance(null)
+    setEstimatedAmountsOut([])
+    setEstimatedValuesPerAsset([])
+    setEstimatedSoldAmounts([])
   }
 
   // Handle sell amount change (deposit token -> ETF or ETF shares -> deposit token)
@@ -258,6 +273,9 @@ export default function Home() {
       setBuyAmount("")
       setDepositTokenAllowance(false)
       setShareTokenAllowance(false)
+      setEstimatedAmountsOut([])
+      setEstimatedValuesPerAsset([])
+      setEstimatedSoldAmounts([])
       return
     }
 
@@ -293,6 +311,10 @@ export default function Home() {
           amount: amountWei,
           allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
         })
+
+        // Store estimated amounts and values for display
+        setEstimatedAmountsOut(estimateResult.amountsOut)
+        setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
 
         if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
           const sharesDecimals = 18
@@ -336,6 +358,9 @@ export default function Home() {
           allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
         })
 
+        // Store estimated sold amounts for display
+        setEstimatedSoldAmounts(estimateResult.soldAmounts)
+
         if (estimateResult.depositOut && estimateResult.depositOut !== "0") {
           const depositDecimals = selectedETF.depositDecimals || 18
           const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
@@ -352,6 +377,9 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error estimating:", error)
+      setEstimatedAmountsOut([])
+      setEstimatedValuesPerAsset([])
+      setEstimatedSoldAmounts([])
     } finally {
       setIsEstimating(false)
       setIsCheckingAllowance(false)
@@ -477,6 +505,8 @@ export default function Home() {
         setSellAmount("")
         setBuyAmount("")
         setDepositTokenAllowance(false)
+        setEstimatedAmountsOut([])
+        setEstimatedValuesPerAsset([])
         
         // Refresh balance
         if (selectedDepositToken) {
@@ -528,6 +558,7 @@ export default function Home() {
         setSellAmount("")
         setBuyAmount("")
         setShareTokenAllowance(false)
+        setEstimatedSoldAmounts([])
         
         // Refresh balance
         const balance = await fetchTokenBalance(selectedETF.shareToken, 18)
@@ -593,6 +624,26 @@ export default function Home() {
       name: token.symbol // We don't have the full name from API
     }))
   }, [depositTokens])
+
+  // Calculate total value from valuesPerAsset
+  const totalEstimatedValue = useMemo(() => {
+    if (estimatedValuesPerAsset.length === 0) return null
+    
+    try {
+      const total = estimatedValuesPerAsset.reduce((sum, value) => {
+        if (!value || value === "0") return sum
+        return sum + BigInt(value)
+      }, 0n)
+      
+      // valuesPerAsset are in USD with 18 decimals
+      const multiplier = BigInt(10) ** BigInt(18)
+      const totalNumber = Number(total) / Number(multiplier)
+      return totalNumber
+    } catch (error) {
+      console.error("Error calculating total value:", error)
+      return null
+    }
+  }, [estimatedValuesPerAsset])
 
   return (
     <div className={s.home}>
@@ -698,11 +749,81 @@ export default function Home() {
                 </Button>
               </div>
               <div className={s.bottom}>
-                {isEstimating ? "Estimating..." : buyAmount && selectedETF?.sharePrice 
-                  ? `~$${(parseFloat(buyAmount) * parseFloat(selectedETF.sharePrice)).toFixed(2)}`
-                  : "$0.00"}
+                {isEstimating ? "Estimating..." : totalEstimatedValue !== null
+                  ? `~$${totalEstimatedValue.toFixed(2)}`
+                  : buyAmount && selectedETF?.sharePrice 
+                    ? `~$${(parseFloat(buyAmount) * parseFloat(selectedETF.sharePrice)).toFixed(2)}`
+                    : "$0.00"}
               </div>
             </div>
+            
+            {/* Display estimated token distribution for deposit */}
+            {estimatedAmountsOut.length > 0 && selectedETF?.assets && (
+              <div className={s.tokenDistribution}>
+                <div className={s.tokenDistributionHeader}>
+                  <Icon icon="hugeicons:pie-chart" />
+                  <span>Estimated Token Added in ETF</span>
+                </div>
+                <div className={s.tokenDistributionList}>
+                  {selectedETF.assets.map((asset, index) => {
+                    if (index >= estimatedAmountsOut.length) return null
+                    
+                    const amountOut = estimatedAmountsOut[index]
+                    const valuePerAsset = estimatedValuesPerAsset[index]
+                    
+                    if (!amountOut || amountOut === "0") return null
+                    
+                    const decimals = asset.decimals || 18
+                    const multiplier = BigInt(10) ** BigInt(decimals)
+                    const amountNumber = Number(BigInt(amountOut)) / Number(multiplier)
+                    
+                    const depositMultiplier = BigInt(10) ** BigInt(18)
+                    const valueNumber = Number(BigInt(valuePerAsset || "0")) / Number(depositMultiplier)
+                    
+                    const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                    
+                    return (
+                      <div key={asset.token} className={s.tokenDistributionItem}>
+                        <div className={s.tokenInfo}>
+                          {logo ? (
+                            <Image
+                              src={logo}
+                              alt={asset.symbol}
+                              width={20}
+                              height={20}
+                              className={s.tokenLogo}
+                            />
+                          ) : (
+                            <div className={s.tokenLogo} style={{
+                              backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.7rem',
+                              fontWeight: '600'
+                            }}>
+                              {asset.symbol.charAt(0)}
+                            </div>
+                          )}
+                          <span className={s.tokenSymbol}>{asset.symbol}</span>
+                          <span className={s.tokenWeight}>
+                            {(asset.targetWeightBps / 100).toFixed(2)}%
+                          </span>
+                        </div>
+                        <div className={s.tokenAmounts}>
+                          <span className={s.tokenAmount}>
+                            {amountNumber.toFixed(6)} {asset.symbol}
+                          </span>
+                          <span className={s.tokenValue}>
+                            ≈ ${valueNumber.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -799,6 +920,67 @@ export default function Home() {
                   : "$0.00"}
               </div>
         </div>
+        
+            {/* Display estimated tokens to be sold for redeem */}
+            {estimatedSoldAmounts.length > 0 && selectedETF?.assets && (
+              <div className={s.tokenDistribution}>
+                <div className={s.tokenDistributionHeader}>
+                  <Icon icon="hugeicons:pie-chart" />
+                  <span>Tokens to be Sold</span>
+                </div>
+                <div className={s.tokenDistributionList}>
+                  {selectedETF.assets.map((asset, index) => {
+                    if (index >= estimatedSoldAmounts.length) return null
+                    
+                    const soldAmount = estimatedSoldAmounts[index]
+                    
+                    if (!soldAmount || soldAmount === "0") return null
+                    
+                    const decimals = asset.decimals || 18
+                    const multiplier = BigInt(10) ** BigInt(decimals)
+                    const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
+                    
+                    const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                    
+                    return (
+                      <div key={asset.token} className={s.tokenDistributionItem}>
+                        <div className={s.tokenInfo}>
+                          {logo ? (
+                            <Image
+                              src={logo}
+                              alt={asset.symbol}
+                              width={20}
+                              height={20}
+                              className={s.tokenLogo}
+                            />
+                          ) : (
+                            <div className={s.tokenLogo} style={{
+                              backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.7rem',
+                              fontWeight: '600'
+                            }}>
+                              {asset.symbol.charAt(0)}
+                            </div>
+                          )}
+                          <span className={s.tokenSymbol}>{asset.symbol}</span>
+                          <span className={s.tokenWeight}>
+                            {(asset.targetWeightBps / 100).toFixed(2)}%
+                          </span>
+                        </div>
+                        <div className={s.tokenAmounts}>
+                          <span className={s.tokenAmount}>
+                            {amountNumber.toFixed(6)} {asset.symbol}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </>
         )}
         {!isWalletConnected ? (

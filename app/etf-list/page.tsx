@@ -18,6 +18,7 @@ import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { formatTokenSupply } from "@/helpers/format"
 import { fetchCGTokenData } from "@/utils/price"
+import { getAssetColor } from "@/utils/assets"
 import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
 import { useEffect, useMemo, useState } from "react"
@@ -27,6 +28,7 @@ import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
 import Image from "next/image"
 import s from "./page.module.scss"
+import { ethers } from "ethers"
 
 interface ETF {
   factory: string
@@ -200,6 +202,26 @@ export default function ETFList() {
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
   })
+
+  // Calculate total value from valuesPerAsset
+  const totalEstimatedValue = useMemo(() => {
+    if (estimatedValuesPerAsset.length === 0) return null
+    
+    try {
+      const total = estimatedValuesPerAsset.reduce((sum, value) => {
+        if (!value || value === "0") return sum
+        return sum + BigInt(value)
+      }, 0n)
+      
+      // valuesPerAsset are in USD with 18 decimals
+      const multiplier = BigInt(10) ** BigInt(18)
+      const totalNumber = Number(total) / Number(multiplier)
+      return totalNumber
+    } catch (error) {
+      console.error("Error calculating total value:", error)
+      return null
+    }
+  }, [estimatedValuesPerAsset])
 
   // Format number to string without scientific notation
   const formatNumberToString = (
@@ -867,7 +889,7 @@ export default function ETFList() {
                   <Card className={s.metric}>
                     <span className={s.metricLabel}>Supply</span>
                     <span className={s.metricValue}>
-                      {formatTokenSupply(etf.totalSupply, 18, 4)}
+                      {formatTokenSupply(`${etf.totalSupply}`, 18, 4)}
                     </span>
                   </Card>
                   <Card className={s.metric}>
@@ -1288,12 +1310,36 @@ export default function ETFList() {
             disabled={isEstimatingShares}
           />
           
+          {/* Display total estimated value */}
+          {totalEstimatedValue !== null && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              background: 'var(--background-low)',
+              borderRadius: 'var(--radius-s)',
+              border: '1px solid var(--border-light)',
+              fontSize: '0.9rem',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <span>Estimated Value:</span>
+              <span style={{
+                fontWeight: '600',
+                fontSize: '1rem',
+                color: 'var(--text-primary)'
+              }}>
+                ~${totalEstimatedValue.toFixed(2)}
+              </span>
+            </div>
+          )}
+          
           {/* Display estimated token distribution */}
           {estimatedAmountsOut.length > 0 && selectedETF?.assets && (
             <div className={s.tokenDistribution}>
               <div className={s.tokenDistributionHeader}>
                 <Icon icon="hugeicons:pie-chart" />
-                <span>Estimated Token Distribution</span>
+                <span>Estimated Token Added in ETF</span>
               </div>
               <div className={s.tokenDistributionList}>
                 {selectedETF.assets.map((asset, index) => {
@@ -1311,24 +1357,46 @@ export default function ETFList() {
                   const depositMultiplier = BigInt(10) ** BigInt(18)
                   const valueNumber = Number(BigInt(valuePerAsset || "0")) / Number(depositMultiplier)
                   
-                  return (
-                    <div key={asset.token} className={s.tokenDistributionItem}>
-                      <div className={s.tokenInfo}>
-                        <span className={s.tokenSymbol}>{asset.symbol}</span>
-                        <span className={s.tokenWeight}>
-                          {(asset.targetWeightBps / 100).toFixed(2)}%
-                        </span>
+                    const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                    
+                    return (
+                      <div key={asset.token} className={s.tokenDistributionItem}>
+                        <div className={s.tokenInfo}>
+                          {logo ? (
+                            <Image
+                              src={logo}
+                              alt={asset.symbol}
+                              width={20}
+                              height={20}
+                              className={s.tokenLogo}
+                            />
+                          ) : (
+                            <div className={s.tokenLogo} style={{
+                              backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.7rem',
+                              fontWeight: '600'
+                            }}>
+                              {asset.symbol.charAt(0)}
+                            </div>
+                          )}
+                          <span className={s.tokenSymbol}>{asset.symbol}</span>
+                          <span className={s.tokenWeight}>
+                            {(asset.targetWeightBps / 100).toFixed(2)}%
+                          </span>
+                        </div>
+                        <div className={s.tokenAmounts}>
+                          <span className={s.tokenAmount}>
+                            {amountNumber.toFixed(6)} {asset.symbol}
+                          </span>
+                          <span className={s.tokenValue}>
+                            ≈ ${valueNumber.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
-                      <div className={s.tokenAmounts}>
-                        <span className={s.tokenAmount}>
-                          {amountNumber.toFixed(6)} {asset.symbol}
-                        </span>
-                        <span className={s.tokenValue}>
-                          ≈ {valueNumber.toFixed(4)} {selectedETF.depositSymbol}
-                        </span>
-                      </div>
-                    </div>
-                  )
+                    )
                 })}
               </div>
             </div>
@@ -1639,9 +1707,31 @@ export default function ETFList() {
                   const multiplier = BigInt(10) ** BigInt(decimals)
                   const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
                   
+                  const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                  
                   return (
                     <div key={asset.token} className={s.tokenDistributionItem}>
                       <div className={s.tokenInfo}>
+                        {logo ? (
+                          <Image
+                            src={logo}
+                            alt={asset.symbol}
+                            width={20}
+                            height={20}
+                            className={s.tokenLogo}
+                          />
+                        ) : (
+                          <div className={s.tokenLogo} style={{
+                            backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.7rem',
+                            fontWeight: '600'
+                          }}>
+                            {asset.symbol.charAt(0)}
+                          </div>
+                        )}
                         <span className={s.tokenSymbol}>{asset.symbol}</span>
                         <span className={s.tokenWeight}>
                           {(asset.targetWeightBps / 100).toFixed(2)}%

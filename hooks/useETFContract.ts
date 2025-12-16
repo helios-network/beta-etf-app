@@ -74,6 +74,7 @@ interface RebalanceParams {
 }
 
 interface RebalanceResult {
+  user: string
   fromIndex: string
   toIndex: string
   moveValue: string
@@ -352,14 +353,14 @@ export const useETFContract = () => {
           throw new Error("Could not find Deposit event in transaction receipt")
         }
         
-        const { depositAmount, sharesOut, eventNonce, eventHeight } = depositEvent.args
+        const { depositAmount, sharesOut, amountsOut: eventAmountsOut, valuesPerAsset: eventValuesPerAsset, eventNonce, eventHeight } = depositEvent.args
         
-        
+        // Use event data if available, fallback to function return values
         return {
           depositAmount,
-          sharesOut: String(depositResult.sharesOutRet),
-          amountsOut: (depositResult.amountsOut || []).map((amt: any) => String(amt)),
-          valuesPerAsset: (depositResult.valuesPerAsset || []).map((val: any) => String(val)),
+          sharesOut: String(sharesOut || depositResult.sharesOutRet),
+          amountsOut: ((eventAmountsOut || depositResult.amountsOut) || []).map((amt: any) => String(amt)),
+          valuesPerAsset: ((eventValuesPerAsset || depositResult.valuesPerAsset) || []).map((val: any) => String(val)),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -447,16 +448,17 @@ export const useETFContract = () => {
           throw new Error("Could not find Redeem event in transaction receipt")
         }
 
-        const { sharesIn, depositOut, eventNonce, eventHeight } = redeemEvent.args
+        const { sharesIn, depositOut, soldAmounts: eventSoldAmounts, eventNonce, eventHeight } = redeemEvent.args
 
         // Use the return values from the function call
         // redeemResult contains: { depositOutRet, soldAmounts }
         const { depositOutRet, soldAmounts } = redeemResult
         
+        // Use event data if available, fallback to function return values
         return {
           sharesIn,
-          depositOut: String(depositOutRet),
-          soldAmounts: (soldAmounts || []).map((amt: any) => String(amt)),
+          depositOut: String(depositOut || depositOutRet),
+          soldAmounts: ((eventSoldAmounts || soldAmounts) || []).map((amt: any) => String(amt)),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -539,9 +541,10 @@ export const useETFContract = () => {
           throw new Error("Could not find Rebalance event in transaction receipt")
         }
 
-        const { fromIndex, toIndex, moveValue, eventNonce, eventHeight, bought } = rebalanceEvent.args
+        const { user, fromIndex, toIndex, moveValue, eventNonce, eventHeight, bought } = rebalanceEvent.args
 
         return {
+          user,
           fromIndex,
           toIndex,
           moveValue,
