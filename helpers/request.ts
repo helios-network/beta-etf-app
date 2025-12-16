@@ -52,6 +52,7 @@ interface ETFAsset {
 interface ETFResponse {
   _id: string
   vault: string
+  pricer: string
   chain: number
   shareToken: string
   depositToken: string

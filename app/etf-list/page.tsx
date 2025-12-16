@@ -50,6 +50,7 @@ interface ETF {
   }>
   price: string
   vault: string
+  pricer: string
   shareToken: string
   depositToken: string
   depositSymbol: string
@@ -98,6 +99,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     tokens,
     price: etf.sharePrice ? `$${etf.sharePrice}` : "$0.00", // Use sharePrice for price display
     vault: etf.vault,
+    pricer: etf.pricer,
     shareToken: etf.shareToken,
     depositToken: etf.depositToken,
     depositSymbol: etf.depositSymbol || "TOKEN",
@@ -878,7 +880,17 @@ export default function ETFList() {
                     title={`View on ${getChainName(etf.chain)} explorer`}
                   >
                     <Icon icon="hugeicons:link-square-01" />
-                    {getChainName(etf.chain)}
+                    vault
+                  </a>
+                  <a
+                    href={getExplorerUrl(etf.pricer, etf.chain)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={s.explorerLink}
+                    title={`View on ${getChainName(etf.chain)} explorer`}
+                  >
+                    <Icon icon="hugeicons:link-square-01" />
+                    pricer
                   </a>
                 </div>
                 <div className={s.metricsGrid}>
