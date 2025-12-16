@@ -129,7 +129,7 @@
   svg {
     width: 20px;
     height: 20px;
-    color: var(--blue);
+    color: white;
   }
 }
 
@@ -548,7 +548,7 @@
   svg {
     width: 18px;
     height: 18px;
-    color: var(--text-secondary);
+    color: white;
   }
 
   &:hover {
@@ -556,7 +556,7 @@
     border-color: var(--border-medium);
 
     svg {
-      color: var(--blue);
+      color: white;
     }
   }
 }
