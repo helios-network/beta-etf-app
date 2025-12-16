@@ -5,6 +5,9 @@ import { Icon } from "@/components/icon"
 import { Modal } from "@/components/modal"
 import { SeasonTabs } from "@/components/season-tabs"
 import { useAppStore } from "@/stores/app"
+import { fetchUserTotalPoints } from "@/helpers/request"
+import { useAccount } from "wagmi"
+import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { useState } from "react"
 import { BorderAnimate } from "../border-animate"
@@ -15,7 +18,21 @@ export const PointsModal = () => {
     "season1"
   )
 
-  const { points, setPointsModalOpen, pointsModalOpen } = useAppStore()
+  const { setPointsModalOpen, pointsModalOpen } = useAppStore()
+  const { address, isConnected } = useAccount()
+
+  const { data: pointsData, isLoading } = useQuery({
+    queryKey: ["userTotalPoints", address],
+    queryFn: () => {
+      if (!address) throw new Error("No address provided")
+      return fetchUserTotalPoints(address)
+    },
+    enabled: !!address && isConnected,
+    refetchInterval: 30000,
+    staleTime: 10000
+  })
+
+  const points = pointsData?.data?.totalPoints ?? 0
 
   const seasonData = {
     season1: {
@@ -66,10 +83,12 @@ export const PointsModal = () => {
           <div className={s.pointsSection}>
             <h3 className={s.sectionTitle}>Points</h3>
             <div className={s.pointsValue}>
-              {currentSeason.points.toLocaleString("en-US", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-              })}
+              {isLoading
+                ? "..."
+                : currentSeason.points.toLocaleString("en-US", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                  })}
             </div>
             <BorderAnimate />
           </div>
