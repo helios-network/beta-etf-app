@@ -128,7 +128,12 @@ export default function LeaderboardPage() {
                       <span className={s.rankBadge}>{entry.rank}</span>
                     </td>
                     <td className={s.addressCol} data-th="Address">
-                      <span className={s.address}>
+                      <span
+                        className={s.address}
+                        onClick={() => console.log(entry.address)}
+                        style={{ cursor: "pointer" }}
+                        title="Click to see full address in console"
+                      >
                         {truncateAddress(entry.address)}
                       </span>
                     </td>

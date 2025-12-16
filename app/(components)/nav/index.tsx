@@ -30,6 +30,10 @@ export const Nav = () => {
       href: routes.etfCreate
     },
     {
+      label: "Portfolio",
+      href: routes.portfolio
+    },
+    {
       label: "Leaderboard",
       href: routes.leaderboard
     }

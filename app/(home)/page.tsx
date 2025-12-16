@@ -13,7 +13,7 @@ import { getAssetColor, getAssetIcon } from "@/utils/assets"
 import { fetchCGTokenData } from "@/utils/price"
 import { useQuery } from "@tanstack/react-query"
 import Image from "next/image"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useAccount, useChainId } from "wagmi"
 import { useAppKit } from "@reown/appkit/react"
@@ -89,8 +89,8 @@ export default function Home() {
     refetchInterval: 5 * 60 * 1000
   })
 
-  const depositTokens = depositTokensData?.data || []
-  const etfs = etfsData?.data || []
+  const depositTokens = useMemo(() => depositTokensData?.data || [], [depositTokensData?.data])
+  const etfs = useMemo(() => etfsData?.data || [], [etfsData?.data])
 
   // Récupérer les logos des tokens
   const allTokenSymbols = useMemo(() => {
@@ -138,7 +138,7 @@ export default function Home() {
     return cleaned
   }
 
-  const fetchTokenBalance = async (
+  const fetchTokenBalance = useCallback(async (
     tokenAddress: string,
     decimals: number
   ): Promise<string | null> => {
@@ -170,7 +170,7 @@ export default function Home() {
       console.error("Error fetching token balance:", error)
       return null
     }
-  }
+  }, [web3Provider, address])
 
   const checkAllowance = async (
     tokenAddress: string,
@@ -555,7 +555,7 @@ export default function Home() {
     }
 
     fetchBalances()
-  }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF])
+  }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF, fetchTokenBalance])
 
   const isWalletConnected = !!address
   const isETFChainMatch = selectedETF ? chainId === selectedETF.chain : true

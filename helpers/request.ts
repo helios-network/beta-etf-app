@@ -289,5 +289,167 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent }
+interface PortfolioAsset {
+  chain: number
+  symbol: string
+  etfVaultAddress: string
+  etfTokenAddress: string
+  etfName: string
+  amount: string
+  amountFormatted: string
+  amountUSD: number
+  sharePriceUSD: number
+  decimals: number
+}
+
+interface PortfolioAllocation {
+  symbol: string
+  etfVaultAddress: string
+  amountUSD: number
+  percentage: number
+  chain: number
+}
+
+interface PortfolioResponse {
+  address: string
+  totalValueUSD: number
+  totalAssets: number
+  chains: number[]
+  updatedAt: string
+}
+
+interface PortfolioSummary {
+  address: string
+  totalValueUSD: number
+  totalAssets: number
+  allocation: PortfolioAllocation[]
+  byChain: {
+    [chainId: string]: number
+  }
+}
+
+interface PortfolioApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+}
+
+async function fetchPortfolio(
+  address: string
+): Promise<PortfolioApiResponse<PortfolioResponse> | null> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/portfolio/${address}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  // 404 means no portfolio found (empty portfolio)
+  if (response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch portfolio: ${response.statusText}`)
+  }
+
+  const data: PortfolioApiResponse<PortfolioResponse> = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
+async function fetchPortfolioAssets(
+  address: string
+): Promise<PortfolioApiResponse<PortfolioAsset[]> | null> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/portfolio/${address}/assets`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  // 404 means no assets found (empty portfolio)
+  if (response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch portfolio assets: ${response.statusText}`)
+  }
+
+  const data: PortfolioApiResponse<PortfolioAsset[]> = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
+async function fetchPortfolioSummary(
+  address: string
+): Promise<PortfolioApiResponse<PortfolioSummary> | null> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/portfolio/${address}/summary`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  // 404 means no summary found (empty portfolio)
+  if (response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch portfolio summary: ${response.statusText}`)
+  }
+
+  const data: PortfolioApiResponse<PortfolioSummary> = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
+export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolio, fetchPortfolioAssets, fetchPortfolioSummary }
+export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation }
