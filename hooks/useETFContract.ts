@@ -42,6 +42,8 @@ interface DepositParams {
 interface DepositResult {
   depositAmount: string
   sharesOut: string
+  amountsOut: string[]
+  valuesPerAsset: string[]
   eventNonce: string
   eventHeight: string
   txHash: string
@@ -59,6 +61,7 @@ interface RedeemParams {
 interface RedeemResult {
   sharesIn: string
   depositOut: string
+  soldAmounts: string[]
   eventNonce: string
   eventHeight: string
   txHash: string
@@ -292,7 +295,7 @@ export const useETFContract = () => {
         console.log("factoryAddress", factoryAddress)
 
         // Simulate the transaction and get the return value
-        const sharesOutRet: any = await factoryContract.methods
+        const depositResult: any = await factoryContract.methods
           .deposit(params.vault, params.amount, params.minSharesOut, false)
           .call({ from: address })
 
@@ -351,11 +354,12 @@ export const useETFContract = () => {
         
         const { depositAmount, sharesOut, eventNonce, eventHeight } = depositEvent.args
         
-        // Use the return value from the function call (sharesOutRet) instead of event
-        // But keep event data for eventNonce and eventHeight
+        
         return {
           depositAmount,
-          sharesOut: String(sharesOutRet), // Use return value
+          sharesOut: String(depositResult.sharesOutRet),
+          amountsOut: (depositResult.amountsOut || []).map((amt: any) => String(amt)),
+          valuesPerAsset: (depositResult.valuesPerAsset || []).map((val: any) => String(val)),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -386,7 +390,7 @@ export const useETFContract = () => {
         )
 
         // Simulate the transaction and get the return value
-        const depositOutRet: any = await factoryContract.methods
+        const redeemResult: any = await factoryContract.methods
           .redeem(params.vault, params.shares, params.minOut, false)
           .call({ from: address })
 
@@ -445,11 +449,14 @@ export const useETFContract = () => {
 
         const { sharesIn, depositOut, eventNonce, eventHeight } = redeemEvent.args
 
-        // Use the return value from the function call (depositOutRet) instead of event
-        // But keep event data for eventNonce and eventHeight
+        // Use the return values from the function call
+        // redeemResult contains: { depositOutRet, soldAmounts }
+        const { depositOutRet, soldAmounts } = redeemResult
+        
         return {
           sharesIn,
-          depositOut: String(depositOutRet), // Use return value
+          depositOut: String(depositOutRet),
+          soldAmounts: (soldAmounts || []).map((amt: any) => String(amt)),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -555,7 +562,11 @@ export const useETFContract = () => {
     vault: string
     amount: string,
     allowance: bigint
-  }): Promise<string> => {
+  }): Promise<{
+    sharesOut: string
+    amountsOut: string[]
+    valuesPerAsset: string[]
+  }> => {
     if (!web3Provider || !address) {
       throw new Error("No wallet connected")
     }
@@ -570,12 +581,18 @@ export const useETFContract = () => {
       // permit to calculate impermanent loss impact
 
       // Call deposit with minSharesOut = 0 and simulate = true to get the estimated shares
-      // The function now returns sharesOutRet directly
-      const sharesOutRet: any = await factoryContract.methods
+      // The function now returns { sharesOutRet, amountsOut, valuesPerAsset }
+      const depositResult: any = await factoryContract.methods
         .deposit(params.vault, params.amount, "0", needEstimateBool)
         .call({ from: address })
+
+      console.log("depositResult", depositResult)
       
-      return String(sharesOutRet)
+      return {
+        sharesOut: String(depositResult.sharesOutRet),
+        amountsOut: (depositResult.amountsOut || []).map((amt: any) => String(amt)),
+        valuesPerAsset: (depositResult.valuesPerAsset || []).map((val: any) => String(val))
+      }
     } catch (error: unknown) {
       throw new Error((error as Error).message || "Error estimating deposit shares")
     }
@@ -586,7 +603,10 @@ export const useETFContract = () => {
     vault: string
     shares: string
     allowance: bigint
-  }): Promise<string> => {
+  }): Promise<{
+    depositOut: string
+    soldAmounts: string[]
+  }> => {
     if (!web3Provider || !address) {
       throw new Error("No wallet connected")
     }
@@ -601,12 +621,16 @@ export const useETFContract = () => {
       // permit to calculate impermanent loss impact
 
       // Call redeem with minOut = 0 and simulate = true to get the estimated deposit tokens
-      // The function now returns depositOutRet directly
-      const depositOutRet: any = await factoryContract.methods
+      // The function now returns { depositOutRet, soldAmounts }
+      const redeemResult: any = await factoryContract.methods
         .redeem(params.vault, params.shares, "0", needEstimateBool)
         .call({ from: address })
       
-      return String(depositOutRet)
+      
+      return {
+        depositOut: String(redeemResult.depositOutRet),
+        soldAmounts: (redeemResult.soldAmounts || []).map((amt: any) => String(amt))
+      }
     } catch (error: unknown) {
       throw new Error((error as Error).message || "Error estimating redeem deposit")
     }

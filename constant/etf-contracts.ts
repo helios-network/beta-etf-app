@@ -139,6 +139,16 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "sharesOutRet",
         type: "uint256"
+      },
+      {
+        internalType: "uint256[]",
+        name: "amountsOut",
+        type: "uint256[]"
+      },
+      {
+        internalType: "uint256[]",
+        name: "valuesPerAsset",
+        type: "uint256[]"
       }
     ],
     stateMutability: "nonpayable",
@@ -173,6 +183,11 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "depositOutRet",
         type: "uint256"
+      },
+      {
+        internalType: "uint256[]",
+        name: "soldAmounts",
+        type: "uint256[]"
       }
     ],
     stateMutability: "nonpayable",

@@ -287,17 +287,17 @@ export default function Home() {
         setDepositTokenAllowance(hasAllowance)
 
         // Estimate shares
-        const estimatedSharesWei = await estimateDepositShares({
+        const estimateResult = await estimateDepositShares({
           factory: selectedETF.factory,
           vault: selectedETF.vault,
           amount: amountWei,
           allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
         })
 
-        if (estimatedSharesWei && estimatedSharesWei !== "0") {
+        if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
           const sharesDecimals = 18
           const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-          const sharesBigInt = BigInt(estimatedSharesWei)
+          const sharesBigInt = BigInt(estimateResult.sharesOut)
           
           // Apply slippage
           const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100))
@@ -329,17 +329,17 @@ export default function Home() {
         setShareTokenAllowance(hasAllowance)
 
         // Estimate deposit tokens
-        const estimatedDepositWei = await estimateRedeemDeposit({
+        const estimateResult = await estimateRedeemDeposit({
           factory: selectedETF.factory,
           vault: selectedETF.vault,
           shares: sharesWei,
           allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
         })
 
-        if (estimatedDepositWei && estimatedDepositWei !== "0") {
+        if (estimateResult.depositOut && estimateResult.depositOut !== "0") {
           const depositDecimals = selectedETF.depositDecimals || 18
           const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
-          const depositBigInt = BigInt(estimatedDepositWei)
+          const depositBigInt = BigInt(estimateResult.depositOut)
           
           // Apply slippage
           const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100))

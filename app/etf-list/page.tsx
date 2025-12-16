@@ -54,6 +54,12 @@ interface ETF {
   depositSymbol: string
   depositDecimals: number
   chain: number
+  assets?: Array<{
+    token: string
+    symbol: string
+    decimals: number
+    targetWeightBps: number
+  }>
 }
 
 function formatETFResponse(etf: ETFResponse): ETF {
@@ -64,6 +70,14 @@ function formatETFResponse(etf: ETFResponse): ETF {
       symbol: asset.symbol,
       percentage: asset.targetWeightBps / 100,
       tvl: asset.tvl || "0"
+    })) || []
+
+  const assets =
+    etf.assets?.map((asset) => ({
+      token: asset.token,
+      symbol: asset.symbol,
+      decimals: asset.decimals,
+      targetWeightBps: asset.targetWeightBps
     })) || []
 
   return {
@@ -87,7 +101,8 @@ function formatETFResponse(etf: ETFResponse): ETF {
     depositToken: etf.depositToken,
     depositSymbol: etf.depositSymbol || "TOKEN",
     depositDecimals: etf.depositDecimals || 18,
-    chain: etf.chain
+    chain: etf.chain,
+    assets
   }
 }
 
@@ -138,6 +153,9 @@ export default function ETFList() {
     useState<boolean>(false)
   const [shareTokenAllowance, setShareTokenAllowance] = useState<boolean>(false)
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
+  const [estimatedAmountsOut, setEstimatedAmountsOut] = useState<string[]>([])
+  const [estimatedValuesPerAsset, setEstimatedValuesPerAsset] = useState<string[]>([])
+  const [estimatedSoldAmounts, setEstimatedSoldAmounts] = useState<string[]>([])
   const [hoveredToken, setHoveredToken] = useState<{
     targetPercentage: number
     currentPercentage: number
@@ -499,6 +517,8 @@ export default function ETFList() {
       setBuyAmount("")
       setMinSharesOut("")
       setSelectedETF(null)
+      setEstimatedAmountsOut([])
+      setEstimatedValuesPerAsset([])
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Deposit failed"
@@ -610,6 +630,7 @@ export default function ETFList() {
       setMinOut("")
       setSelectedETF(null)
       setShareTokenAllowance(false)
+      setEstimatedSoldAmounts([])
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Redeem failed"
@@ -1028,6 +1049,8 @@ export default function ETFList() {
           setBuyAmount("")
           setMinSharesOut("")
           setDepositTokenAllowance(false)
+          setEstimatedAmountsOut([])
+          setEstimatedValuesPerAsset([])
         }}
         title={`Buy ${selectedETF?.symbol || ""}`}
       >
@@ -1081,19 +1104,23 @@ export default function ETFList() {
 
                 // Estimate shares by calling deposit with minSharesOut = 0
                 try {
-                  const estimatedSharesWei = await estimateDepositShares({
+                  const estimateResult = await estimateDepositShares({
                     factory: selectedETF.factory,
                     vault: selectedETF.vault,
                     amount: amountWei,
                     allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
                   })
 
+                  // Store estimated amounts and values for display
+                  setEstimatedAmountsOut(estimateResult.amountsOut)
+                  setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
+
                   // Convert shares from wei to human-readable format and apply slippage
-                  if (estimatedSharesWei && estimatedSharesWei !== "0") {
+                  if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
                     const sharesDecimals = 18
                     const sharesMultiplier =
                       BigInt(10) ** BigInt(sharesDecimals)
-                    const sharesBigInt = BigInt(estimatedSharesWei)
+                    const sharesBigInt = BigInt(estimateResult.sharesOut)
 
                     // Apply slippage to the BigInt value
                     const slippageMultiplier = BigInt(
@@ -1112,6 +1139,8 @@ export default function ETFList() {
                   }
                 } catch (error) {
                   console.error("Error estimating shares:", error)
+                  setEstimatedAmountsOut([])
+                  setEstimatedValuesPerAsset([])
                   // Don't show error to user, just log it
                 }
 
@@ -1158,18 +1187,22 @@ export default function ETFList() {
                   // Estimate shares
                   try {
                     console.log("estimatedSharesWei", amountWei)
-                    const estimatedSharesWei = await estimateDepositShares({
+                    const estimateResult = await estimateDepositShares({
                       factory: selectedETF.factory,
                       vault: selectedETF.vault,
                       amount: amountWei,
                       allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
                     })
 
-                    if (estimatedSharesWei && estimatedSharesWei !== "0") {
+                    // Store estimated amounts and values for display
+                    setEstimatedAmountsOut(estimateResult.amountsOut)
+                    setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
+
+                    if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
                       const sharesDecimals = 18
                       const sharesMultiplier =
                         BigInt(10) ** BigInt(sharesDecimals)
-                      const sharesBigInt = BigInt(estimatedSharesWei)
+                      const sharesBigInt = BigInt(estimateResult.sharesOut)
                       const sharesNumber =
                         Number(sharesBigInt) / Number(sharesMultiplier)
                       const estimatedShares = formatNumberToString(
@@ -1180,6 +1213,8 @@ export default function ETFList() {
                     }
                   } catch (error) {
                     console.error("Error estimating shares:", error)
+                    setEstimatedAmountsOut([])
+                    setEstimatedValuesPerAsset([])
                     // Don't show error to user, just log it
                   }
 
@@ -1252,6 +1287,53 @@ export default function ETFList() {
             }
             disabled={isEstimatingShares}
           />
+          
+          {/* Display estimated token distribution */}
+          {estimatedAmountsOut.length > 0 && selectedETF?.assets && (
+            <div className={s.tokenDistribution}>
+              <div className={s.tokenDistributionHeader}>
+                <Icon icon="hugeicons:pie-chart" />
+                <span>Estimated Token Distribution</span>
+              </div>
+              <div className={s.tokenDistributionList}>
+                {selectedETF.assets.map((asset, index) => {
+                  if (index >= estimatedAmountsOut.length) return null
+                  
+                  const amountOut = estimatedAmountsOut[index]
+                  const valuePerAsset = estimatedValuesPerAsset[index]
+                  
+                  if (!amountOut || amountOut === "0") return null
+                  
+                  const decimals = asset.decimals || 18
+                  const multiplier = BigInt(10) ** BigInt(decimals)
+                  const amountNumber = Number(BigInt(amountOut)) / Number(multiplier)
+                  
+                  const depositMultiplier = BigInt(10) ** BigInt(18)
+                  const valueNumber = Number(BigInt(valuePerAsset || "0")) / Number(depositMultiplier)
+                  
+                  return (
+                    <div key={asset.token} className={s.tokenDistributionItem}>
+                      <div className={s.tokenInfo}>
+                        <span className={s.tokenSymbol}>{asset.symbol}</span>
+                        <span className={s.tokenWeight}>
+                          {(asset.targetWeightBps / 100).toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className={s.tokenAmounts}>
+                        <span className={s.tokenAmount}>
+                          {amountNumber.toFixed(6)} {asset.symbol}
+                        </span>
+                        <span className={s.tokenValue}>
+                          ≈ {valueNumber.toFixed(4)} {selectedETF.depositSymbol}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          
           <div className={s.modalActions}>
             <Button
               variant="secondary"
@@ -1260,6 +1342,8 @@ export default function ETFList() {
                 setSelectedETF(null)
                 setBuyAmount("")
                 setMinSharesOut("")
+                setEstimatedAmountsOut([])
+                setEstimatedValuesPerAsset([])
               }}
             >
               Cancel
@@ -1306,6 +1390,7 @@ export default function ETFList() {
           setSellShares("")
           setMinOut("")
           setShareTokenAllowance(false)
+          setEstimatedSoldAmounts([])
         }}
         title={`Sell ${selectedETF?.symbol || ""}`}
       >
@@ -1354,19 +1439,22 @@ export default function ETFList() {
 
                 // Estimate deposit tokens by calling redeem with minOut = 0
                 try {
-                  const estimatedDepositWei = await estimateRedeemDeposit({
+                  const estimateResult = await estimateRedeemDeposit({
                     factory: selectedETF.factory,
                     vault: selectedETF.vault,
                     shares: sharesWei,
                     allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
                   })
 
+                  // Store estimated sold amounts for display
+                  setEstimatedSoldAmounts(estimateResult.soldAmounts)
+
                   // Convert deposit tokens from wei to human-readable format and apply slippage
-                  if (estimatedDepositWei && estimatedDepositWei !== "0") {
+                  if (estimateResult.depositOut && estimateResult.depositOut !== "0") {
                     const depositDecimals = selectedETF.depositDecimals || 18
                     const depositMultiplier =
                       BigInt(10) ** BigInt(depositDecimals)
-                    const depositBigInt = BigInt(estimatedDepositWei)
+                    const depositBigInt = BigInt(estimateResult.depositOut)
 
                     // Apply slippage to the BigInt value
                     const slippageMultiplier = BigInt(
@@ -1385,6 +1473,7 @@ export default function ETFList() {
                   }
                 } catch (error) {
                   console.error("Error estimating deposit tokens:", error)
+                  setEstimatedSoldAmounts([])
                   // Don't show error to user, just log it
                 }
 
@@ -1430,18 +1519,21 @@ export default function ETFList() {
 
                   // Estimate deposit tokens
                   try {
-                    const estimatedDepositWei = await estimateRedeemDeposit({
+                    const estimateResult = await estimateRedeemDeposit({
                       factory: selectedETF.factory,
                       vault: selectedETF.vault,
                       shares: sharesWei,
                       allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
                     })
 
-                    if (estimatedDepositWei && estimatedDepositWei !== "0") {
+                    // Store estimated sold amounts for display
+                    setEstimatedSoldAmounts(estimateResult.soldAmounts)
+
+                    if (estimateResult.depositOut && estimateResult.depositOut !== "0") {
                       const depositDecimals = selectedETF.depositDecimals || 18
                       const depositMultiplier =
                         BigInt(10) ** BigInt(depositDecimals)
-                      const depositBigInt = BigInt(estimatedDepositWei)
+                      const depositBigInt = BigInt(estimateResult.depositOut)
 
                       // Apply slippage to the BigInt value
                       const slippageMultiplier = BigInt(
@@ -1460,6 +1552,7 @@ export default function ETFList() {
                     }
                   } catch (error) {
                     console.error("Error estimating deposit tokens:", error)
+                    setEstimatedSoldAmounts([])
                   }
 
                   setIsCheckingAllowance(false)
@@ -1526,6 +1619,46 @@ export default function ETFList() {
             }
             disabled={isEstimatingDeposit}
           />
+          
+          {/* Display estimated tokens to be sold */}
+          {estimatedSoldAmounts.length > 0 && selectedETF?.assets && (
+            <div className={s.tokenDistribution}>
+              <div className={s.tokenDistributionHeader}>
+                <Icon icon="hugeicons:pie-chart" />
+                <span>Tokens to be Sold</span>
+              </div>
+              <div className={s.tokenDistributionList}>
+                {selectedETF.assets.map((asset, index) => {
+                  if (index >= estimatedSoldAmounts.length) return null
+                  
+                  const soldAmount = estimatedSoldAmounts[index]
+                  
+                  if (!soldAmount || soldAmount === "0") return null
+                  
+                  const decimals = asset.decimals || 18
+                  const multiplier = BigInt(10) ** BigInt(decimals)
+                  const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
+                  
+                  return (
+                    <div key={asset.token} className={s.tokenDistributionItem}>
+                      <div className={s.tokenInfo}>
+                        <span className={s.tokenSymbol}>{asset.symbol}</span>
+                        <span className={s.tokenWeight}>
+                          {(asset.targetWeightBps / 100).toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className={s.tokenAmounts}>
+                        <span className={s.tokenAmount}>
+                          {amountNumber.toFixed(6)} {asset.symbol}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+          
           <div className={s.modalActions}>
             <Button
               variant="secondary"
@@ -1534,6 +1667,7 @@ export default function ETFList() {
                 setSelectedETF(null)
                 setSellShares("")
                 setMinOut("")
+                setEstimatedSoldAmounts([])
               }}
             >
               Cancel
