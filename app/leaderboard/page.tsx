@@ -59,7 +59,7 @@ export default function LeaderboardPage() {
     <>
       <div className={s.headingWrapper}>
         <Heading
-          icon="hugeicons:star"
+          icon="hugeicons:ranking"
           title="Points Leaderboard"
           description="Top performers in Helios points accumulation"
         />

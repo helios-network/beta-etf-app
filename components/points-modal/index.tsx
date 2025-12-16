@@ -85,7 +85,7 @@ export const PointsModal = () => {
             onClick={handleClose}
           >
             <Button variant="primary" className={s.leaderboardButton}>
-              <Icon icon="hugeicons:trophy-01" />
+              <Icon icon="hugeicons:ranking" />
               <span>Leaderboard</span>
             </Button>
           </Link>

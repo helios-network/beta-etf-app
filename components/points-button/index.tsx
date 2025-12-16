@@ -22,7 +22,7 @@ export const PointsButton = () => {
       data-button-points
     >
       <div className={s.content}>
-        <Icon icon="hugeicons:trophy" className={s.icon} />
+        <Icon icon="hugeicons:ranking" className={s.icon} />
         <span className={s.text}>
           {points.toLocaleString("en-US", {
             minimumFractionDigits: 0,
