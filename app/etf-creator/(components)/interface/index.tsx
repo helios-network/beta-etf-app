@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { useAccount, useChainId } from "wagmi"
 import s from "./interface.module.scss"
 import { getChainConfig } from "@/config/chain-config"
+import { ASSETS_ADDRS } from "@/helpers/tokens"
 
 type TokenComponent = {
   token: string
@@ -175,12 +176,13 @@ export const ETFCreatorInterface = () => {
     })
 
     try {
+      console.log(chainId, (ASSETS_ADDRS as any)[chainId]?.USDC)
       const data = await verifyETF({
-        chainId: 1, // Ethereum mainnet
-        depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+        chainId: chainId, // Ethereum mainnet
+        depositToken: (ASSETS_ADDRS as any)[chainId]?.USDC || "",
         components: form.components
       })
-
+      
       if (data.status === "ERROR") {
         setVerifyState({
           status: "error",
@@ -242,19 +244,38 @@ export const ETFCreatorInterface = () => {
 
       let router = ""
       let quoter = ""
-      if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
-        router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" // Uniswap V2 Router
-        quoter = "0x0000000000000000000000000000000000000000" // None
-      } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
-        router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
-        quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
+      let depositFeed = "";
+
+      switch (chainId) {
+        case 42161:
+          depositFeed = "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3" // USDC/USD feed
+
+          if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
+            router = "0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24" // Uniswap V2 Router
+            quoter = "0x0000000000000000000000000000000000000000" // None
+          } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
+            router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
+            quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
+          }
+          break
+        case 1:
+          depositFeed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6" // USDC/USD feed
+
+          if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
+            router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" // Uniswap V2 Router
+            quoter = "0x0000000000000000000000000000000000000000" // None
+          } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
+            router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
+            quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
+          }
+          break
       }
 
       // Call the createETF function with new parameters
       const result = await createETF({
         factoryAddress: backendData.factoryAddress,
-        depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-        depositFeed: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6", // USDC/USD feed
+        depositToken: (ASSETS_ADDRS as any)[chainId]?.USDC || "", // USDC
+        depositFeed: depositFeed, // USDC/USD feed
         router: router,
         quoter: quoter,
         assetTokens,

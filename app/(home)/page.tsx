@@ -81,7 +81,7 @@ export default function Home() {
   // Fetch deposit tokens
   const { data: depositTokensData } = useQuery({
     queryKey: ["depositTokens"],
-    queryFn: fetchDepositTokens,
+    queryFn: () => fetchDepositTokens(chainId),
     staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000
   })

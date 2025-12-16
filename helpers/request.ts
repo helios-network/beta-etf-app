@@ -143,7 +143,7 @@ interface DepositTokensApiResponse {
   data: DepositToken[]
 }
 
-async function fetchDepositTokens(): Promise<DepositTokensApiResponse> {
+async function fetchDepositTokens(chainId: number): Promise<DepositTokensApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
   
   if (!apiUrl) {
@@ -152,7 +152,7 @@ async function fetchDepositTokens(): Promise<DepositTokensApiResponse> {
 
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
-  const url = `${baseUrl}/api/etfs/deposit-tokens`
+  const url = `${baseUrl}/api/etfs/deposit-tokens?chainId=${chainId}`
   
   const response = await fetch(url, {
     method: "GET",
