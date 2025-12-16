@@ -28,7 +28,6 @@ import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
 import Image from "next/image"
 import s from "./page.module.scss"
-import { ethers } from "ethers"
 
 interface ETF {
   factory: string
