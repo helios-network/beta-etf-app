@@ -3,7 +3,7 @@
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
 import { Modal } from "@/components/modal"
-import { SeasonTabs } from "@/components/season-tabs"
+// import { SeasonTabs } from "@/components/season-tabs"
 import { useAppStore } from "@/stores/app"
 import { fetchUserTotalPoints } from "@/helpers/request"
 import { useAccount } from "wagmi"
@@ -56,11 +56,11 @@ export const PointsModal = () => {
     }
   }
 
-  const seasonLabels = {
-    season1: { label: "Season 1", status: "Active" },
-    season2: { label: "Season 2", status: "Not Started" },
-    season3: { label: "Season 3", status: "Not Started" }
-  }
+  // const seasonLabels = {
+  //   season1: { label: "Season 1", status: "Active" },
+  //   season2: { label: "Season 2", status: "Not Started" },
+  //   season3: { label: "Season 3", status: "Not Started" }
+  // }
 
   const currentSeason = seasonData[activeTab]
 
@@ -71,13 +71,13 @@ export const PointsModal = () => {
   return (
     <Modal open={pointsModalOpen} onClose={handleClose} title="Helios points">
       <div className={s.content}>
-        <SeasonTabs
+        {/* <SeasonTabs
           seasons={seasonLabels}
           activeSeason={activeTab}
           onSeasonChange={(season) => setActiveTab(season as typeof activeTab)}
           disabledSeasons={["season2", "season3"]}
           className={s.seasonTabs}
-        />
+        /> */}
 
         <div className={s.seasonContent}>
           <div className={s.pointsSection}>
