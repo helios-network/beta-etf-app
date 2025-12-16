@@ -4,7 +4,7 @@ import { Button } from "@/components/button"
 import { DataState } from "@/components/data-state"
 import { Heading } from "@/components/heading"
 import { Input } from "@/components/input"
-import { SeasonTabs } from "@/components/season-tabs"
+// import { SeasonTabs } from "@/components/season-tabs"
 import { fetchLeaderboard } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import type { LeaderboardEntry } from "@/types/points"
@@ -49,11 +49,11 @@ export default function LeaderboardPage() {
     entry.address.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const seasonLabels = {
-    season1: { label: "Season 1", status: "Active" },
-    season2: { label: "Season 2", status: "Not Started" },
-    season3: { label: "Season 3", status: "Not Started" }
-  }
+  // const seasonLabels = {
+  //   season1: { label: "Season 1", status: "Active" },
+  //   season2: { label: "Season 2", status: "Not Started" },
+  //   season3: { label: "Season 3", status: "Not Started" }
+  // }
 
   return (
     <>
@@ -65,7 +65,7 @@ export default function LeaderboardPage() {
         />
       </div>
 
-      <SeasonTabs
+      {/* <SeasonTabs
         seasons={seasonLabels}
         activeSeason={activeTab}
         onSeasonChange={(season) => {
@@ -73,7 +73,7 @@ export default function LeaderboardPage() {
           setCurrentPage(1)
         }}
         disabledSeasons={["season2", "season3"]}
-      />
+      /> */}
 
       <div className={s.content}>
         <div className={s.filterCardContent}>
