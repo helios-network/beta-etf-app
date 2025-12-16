@@ -10,7 +10,6 @@ import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Select } from "@/components/input/select"
 import { Modal } from "@/components/modal"
-import { ETHEREUM_NETWORK_ID } from "@/config/app"
 import { erc20Abi } from "@/constant/helios-contracts"
 import { fetchETFs, type ETFResponse } from "@/helpers/request"
 import { useETFContract } from "@/hooks/useETFContract"
@@ -179,7 +178,6 @@ export default function ETFList() {
   const [isEstimatingShares, setIsEstimatingShares] = useState(false)
   const [isEstimatingDeposit, setIsEstimatingDeposit] = useState(false)
 
-  const isEthereumNetwork = chainId === ETHEREUM_NETWORK_ID
   const isWalletConnected = !!address
 
   const isETFChainMatch = (etf: ETF) => {
@@ -761,13 +759,6 @@ export default function ETFList() {
           description="Browse and trade available ETF baskets. Buy, sell, mint, or withdraw your positions."
         />
       </div>
-
-      {!isEthereumNetwork && isWalletConnected && (
-        <div className={s.networkWarning}>
-          <Icon icon="hugeicons:alert-circle" />
-          <span>Please switch to Ethereum network to trade ETFs</span>
-        </div>
-      )}
 
       <div className={s.filterCardContent}>
         <div className={s.filterGrid}>
