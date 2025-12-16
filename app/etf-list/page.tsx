@@ -158,6 +158,7 @@ export default function ETFList() {
   const [estimatedAmountsOut, setEstimatedAmountsOut] = useState<string[]>([])
   const [estimatedValuesPerAsset, setEstimatedValuesPerAsset] = useState<string[]>([])
   const [estimatedSoldAmounts, setEstimatedSoldAmounts] = useState<string[]>([])
+  const [impermanentLossPercentage, setImpermanentLossPercentage] = useState<number | null>(null)
   const [hoveredToken, setHoveredToken] = useState<{
     targetPercentage: number
     currentPercentage: number
@@ -222,6 +223,7 @@ export default function ETFList() {
       return null
     }
   }, [estimatedValuesPerAsset])
+
 
   // Format number to string without scientific notation
   const formatNumberToString = (
@@ -541,6 +543,7 @@ export default function ETFList() {
       setSelectedETF(null)
       setEstimatedAmountsOut([])
       setEstimatedValuesPerAsset([])
+      setImpermanentLossPercentage(null)
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Deposit failed"
@@ -1073,6 +1076,7 @@ export default function ETFList() {
           setDepositTokenAllowance(false)
           setEstimatedAmountsOut([])
           setEstimatedValuesPerAsset([])
+          setImpermanentLossPercentage(null)
         }}
         title={`Buy ${selectedETF?.symbol || ""}`}
       >
@@ -1137,6 +1141,28 @@ export default function ETFList() {
                   setEstimatedAmountsOut(estimateResult.amountsOut)
                   setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
 
+                  // Calculate impermanent loss
+                  try {
+                    const total = estimateResult.valuesPerAsset.reduce((sum, value) => {
+                      if (!value || value === "0") return sum
+                      return sum + BigInt(value)
+                    }, 0n)
+                    
+                    const multiplier = BigInt(10) ** BigInt(18)
+                    const totalValue = Number(total) / Number(multiplier)
+                    const depositAmount = parseFloat(validatedValue)
+                    
+                    if (depositAmount > 0 && totalValue > 0) {
+                      const lossPercentage = ((depositAmount - totalValue) / depositAmount) * 100
+                      setImpermanentLossPercentage(lossPercentage)
+                    } else {
+                      setImpermanentLossPercentage(null)
+                    }
+                  } catch (err) {
+                    console.error("Error calculating impermanent loss:", err)
+                    setImpermanentLossPercentage(null)
+                  }
+
                   // Convert shares from wei to human-readable format and apply slippage
                   if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
                     const sharesDecimals = 18
@@ -1163,6 +1189,7 @@ export default function ETFList() {
                   console.error("Error estimating shares:", error)
                   setEstimatedAmountsOut([])
                   setEstimatedValuesPerAsset([])
+                  setImpermanentLossPercentage(null)
                   // Don't show error to user, just log it
                 }
 
@@ -1220,6 +1247,28 @@ export default function ETFList() {
                     setEstimatedAmountsOut(estimateResult.amountsOut)
                     setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
 
+                    // Calculate impermanent loss
+                    try {
+                      const total = estimateResult.valuesPerAsset.reduce((sum, value) => {
+                        if (!value || value === "0") return sum
+                        return sum + BigInt(value)
+                      }, 0n)
+                      
+                      const multiplier = BigInt(10) ** BigInt(18)
+                      const totalValue = Number(total) / Number(multiplier)
+                      const depositAmount = parseFloat(depositTokenBalance || "0")
+                      
+                      if (depositAmount > 0 && totalValue > 0) {
+                        const lossPercentage = ((depositAmount - totalValue) / depositAmount) * 100
+                        setImpermanentLossPercentage(lossPercentage)
+                      } else {
+                        setImpermanentLossPercentage(null)
+                      }
+                    } catch (err) {
+                      console.error("Error calculating impermanent loss:", err)
+                      setImpermanentLossPercentage(null)
+                    }
+
                     if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
                       const sharesDecimals = 18
                       const sharesMultiplier =
@@ -1237,6 +1286,7 @@ export default function ETFList() {
                     console.error("Error estimating shares:", error)
                     setEstimatedAmountsOut([])
                     setEstimatedValuesPerAsset([])
+                    setImpermanentLossPercentage(null)
                     // Don't show error to user, just log it
                   }
 
@@ -1334,6 +1384,63 @@ export default function ETFList() {
             </div>
           )}
           
+          {/* Display impermanent loss warning */}
+          {impermanentLossPercentage !== null && impermanentLossPercentage > 1 && (
+            <div style={{
+              padding: '1rem',
+              background: impermanentLossPercentage > 5 
+                ? 'var(--danger-lowest)' 
+                : 'var(--warning-lowest)',
+              border: `1px solid ${impermanentLossPercentage > 5 
+                ? 'var(--danger-low)' 
+                : 'var(--warning-low)'}`,
+              borderRadius: 'var(--radius-s)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.75rem'
+            }}>
+              <Icon 
+                icon={impermanentLossPercentage > 5 
+                  ? "hugeicons:alert-circle" 
+                  : "hugeicons:alert-02"}
+                style={{
+                  fontSize: '1.5rem',
+                  color: impermanentLossPercentage > 5 
+                    ? 'var(--danger-high)' 
+                    : 'var(--warning-high)',
+                  flexShrink: 0
+                }}
+              />
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem'
+              }}>
+                <strong style={{
+                  color: impermanentLossPercentage > 5 
+                    ? 'var(--danger-high)' 
+                    : 'var(--warning-high)',
+                  fontSize: '0.9rem'
+                }}>
+                  {impermanentLossPercentage > 5 
+                    ? 'High Impermanent Loss Detected!' 
+                    : 'Impermanent Loss Warning'}
+                </strong>
+                <span style={{
+                  color: impermanentLossPercentage > 5 
+                    ? 'var(--danger-medium)' 
+                    : 'var(--warning-medium)',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.4'
+                }}>
+                  {impermanentLossPercentage > 5 
+                    ? `You may lose approximately ${impermanentLossPercentage.toFixed(2)}% due to swap fees and slippage. Consider depositing a smaller amount or waiting for better market conditions.`
+                    : `You may lose approximately ${impermanentLossPercentage.toFixed(2)}% due to swap fees and slippage.`}
+                </span>
+              </div>
+            </div>
+          )}
+          
           {/* Display estimated token distribution */}
           {estimatedAmountsOut.length > 0 && selectedETF?.assets && (
             <div className={s.tokenDistribution}>
@@ -1412,6 +1519,7 @@ export default function ETFList() {
                 setMinSharesOut("")
                 setEstimatedAmountsOut([])
                 setEstimatedValuesPerAsset([])
+                setImpermanentLossPercentage(null)
               }}
             >
               Cancel
