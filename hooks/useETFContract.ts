@@ -6,7 +6,7 @@ import { erc20Abi } from "@/constant/helios-contracts"
 import { getBestGasPrice } from "@/lib/utils/gas"
 import { decodeEventLog, TransactionReceipt, Abi } from "viem"
 import { getErrorMessage } from "@/utils/string"
-import { EventLog } from "web3"
+import { EventLog, ResponseError } from "web3"
 
 interface CreateETFParams {
   factoryAddress: string
@@ -230,6 +230,9 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
         throw new Error((error as Error).message || "Error during createETF")
       }
     }
@@ -271,6 +274,9 @@ export const useETFContract = () => {
             gasPrice: bestGasPrice.toString()
           })
       } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
         throw new Error((error as Error).message || "Error during token approval")
       }
     }
@@ -367,6 +373,9 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
         throw new Error((error as Error).message || "Error during deposit")
       }
     }
@@ -465,6 +474,9 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
         throw new Error((error as Error).message || "Error during redeem")
       }
     }
@@ -555,6 +567,9 @@ export const useETFContract = () => {
           blockNumber: Number(receipt.blockNumber)
         }
       } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
         throw new Error((error as Error).message || "Error during rebalance")
       }
     }
@@ -597,6 +612,9 @@ export const useETFContract = () => {
         valuesPerAsset: (depositResult.valuesPerAsset || []).map((val: any) => String(val))
       }
     } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
       throw new Error((error as Error).message || "Error estimating deposit shares")
     }
   }
@@ -635,6 +653,9 @@ export const useETFContract = () => {
         soldAmounts: (redeemResult.soldAmounts || []).map((amt: any) => String(amt))
       }
     } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
       throw new Error((error as Error).message || "Error estimating redeem deposit")
     }
   }
