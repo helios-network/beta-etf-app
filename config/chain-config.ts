@@ -15,6 +15,7 @@ export interface ChainConfig {
   wrappedToken?: string
   wrapperContract?: string
   decimals?: number
+  abbreviatedName?: string
 }
 
 export const CHAIN_CONFIG: Record<number, ChainConfig> = {
@@ -25,7 +26,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     color: CHAIN_COLORS.helios,
     iconName: "helios",
     rpcUrl: typeof window !== "undefined" ? getRpcUrl() : RPC_URL_DEFAULT,
-    explorerUrl: EXPLORER_URL
+    explorerUrl: EXPLORER_URL,
+    abbreviatedName: "HLS"
   },
   1: {
     id: "ethereum",
@@ -38,7 +40,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
     decimals: 18,
     token: "ETH",
-    wrappedToken: "WETH"
+    wrappedToken: "WETH",
+    abbreviatedName: "ETH"
   },
   56: {
     id: "bsc",
@@ -51,7 +54,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
     decimals: 18,
     token: "BNB",
-    wrappedToken: "WBNB"
+    wrappedToken: "WBNB",
+    abbreviatedName: "BSC"
   },
   11155111: {
     id: "sepolia",
@@ -64,7 +68,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9",
     decimals: 18,
     token: "ETH",
-    wrappedToken: "WETH"
+    wrappedToken: "WETH",
+    abbreviatedName: "ETH"
   },
   80002: {
     id: "polygon-amoy",
@@ -77,7 +82,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0xa5733b3a8e62a8faf43b0376d5faf46e89b3033e",
     decimals: 18,
     token: "POL",
-    wrappedToken: "WPOL"
+    wrappedToken: "WPOL",
+    abbreviatedName: "POL"
   },
   97: {
     id: "bsc-testnet",
@@ -90,7 +96,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0xc689bf5a007f44410676109f8aa8e3562da1c9ba",
     decimals: 18,
     token: "tBNB",
-    wrappedToken: "WtBNB"
+    wrappedToken: "WtBNB",
+    abbreviatedName: "BSC"
   },
   43113: {
     id: "avalanche-fuji",
@@ -103,7 +110,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0xd00ae08403B9bbb9124bB305C09058E32C39A48c",
     decimals: 18,
     token: "AVAX",
-    wrappedToken: "WAVAX"
+    wrappedToken: "WAVAX",
+    abbreviatedName: "AVAX"
   },
   42161: {
     id: "arbitrum",
@@ -116,7 +124,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     decimals: 18,
     token: "ETH",
-    wrappedToken: "WETH"
+    wrappedToken: "WETH",
+    abbreviatedName: "ARB"
   },
   8453: {
     id: "base",
@@ -129,7 +138,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0x4200000000000000000000000000000000000006",
     decimals: 18,
     token: "BASE",
-    wrappedToken: "WBASE"
+    wrappedToken: "WBASE",
+    abbreviatedName: "BASE"
   },
   10: {
     id: "optimism",
@@ -142,7 +152,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0x4200000000000000000000000000000000000006",
     decimals: 18,
     token: "ETH",
-    wrappedToken: "WETH"
+    wrappedToken: "WETH",
+    abbreviatedName: "OPT"
   },
   137: {
     id: "polygon",
@@ -155,7 +166,8 @@ export const CHAIN_CONFIG: Record<number, ChainConfig> = {
     wrapperContract: "0x0000000000000000000000000000000000001010",
     decimals: 18,
     token: "POL",
-    wrappedToken: "WPOL"
+    wrappedToken: "WPOL",
+    abbreviatedName: "POL"
   }
 }
 

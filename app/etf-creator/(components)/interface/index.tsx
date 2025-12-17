@@ -301,7 +301,8 @@ export const ETFCreatorInterface = () => {
         address: result.vault,
         shareToken: result.shareToken,
         txHash: result.txHash,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        chainId
       }
 
       setDeployedETF(newETF)

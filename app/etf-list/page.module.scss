@@ -235,6 +235,7 @@
     padding: 0;
     background: var(--background-lowest);
     box-shadow: 0 0 40px rgba(var(--blue-rgb), 0);
+    position: relative;
 
     .hover {
       transition: opacity var(--transition);
@@ -263,6 +264,27 @@
       margin-top: -1px;
       width: calc(100% + 2px);
       margin-left: -1px;
+    }
+  }
+
+  .chainLogo {
+    position: absolute;
+    top: 2.4rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    z-index: 10;
+    background: var(--background-low);
+    padding: 4px;
+    border: 2px solid var(--border-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.1);
+      border-color: var(--primary-medium);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
     }
   }
 

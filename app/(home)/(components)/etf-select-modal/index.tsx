@@ -5,6 +5,7 @@ import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
 import { Symbol } from "@/components/symbol"
 import { getAssetColor, getAssetIcon } from "@/utils/assets"
+import { CHAIN_CONFIG } from "@/config/chain-config"
 import clsx from "clsx"
 import Image from "next/image"
 import { useMemo, useState } from "react"
@@ -14,6 +15,7 @@ interface ETF {
   id: string
   name: string
   symbol: string
+  chain?: number
   tokens: Array<{
     symbol: string
     percentage: number
@@ -174,7 +176,22 @@ export function ETFSelectModal({
                     <div className={s.text}>
                       <div className={s.symbol}>{etf.symbol}</div>
                       <div className={s.name}>{etf.name}</div>
+                      {etf.chain && CHAIN_CONFIG[etf.chain] && (
+                        <div className={s.chainBadge}>
+                          {CHAIN_CONFIG[etf.chain].name}
+                        </div>
+                      )}
                     </div>
+                    {etf.chain && CHAIN_CONFIG[etf.chain]?.abbreviatedName && (
+                      <Image
+                        src={`/img/chains/${CHAIN_CONFIG[etf.chain].abbreviatedName}.png`}
+                        alt={CHAIN_CONFIG[etf.chain].name}
+                        width={24}
+                        height={24}
+                        className={s.chainLogo}
+                        title={`${CHAIN_CONFIG[etf.chain].name} Network`}
+                      />
+                    )}
                     <Icon icon="hugeicons:arrow-right-01" className={s.arrow} />
                   </div>
                 </button>

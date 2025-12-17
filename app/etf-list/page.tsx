@@ -14,6 +14,7 @@ import { erc20Abi } from "@/constant/helios-contracts"
 import { fetchETFs, type ETFResponse } from "@/helpers/request"
 import { useETFContract } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
+import { CHAIN_CONFIG } from "@/config/chain-config"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { formatTokenSupply } from "@/helpers/format"
 import { fetchCGTokenData } from "@/utils/price"
@@ -822,6 +823,16 @@ export default function ETFList() {
           {filteredAndSortedETFs.map((etf) => (
             <Card key={etf.id} className={s.etfCard}>
               <BorderAnimate className={s.hover} />
+              {CHAIN_CONFIG[etf.chain]?.abbreviatedName && (
+                <Image
+                  src={`/img/chains/${CHAIN_CONFIG[etf.chain].abbreviatedName}.png`}
+                  alt={CHAIN_CONFIG[etf.chain].name}
+                  width={32}
+                  height={32}
+                  className={s.chainLogo}
+                  title={`${CHAIN_CONFIG[etf.chain].name} Network`}
+                />
+              )}
               <Card className={s.cardHeader}>
                 <div className={s.etfTitle}>
                   <div className={s.titleRow}>

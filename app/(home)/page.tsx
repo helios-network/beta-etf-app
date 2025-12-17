@@ -22,11 +22,13 @@ import { ETFSelectModal } from "./(components)/etf-select-modal"
 import { SlippageModal } from "./(components)/slippage-modal"
 import { TokenSelectModal } from "./(components)/token-select-modal"
 import s from "./page.module.scss"
+import { CHAIN_CONFIG } from "@/config/chain-config"
 
 interface ETF {
   id: string
   name: string
   symbol: string
+  chain?: number
   tokens: Array<{
     symbol: string
     percentage: number
@@ -599,6 +601,23 @@ export default function Home() {
     }
   }
 
+  // Effect to reset state when chain changes
+  useEffect(() => {
+    // Reset allowances and estimates when chain changes
+    setDepositTokenAllowance(false)
+    setShareTokenAllowance(false)
+    setEstimatedAmountsOut([])
+    setEstimatedValuesPerAsset([])
+    setEstimatedSoldAmounts([])
+    setImpermanentLossPercentage(null)
+    
+    // Reset amounts if selected ETF doesn't match current chain
+    if (selectedETF && chainId !== selectedETF.chain) {
+      setSellAmount("")
+      setBuyAmount("")
+    }
+  }, [chainId, selectedETF])
+
   // Effect to fetch balances when selections change
   useEffect(() => {
     const fetchBalances = async () => {
@@ -617,7 +636,7 @@ export default function Home() {
     }
 
     fetchBalances()
-  }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF, fetchTokenBalance])
+  }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF, fetchTokenBalance, chainId])
 
   const isWalletConnected = !!address
   const isETFChainMatch = selectedETF ? chainId === selectedETF.chain : true
@@ -639,6 +658,7 @@ export default function Home() {
       id: etf._id,
       name: etf.name,
       symbol: etf.symbol,
+      chain: etf.chain,
       tokens: etf.assets?.map((asset) => ({
         symbol: asset.symbol,
         percentage: asset.targetWeightBps / 100
@@ -1105,7 +1125,7 @@ export default function Home() {
           </Button>
         ) : !isETFChainMatch && selectedETF ? (
           <Button className={s.start} disabled>
-            Wrong Network (Chain ID: {selectedETF.chain})
+            Wrong Network ({CHAIN_CONFIG[selectedETF.chain]?.name ?? `Chain ${selectedETF.chain}`})
           </Button>
         ) : !selectedETF || (!isReversed && !selectedDepositToken) ? (
           <Button className={s.start} disabled>

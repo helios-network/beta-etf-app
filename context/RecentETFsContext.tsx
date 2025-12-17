@@ -15,6 +15,7 @@ export type DeployedETF = {
     address: string
     txHash: string
     timestamp: number
+    chainId?: number
 }
 
 type RecentETFsContextType = {
