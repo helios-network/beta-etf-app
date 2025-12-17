@@ -91,6 +91,18 @@ interface ApproveTokenParams {
   amount: string
 }
 
+interface UpdateParamsParams {
+  factory: string
+  vault: string
+  imbalanceThresholdBps: string
+  maxPriceStaleness: string
+}
+
+interface UpdateParamsResult {
+  txHash: string
+  blockNumber: number
+}
+
 export const useETFContract = () => {
   const { address } = useAccount()
   const chainId = useChainId()
@@ -660,16 +672,146 @@ export const useETFContract = () => {
     }
   }
 
+  const estimateUpdateParams = async (params: UpdateParamsParams): Promise<void> => {
+    if (!web3Provider || !address) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        params.factory
+      )
+
+      // Simulate the transaction to validate it will succeed
+      await factoryContract.methods
+        .updateParams(
+          params.vault,
+          params.imbalanceThresholdBps,
+          params.maxPriceStaleness
+        )
+        .call({ from: address })
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error estimating update params")
+    }
+  }
+
+  const updateParams = useMutation({
+    mutationFn: async (params: UpdateParamsParams): Promise<UpdateParamsResult> => {
+      if (!web3Provider || !address) {
+        throw new Error("No wallet connected")
+      }
+
+      if (!chainId) {
+        throw new Error("No chain id found")
+      }
+
+      try {
+        const factoryAddress = params.factory
+
+        const factoryContract = new web3Provider.eth.Contract(
+          factoryAbi as any,
+          factoryAddress
+        )
+
+        // Simulate the transaction
+        await factoryContract.methods
+          .updateParams(
+            params.vault,
+            params.imbalanceThresholdBps,
+            params.maxPriceStaleness
+          )
+          .call({ from: address })
+
+        // Estimate gas
+        const gasEstimate = await factoryContract.methods
+          .updateParams(
+            params.vault,
+            params.imbalanceThresholdBps,
+            params.maxPriceStaleness
+          )
+          .estimateGas({ from: address })
+
+        // Add 20% to the gas estimation
+        const gasLimit = (BigInt(gasEstimate.toString()) * 120n) / 100n
+
+        // Get best gas price
+        const bestGasPrice = await getBestGasPrice(web3Provider)
+
+        // Send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth
+            .sendTransaction({
+              from: address,
+              to: factoryAddress,
+              data: factoryContract.methods
+                .updateParams(
+                  params.vault,
+                  params.imbalanceThresholdBps,
+                  params.maxPriceStaleness
+                )
+                .encodeABI(),
+              gas: gasLimit.toString(),
+              gasPrice: bestGasPrice.toString()
+            })
+            .then((tx) => {
+              resolve(tx as any)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        })
+
+        // Parse the ParamsUpdated event
+        let paramsUpdatedEvent: any | null = null
+
+        for (const log of receipt.logs) {
+          try {
+            const evt = decodeEventLog({
+              abi: factoryAbi,
+              data: log.data,
+              topics: log.topics,
+            })
+
+            if (evt.eventName === "ParamsUpdated") {
+              paramsUpdatedEvent = evt
+              break
+            }
+          } catch {}
+        }
+
+        if (!paramsUpdatedEvent) {
+          throw new Error("Could not find ParamsUpdated event in transaction receipt")
+        }
+
+        return {
+          txHash: receipt.transactionHash,
+          blockNumber: Number(receipt.blockNumber)
+        }
+      } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
+        throw new Error((error as Error).message || "Error during updateParams")
+      }
+    }
+  })
+
   return {
     createETF: createETF.mutateAsync,
     deposit: deposit.mutateAsync,
     redeem: redeem.mutateAsync,
     rebalance: rebalance.mutateAsync,
     approveToken: approveToken.mutateAsync,
+    updateParams: updateParams.mutateAsync,
     estimateDepositShares,
     estimateRedeemDeposit,
-    isLoading: createETF.isPending || deposit.isPending || redeem.isPending || rebalance.isPending || approveToken.isPending,
-    error: createETF.error || deposit.error || redeem.error || rebalance.error || approveToken.error
+    estimateUpdateParams,
+    isLoading: createETF.isPending || deposit.isPending || redeem.isPending || rebalance.isPending || approveToken.isPending || updateParams.isPending,
+    error: createETF.error || deposit.error || redeem.error || rebalance.error || approveToken.error || updateParams.error
   }
 }
 

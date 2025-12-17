@@ -11,6 +11,8 @@ import { Input } from "@/components/input"
 import { Select } from "@/components/input/select"
 import { Modal } from "@/components/modal"
 import { erc20Abi } from "@/constant/helios-contracts"
+import { vaultViewAbi } from "@/constant/vault-abi"
+import { pricerViewAbi } from "@/constant/pricer-abi"
 import { fetchETFs, type ETFResponse } from "@/helpers/request"
 import { useETFContract } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
@@ -65,6 +67,7 @@ interface ETF {
     decimals: number
     targetWeightBps: number
   }>
+  owner: string
 }
 
 function formatETFResponse(etf: ETFResponse): ETF {
@@ -111,6 +114,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     chain: etf.chain,
     depositCount: etf.depositCount,
     redeemCount: etf.redeemCount,
+    owner: etf.owner || "",
     assets
   }
 }
@@ -172,13 +176,24 @@ export default function ETFList() {
     tvl: string
   } | null>(null)
 
+  // Update params modal state
+  const [updateParamsModalOpen, setUpdateParamsModalOpen] = useState(false)
+  const [imbalanceThresholdBps, setImbalanceThresholdBps] = useState("")
+  const [maxPriceStaleness, setMaxPriceStaleness] = useState("")
+  const [currentImbalanceThresholdBps, setCurrentImbalanceThresholdBps] = useState<string | null>(null)
+  const [currentMaxPriceStaleness, setCurrentMaxPriceStaleness] = useState<string | null>(null)
+  const [isLoadingCurrentParams, setIsLoadingCurrentParams] = useState(false)
+  const [updateParamsError, setUpdateParamsError] = useState<string | null>(null)
+
   const {
     deposit,
     redeem,
     rebalance,
     approveToken,
+    updateParams,
     estimateDepositShares,
     estimateRedeemDeposit,
+    estimateUpdateParams,
     isLoading: isContractLoading
   } = useETFContract()
   const web3Provider = useWeb3Provider()
@@ -692,6 +707,135 @@ export default function ETFList() {
     }
   }
 
+  const fetchCurrentParams = async (etf: ETF) => {
+    if (!web3Provider) return
+
+    setIsLoadingCurrentParams(true)
+    setUpdateParamsError(null)
+
+    try {
+      // Fetch imbalanceThresholdBps from vault
+      const vaultContract = new web3Provider.eth.Contract(
+        vaultViewAbi as any,
+        etf.vault
+      )
+      const imbalanceThresholdBpsValue = await vaultContract.methods
+        .imbalanceThresholdBps()
+        .call()
+
+      // Fetch maxPriceStaleness from pricer
+      const pricerContract = new web3Provider.eth.Contract(
+        pricerViewAbi as any,
+        etf.pricer
+      )
+      const maxPriceStalenessValue = await pricerContract.methods
+        .maxPriceStaleness()
+        .call()
+
+      setCurrentImbalanceThresholdBps(String(imbalanceThresholdBpsValue))
+      setCurrentMaxPriceStaleness(String(maxPriceStalenessValue))
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch current parameters"
+      setUpdateParamsError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsLoadingCurrentParams(false)
+    }
+  }
+
+  const handleOpenUpdateParamsModal = async (etf: ETF) => {
+    if (!isWalletConnected) {
+      toast.error("Please connect your wallet first")
+      return
+    }
+    if (!isETFChainMatch(etf)) {
+      toast.error(
+        `Please switch to the correct network (Chain ID: ${etf.chain})`
+      )
+      return
+    }
+
+    setSelectedETF(etf)
+    setImbalanceThresholdBps("")
+    setMaxPriceStaleness("")
+    setCurrentImbalanceThresholdBps(null)
+    setCurrentMaxPriceStaleness(null)
+    setUpdateParamsError(null)
+    setUpdateParamsModalOpen(true)
+
+    // Fetch current params
+    await fetchCurrentParams(etf)
+  }
+
+  const handleEstimateUpdateParams = async () => {
+    if (!selectedETF) return
+
+    if (!imbalanceThresholdBps || parseFloat(imbalanceThresholdBps) < 0) {
+      toast.error("Please enter a valid imbalance threshold (BPS)")
+      return
+    }
+
+    if (!maxPriceStaleness || parseFloat(maxPriceStaleness) < 0) {
+      toast.error("Please enter a valid max price staleness")
+      return
+    }
+
+    try {
+      await estimateUpdateParams({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        imbalanceThresholdBps,
+        maxPriceStaleness
+      })
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to validate parameters"
+      toast.error(errorMessage)
+      throw error
+    }
+  }
+
+  const handleConfirmUpdateParams = async () => {
+    if (!selectedETF) return
+
+    if (!imbalanceThresholdBps || parseFloat(imbalanceThresholdBps) < 0) {
+      toast.error("Please enter a valid imbalance threshold (BPS)")
+      return
+    }
+
+    if (!maxPriceStaleness || parseFloat(maxPriceStaleness) < 0) {
+      toast.error("Please enter a valid max price staleness")
+      return
+    }
+
+    try {
+      // First estimate to validate
+      await handleEstimateUpdateParams()
+
+      // If estimation succeeds, proceed with the update
+      await updateParams({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        imbalanceThresholdBps,
+        maxPriceStaleness
+      })
+
+      toast.success(`Successfully updated parameters for ${selectedETF.symbol}`)
+      setUpdateParamsModalOpen(false)
+      setImbalanceThresholdBps("")
+      setMaxPriceStaleness("")
+      setSelectedETF(null)
+      setCurrentImbalanceThresholdBps(null)
+      setCurrentMaxPriceStaleness(null)
+      setUpdateParamsError(null)
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update parameters"
+      toast.error(errorMessage)
+    }
+  }
+
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case "low":
@@ -952,6 +1096,15 @@ export default function ETFList() {
                 <div className={s.composition}>
                   <h4>
                     Composition <span>{etf.tokens.length} tokens</span>
+                    {etf.owner && address && etf.owner.toLowerCase() === address.toLowerCase() && (
+                      <Button
+                        variant="secondary"
+                        size="xsmall"
+                        onClick={() => handleOpenUpdateParamsModal(etf)}
+                        iconLeft="hugeicons:settings-01"
+                        title="Update Parameters"
+                      />
+                    )}
                   </h4>
                   <div className={s.tokens}>
                     {etf.tokens.map((token) => {
@@ -1933,6 +2086,133 @@ export default function ETFList() {
               </Button>
             )}
           </div>
+        </div>
+      </Modal>
+
+      {/* Update Params Modal */}
+      <Modal
+        open={updateParamsModalOpen}
+        onClose={() => {
+          setUpdateParamsModalOpen(false)
+          setSelectedETF(null)
+          setImbalanceThresholdBps("")
+          setMaxPriceStaleness("")
+          setCurrentImbalanceThresholdBps(null)
+          setCurrentMaxPriceStaleness(null)
+          setUpdateParamsError(null)
+        }}
+        title={`Update Parameters - ${selectedETF?.symbol || ""}`}
+      >
+        <div className={s.modalContent}>
+          <p className={s.modalDescription}>
+            Update vault parameters for this ETF. Only the owner can modify these settings.
+          </p>
+
+          {isLoadingCurrentParams ? (
+            <div style={{ padding: "1rem", textAlign: "center" }}>
+              Loading current parameters...
+            </div>
+          ) : (
+            <>
+              {currentImbalanceThresholdBps !== null && currentMaxPriceStaleness !== null && (
+                <div style={{
+                  padding: "0.75rem 1rem",
+                  background: "var(--background-low)",
+                  borderRadius: "var(--radius-s)",
+                  border: "1px solid var(--border-light)",
+                  marginBottom: "1rem"
+                }}>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                    Current Values:
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <div style={{ fontSize: "0.85rem" }}>
+                      <strong>Imbalance Threshold:</strong> {currentImbalanceThresholdBps} BPS
+                    </div>
+                    <div 
+                      style={{ fontSize: "0.85rem" }}
+                      title={`${(parseInt(currentMaxPriceStaleness || "0") / 60).toFixed(2)} minutes, ${(parseInt(currentMaxPriceStaleness || "0") / 3600).toFixed(2)} hours, ${((parseInt(currentMaxPriceStaleness || "0") / 3600) / 24).toFixed(2)} days`}
+                    >
+                      <strong>Max Price Staleness:</strong> {currentMaxPriceStaleness} seconds
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {updateParamsError && (
+                <div style={{
+                  padding: "0.75rem 1rem",
+                  background: "var(--danger-lowest)",
+                  border: "1px solid var(--danger-low)",
+                  borderRadius: "var(--radius-s)",
+                  color: "var(--danger-high)",
+                  marginBottom: "1rem",
+                  fontSize: "0.9rem"
+                }}>
+                  {updateParamsError}
+                </div>
+              )}
+
+              <Input
+                label="Imbalance Threshold (BPS)"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 100"
+                value={imbalanceThresholdBps}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, "")
+                  setImbalanceThresholdBps(value)
+                  setUpdateParamsError(null)
+                }}
+                icon="hugeicons:percent"
+                helperText="Basis Points (1 BPS = 0.01%)"
+              />
+
+              <Input
+                label="Max Price Staleness"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 3600"
+                value={maxPriceStaleness}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, "")
+                  setMaxPriceStaleness(value)
+                  setUpdateParamsError(null)
+                }}
+                icon="hugeicons:clock-01"
+                helperText="Maximum age of price data in seconds"
+              />
+
+              <div className={s.modalActions}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setUpdateParamsModalOpen(false)
+                    setSelectedETF(null)
+                    setImbalanceThresholdBps("")
+                    setMaxPriceStaleness("")
+                    setCurrentImbalanceThresholdBps(null)
+                    setCurrentMaxPriceStaleness(null)
+                    setUpdateParamsError(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleConfirmUpdateParams}
+                  disabled={isContractLoading || !imbalanceThresholdBps || !maxPriceStaleness}
+                  iconLeft={
+                    isContractLoading
+                      ? "hugeicons:loading-01"
+                      : "hugeicons:checkmark-circle-02"
+                  }
+                >
+                  {isContractLoading ? "Processing..." : "Confirm Update"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
 

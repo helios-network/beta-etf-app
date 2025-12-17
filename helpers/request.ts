@@ -77,6 +77,7 @@ interface ETFResponse {
   maxPriceStaleness?: number
   depositCount?: number
   redeemCount?: number
+  owner?: string
   createdAt: string
   updatedAt: string
   __v: number
