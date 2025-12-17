@@ -62,6 +62,7 @@ interface ETFResponse {
   symbol: string
   totalSupply?: string
   volumeTradedUSD?: number
+  dailyVolumeUSD?: number
   tvl: number
   sharePrice?: string
   eventNonce: number
