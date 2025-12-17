@@ -1141,7 +1141,6 @@ export default function Home() {
         onSelect={(etfResponse) => {
           handleETFSelect(etfResponse)
         }}
-        chainId={chainId}
         depositToken={isReversed ? undefined : selectedDepositToken?.address}
       />
 

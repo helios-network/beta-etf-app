@@ -28,16 +28,10 @@ interface ETF {
   }>
 }
 
-interface TokenData {
-  price: number
-  logo: string
-}
-
 interface ETFSelectModalProps {
   open: boolean
   onClose: () => void
   onSelect: (etf: ETFResponse) => void
-  chainId: number
   depositToken?: string
 }
 
@@ -45,7 +39,6 @@ export function ETFSelectModal({
   open,
   onClose,
   onSelect,
-  chainId,
   depositToken
 }: ETFSelectModalProps) {
   const [searchTerm, setSearchTerm] = useState("")

@@ -20,11 +20,6 @@ interface Token {
   name: string
 }
 
-interface TokenData {
-  price: number
-  logo: string
-}
-
 interface TokenSelectModalProps {
   open: boolean
   onClose: () => void
