@@ -871,20 +871,23 @@ export default function ETFList() {
                     </div>
                   </div>
                 </div>
-                <span className={s.symbol}>
-                  {etf.symbol} <BorderAnimate />
-                </span>
+                {/* <span className={s.symbol}>
+                  <Icon icon="hugeicons:link-square-01" />{etf.symbol} <BorderAnimate />
+                </span> */}
+                <a
+                    href={getExplorerUrl(etf.shareToken, etf.chain)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={s.symbol}
+                    title={`View on ${getChainName(etf.chain)} explorer`}
+                  >
+                    <Icon icon="hugeicons:link-square-01" />
+                    {etf.symbol} <BorderAnimate />
+                </a>
                 <div className={s.badges}>
                   <Badge status={getRiskColor(etf.riskLevel)}>
                     {etf.riskLevel.toUpperCase()}
                   </Badge>
-                  <Badge status="primary">{etf.category}</Badge>
-                  {etf.depositCount !== undefined && etf.redeemCount !== undefined && 
-                   (etf.depositCount === 0 || etf.redeemCount === 0) && (
-                    <Badge status="warning">
-                      Not Tested
-                    </Badge>
-                  )}
                   <a
                     href={getExplorerUrl(etf.vault, etf.chain)}
                     target="_blank"
@@ -905,6 +908,12 @@ export default function ETFList() {
                     <Icon icon="hugeicons:link-square-01" />
                     pricer
                   </a>
+                  {etf.depositCount !== undefined && etf.redeemCount !== undefined && 
+                   (etf.depositCount === 0 || etf.redeemCount === 0) && (
+                    <Badge status="warning">
+                      Not Tested
+                    </Badge>
+                  )}
                 </div>
                 <div className={s.metricsGrid}>
                   <Card className={s.metric}>

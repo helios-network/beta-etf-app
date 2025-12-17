@@ -453,6 +453,15 @@
     position: absolute;
     top: -1px;
     left: var(--padding);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
+    min-width: 0;
   }
 
   .badges {
