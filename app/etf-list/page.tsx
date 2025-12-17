@@ -55,6 +55,8 @@ interface ETF {
   depositSymbol: string
   depositDecimals: number
   chain: number
+  depositCount?: number
+  redeemCount?: number
   assets?: Array<{
     token: string
     symbol: string
@@ -104,6 +106,8 @@ function formatETFResponse(etf: ETFResponse): ETF {
     depositSymbol: etf.depositSymbol || "TOKEN",
     depositDecimals: etf.depositDecimals || 18,
     chain: etf.chain,
+    depositCount: etf.depositCount,
+    redeemCount: etf.redeemCount,
     assets
   }
 }
@@ -863,6 +867,19 @@ export default function ETFList() {
                     {etf.riskLevel.toUpperCase()}
                   </Badge>
                   <Badge status="primary">{etf.category}</Badge>
+                  {etf.depositCount !== undefined && etf.redeemCount !== undefined && (
+                    <Badge
+                      status={
+                        etf.depositCount > 1 && etf.redeemCount > 1
+                          ? "success"
+                          : "warning"
+                      }
+                    >
+                      {etf.depositCount > 1 && etf.redeemCount > 1
+                        ? "Tested"
+                        : "Not Tested"}
+                    </Badge>
+                  )}
                   <a
                     href={getExplorerUrl(etf.vault, etf.chain)}
                     target="_blank"

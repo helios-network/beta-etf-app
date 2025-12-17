@@ -14,7 +14,7 @@ import { BorderAnimate } from "../border-animate"
 import s from "./points-modal.module.scss"
 
 export const PointsModal = () => {
-  const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
+  const [activeTab/*, setActiveTab*/] = useState<"season1" | "season2" | "season3">(
     "season1"
   )
 

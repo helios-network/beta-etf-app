@@ -13,9 +13,9 @@ import { useEffect, useState } from "react"
 import s from "./leaderboard.module.scss"
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
-    "season1"
-  )
+  // const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
+  //   "season1"
+  // )
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([])

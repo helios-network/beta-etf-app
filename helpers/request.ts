@@ -74,6 +74,8 @@ interface ETFResponse {
   assets?: ETFAsset[]
   imbalanceThresholdBps?: number
   maxPriceStaleness?: number
+  depositCount?: number
+  redeemCount?: number
   createdAt: string
   updatedAt: string
   __v: number
