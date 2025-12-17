@@ -209,7 +209,6 @@ export default function Home() {
 
   const handleETFSelect = async (etf: ETFResponse) => {
     setSelectedETF(etf)
-    setSellAmount("")
     setBuyAmount("")
     setDepositTokenAllowance(false)
     setShareTokenAllowance(false)
@@ -257,8 +256,6 @@ export default function Home() {
 
   // Handle sell amount change (deposit token -> ETF or ETF shares -> deposit token)
   const handleSellAmountChange = async (value: string) => {
-    if (!selectedETF) return
-    
     const decimals = isReversed ? 18 : (selectedDepositToken?.decimals || 18)
     const validatedValue = validateDecimalInput(value, decimals)
     setSellAmount(validatedValue)
@@ -273,6 +270,9 @@ export default function Home() {
       setImpermanentLossPercentage(null)
       return
     }
+
+    // Si aucun ETF n'est sélectionné, on met juste à jour le montant sans estimation
+    if (!selectedETF) return
 
     setIsEstimating(true)
     setIsCheckingAllowance(true)
@@ -626,6 +626,14 @@ export default function Home() {
 
     fetchBalances()
   }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF, fetchTokenBalance, chainId])
+
+  // Effect to trigger estimation when ETF is selected and amount already exists
+  useEffect(() => {
+    if (selectedETF && sellAmount && parseFloat(sellAmount) > 0) {
+      handleSellAmountChange(sellAmount)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedETF])
 
   const isWalletConnected = !!address
   const isETFChainMatch = selectedETF ? chainId === selectedETF.chain : true
