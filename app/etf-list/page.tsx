@@ -867,17 +867,10 @@ export default function ETFList() {
                     {etf.riskLevel.toUpperCase()}
                   </Badge>
                   <Badge status="primary">{etf.category}</Badge>
-                  {etf.depositCount !== undefined && etf.redeemCount !== undefined && (
-                    <Badge
-                      status={
-                        etf.depositCount > 1 && etf.redeemCount > 1
-                          ? "success"
-                          : "warning"
-                      }
-                    >
-                      {etf.depositCount > 1 && etf.redeemCount > 1
-                        ? "Tested"
-                        : "Not Tested"}
+                  {etf.depositCount !== undefined && etf.redeemCount !== undefined && 
+                   (etf.depositCount === 0 || etf.redeemCount === 0) && (
+                    <Badge status="warning">
+                      Not Tested
                     </Badge>
                   )}
                   <a
