@@ -254,6 +254,13 @@ interface VerifyETFResponse {
   status: "OK" | "ERROR"
   readyForCreation?: boolean
   errorMessage?: string
+  details?: {
+    details: string
+    message: string
+    requiredUSD: number
+    token: string
+  }
+  reason?: string
   factoryAddress: string
   components?: VerifyETFComponent[]
 }
@@ -280,6 +287,11 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   if (!response.ok) {
 
     const data = await response.json()
+
+    if (data?.details?.details != undefined) {
+      console.log("sssss", data)
+      return data.details as VerifyETFResponse;
+    }
 
     if (data?.details?.message) {
       throw new Error(`Failed to verify ETF: ${data?.details?.message}`)

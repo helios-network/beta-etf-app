@@ -184,12 +184,27 @@ export const ETFCreatorInterface = () => {
       })
       
       if (data.status === "ERROR") {
+        if (data.reason == "INSUFFICIENT_LIQUIDITY") {
+          toast.error(`Insufficient liquidity for ${data.details?.token}. Required: $${data.details?.requiredUSD.toLocaleString()}. Please add more liquidity to the token.`, {
+            duration: 10000,
+            closeButton: true
+          })
+          setVerifyState({
+            status: "error",
+            errorMessage: data.reason || "Verification failed",
+            backendResult: data
+          })
+          return
+        }
         setVerifyState({
           status: "error",
-          errorMessage: data.errorMessage || "Verification failed",
+          errorMessage: data.reason || "Verification failed",
           backendResult: data
         })
-        toast.error(data.errorMessage || "Verification failed")
+        toast.error(JSON.stringify(data), {
+          duration: 10000,
+          closeButton: true
+        })
       } else if (data.status === "OK" && data.readyForCreation) {
         setVerifyState({
           status: "success",
@@ -206,6 +221,7 @@ export const ETFCreatorInterface = () => {
         toast.error("Backend returned unexpected status")
       }
     } catch (error: any) {
+      console.error("Error verifying ETF:", error)
       setVerifyState({
         status: "error",
         errorMessage: error?.message || "Failed to verify with backend",
@@ -346,7 +362,7 @@ export const ETFCreatorInterface = () => {
     form.rebalancingMode !== null
 
   const isWalletConnected = !!address
-  const canVerify = isFormValid && !verifyState.backendResult
+  const canVerify = isFormValid && (!verifyState.backendResult || verifyState.status === "error")
   const canDeploy = isFormValid && verifyState.status === "success"
 
   return (
