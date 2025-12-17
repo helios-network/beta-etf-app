@@ -5,8 +5,14 @@ import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
 import { Symbol } from "@/components/symbol"
 import { getAssetColor, getAssetIcon } from "@/utils/assets"
+import { fetchDepositTokens, type DepositToken } from "@/helpers/request"
+
+// Keep Token interface for internal use
+import { fetchCGTokenData } from "@/utils/price"
+import { useQuery } from "@tanstack/react-query"
+import { useDebounceValue } from "usehooks-ts"
 import Image from "next/image"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import s from "./token-select-modal.module.scss"
 
 interface Token {
@@ -22,35 +28,70 @@ interface TokenData {
 interface TokenSelectModalProps {
   open: boolean
   onClose: () => void
-  onSelect: (token: Token) => void
-  tokens: Token[]
-  tokenData: Record<string, TokenData>
+  onSelect: (token: DepositToken) => void
+  chainId: number
 }
 
 export function TokenSelectModal({
   open,
   onClose,
   onSelect,
-  tokens,
-  tokenData
+  chainId
 }: TokenSelectModalProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const [debouncedSearchTerm] = useDebounceValue(searchTerm, 400)
 
-  const filteredTokens = useMemo(() => {
-    if (!searchTerm.trim()) return tokens
+  // Reset search term when modal opens
+  useEffect(() => {
+    if (open) {
+      setSearchTerm("")
+    }
+  }, [open])
 
-    const lowerSearch = searchTerm.toLowerCase()
-    return tokens.filter(
-      (token) =>
-        token.symbol.toLowerCase().includes(lowerSearch) ||
-        token.name.toLowerCase().includes(lowerSearch)
-    )
-  }, [tokens, searchTerm])
+  // Fetch tokens with search
+  const { data: tokensData, isLoading: isLoadingTokens, error: tokensError } = useQuery({
+    queryKey: ["depositTokens", "modal", chainId, debouncedSearchTerm || ""],
+    queryFn: () => {
+      const searchParam = debouncedSearchTerm?.trim() || undefined
+      return fetchDepositTokens(chainId, searchParam)
+    },
+    enabled: open,
+    staleTime: 30 * 1000,
+  })
+
+  // Store full DepositToken data
+  const depositTokens: DepositToken[] = useMemo(() => {
+    return tokensData?.data || []
+  }, [tokensData?.data])
+
+  // Convert DepositToken to Token format for display
+  const tokens: Token[] = useMemo(() => {
+    return depositTokens.map((token) => ({
+      symbol: token.symbol,
+      name: token.symbol // We don't have the full name from API
+    }))
+  }, [depositTokens])
+
+  // Get all token symbols
+  const allTokenSymbols = useMemo(() => {
+    return tokens.map((token) => token.symbol.toLowerCase())
+  }, [tokens])
+
+  // Fetch token data
+  const { data: tokenData = {} } = useQuery({
+    queryKey: ["tokenData", "modal", allTokenSymbols],
+    queryFn: () => fetchCGTokenData(allTokenSymbols),
+    enabled: open && allTokenSymbols.length > 0,
+    staleTime: 5 * 60 * 1000,
+  })
 
   const handleSelect = (token: Token) => {
-    onSelect(token)
-    setSearchTerm("")
-    onClose()
+    const depositToken = depositTokens.find((t) => t.symbol === token.symbol)
+    if (depositToken) {
+      onSelect(depositToken)
+      setSearchTerm("")
+      onClose()
+    }
   }
 
   return (
@@ -73,10 +114,18 @@ export function TokenSelectModal({
         </div>
 
         <div className={s.list}>
-          {filteredTokens.length === 0 ? (
-            <div className={s.empty}>No tokens found</div>
+          {isLoadingTokens ? (
+            <div className={s.empty}>Loading...</div>
+          ) : tokensError ? (
+            <div className={s.empty}>
+              Error loading tokens: {tokensError instanceof Error ? tokensError.message : "Unknown error"}
+            </div>
+          ) : tokens.length === 0 ? (
+            <div className={s.empty}>
+              {debouncedSearchTerm ? `No tokens found for "${debouncedSearchTerm}"` : "No tokens found"}
+            </div>
           ) : (
-            filteredTokens.map((token) => {
+            tokens.map((token) => {
               const logo = tokenData[token.symbol.toLowerCase()]?.logo
 
               return (

@@ -95,7 +95,7 @@ interface ETFsApiResponse {
   }
 }
 
-async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string): Promise<ETFsApiResponse> {
+async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string, search?: string): Promise<ETFsApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
   
   if (!apiUrl) {
@@ -111,6 +111,10 @@ async function fetchETFs(page: number = 1, size: number = 10, depositToken?: str
   
   if (depositToken) {
     params.append("depositToken", depositToken)
+  }
+  
+  if (search && search.trim()) {
+    params.append("search", search.trim())
   }
   
   const url = `${baseUrl}/api/etfs?${params.toString()}`
@@ -146,7 +150,7 @@ interface DepositTokensApiResponse {
   data: DepositToken[]
 }
 
-async function fetchDepositTokens(chainId: number): Promise<DepositTokensApiResponse> {
+async function fetchDepositTokens(chainId: number, search?: string): Promise<DepositTokensApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
   
   if (!apiUrl) {
@@ -155,7 +159,15 @@ async function fetchDepositTokens(chainId: number): Promise<DepositTokensApiResp
 
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
-  const url = `${baseUrl}/api/etfs/deposit-tokens?chainId=${chainId}`
+  const params = new URLSearchParams({
+    chainId: chainId.toString()
+  })
+  
+  if (search && search.trim()) {
+    params.append("search", search.trim())
+  }
+  
+  const url = `${baseUrl}/api/etfs/deposit-tokens?${params.toString()}`
   
   const response = await fetch(url, {
     method: "GET",
