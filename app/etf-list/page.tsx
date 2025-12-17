@@ -737,12 +737,12 @@ export default function ETFList() {
           <span className={s.label}>Total TVL</span>
           <span className={s.statValue}>
             $
-            {filteredAndSortedETFs
+            {formatTokenSupply(filteredAndSortedETFs
               .reduce(
                 (sum, etf) => sum + Number(etf.tvl),
                 0
               )
-              .toFixed(2)}
+              .toFixed(2), 0, 2)}
           </span>
         </div>
         <div className={s.stat}>
@@ -752,7 +752,7 @@ export default function ETFList() {
               formatTokenSupply(filteredAndSortedETFs.reduce(
                 (sum, etf) => sum + etf.dailyVolumeUSD,
                 0
-              ).toString(), 0, 2)}
+              ).toFixed(2), 0, 2)}
           </span>
         </div>
       </div>
