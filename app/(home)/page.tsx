@@ -252,7 +252,6 @@ export default function Home() {
 
   const handleSwapDirection = () => {
     setIsReversed(!isReversed)
-    setSelectedETF(null)
     setSellAmount("")
     setBuyAmount("")
     setDepositTokenAllowance(false)
