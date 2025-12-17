@@ -224,7 +224,7 @@ export default function PortfolioPage() {
           <Card className={s.stat}>
             <span className={s.label}>Total Value</span>
             <span className={s.value}>
-              ${formatTokenAmount(summary.totalValueUSD)}
+              ${formatTokenAmount(assets.reduce((acc, asset) => acc + asset.amountUSD, 0).toString())}
             </span>
           </Card>
           <Card className={s.stat}>
