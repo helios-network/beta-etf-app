@@ -39,14 +39,14 @@ export const PointsButton = () => {
       data-button-points
     >
       <div className={s.content}>
-        <Icon icon="hugeicons:ranking" className={s.icon} />
+        <Icon icon="hugeicons:star" className={s.icon} />
         <span className={s.text}>
           {isLoading
             ? "..."
             : points.toLocaleString("en-US", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-              })}
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2
+            })}
         </span>
         <span className={s.multiplier}>{multiplier.toFixed(1)}x</span>
       </div>
