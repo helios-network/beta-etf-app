@@ -11,58 +11,21 @@ export function Disclosures() {
       <Heading
         icon="hugeicons:apple-reminder"
         title="Disclosures"
-        description="Important legal and risk information"
+        description="Please read carefully"
       />
 
       <div className={s.content}>
-        <div className={s.section}>
-          <h4 className={s.sectionTitle}>General Disclaimer</h4>
-          <p className={s.text}>
-            Use of this platform implies acceptance of our terms and conditions.
-            Information presented comes from on-chain sources and may be subject
-            to errors or delays. Past performance is not indicative of future
-            results.
-          </p>
-        </div>
+        <p className={s.disclosureText}>
+          By using <a href="#" className={s.link}>helios.finance</a> (the "Website"), you expressly acknowledge that you have read and understood the <a href="#" className={s.link}>Terms and Conditions</a> and agree to the terms therein. Helios Labs ("Helios") operates the Website to help facilitate interaction with the Helios protocol, including the minting and redeeming of ETFs. However, the Website is only one of several ways in which you can interact with the Helios protocol. Helios has neither created nor deployed any DTF and you are solely responsible for your interaction with specific DTFs via this Website in no way indicates that any DTF is endorsed by Helios. In fact, Helios assumes no liability for your use of the Website and interaction with the Helios protocol, as covered in the Terms and Conditions.
+        </p>
 
-        <div className={s.section}>
-          <h4 className={s.sectionTitle}>Risks Related to Digital Assets</h4>
-          <p className={s.text}>
-            Digital assets and ETF tokens present significant risks, including
-            price volatility, possible total loss of invested capital, and
-            technical risks related to blockchain technology. Only invest what
-            you can afford to lose.
-          </p>
-        </div>
+        <p className={s.disclosureText}>
+          The information provided on the Website comes from on-chain sources. Past performance is not indicative of future results. Although index ETFs are intended to track indexes, their ability to successfully track indexes is dependent on the governance structure of the DTF and the governance's ability to make appropriate trades. There is no guarantee that index funds will be successful or will track its corresponding index exactly. There are many risks associated with digital assets, including but not limited to security risk, counterparty risk, volatility risk, conflicts of interest, and many more. DTFs are non-custodial. You agree that your interaction with any DTFs is solely at your own risk and the Website and DTFs come as is, without any warranty or condition of any kind.
+        </p>
 
-        <div className={s.section}>
-          <h4 className={s.sectionTitle}>Not Financial Advice</h4>
-          <p className={s.text}>
-            Information provided on this platform does not constitute financial,
-            investment, legal, or tax advice. You must conduct your own research
-            and consult qualified professionals before making any investment
-            decisions.
-          </p>
-        </div>
-
-        <div className={s.section}>
-          <h4 className={s.sectionTitle}>Smart Contract Risks</h4>
-          <p className={s.text}>
-            ETFs are managed by smart contracts deployed on the blockchain.
-            Although these contracts are audited, they may contain bugs or
-            vulnerabilities that could result in loss of funds. There is no
-            guarantee regarding the security or operation of these contracts.
-          </p>
-        </div>
-
-        <div className={s.section}>
-          <h4 className={s.sectionTitle}>Regulation</h4>
-          <p className={s.text}>
-            Regulations regarding digital assets vary by jurisdiction. Make sure
-            you understand and comply with applicable laws in your region before
-            using this platform.
-          </p>
-        </div>
+        <p className={s.disclosureFooter}>
+          To learn more about the risks associated with DTFs, <a href="#" className={s.link}>please see here</a>.
+        </p>
       </div>
     </Card>
   )
