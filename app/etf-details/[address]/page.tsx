@@ -1,6 +1,5 @@
 "use client"
 
-import { useParams } from "next/navigation"
 import { AboutSection } from "./(components)/about-section"
 import { BasketGovernance } from "./(components)/basket-governance"
 import { Disclosures } from "./(components)/disclosures"
@@ -47,7 +46,6 @@ const fakeETFData = {
 }
 
 export default function ETFDetailsPage() {
-  const params = useParams()
   const etf = fakeETFData
   const chainConfig = CHAIN_CONFIG[etf.chain]
   const isCreator = true // TODO: Replace with actual creator check based on wallet address

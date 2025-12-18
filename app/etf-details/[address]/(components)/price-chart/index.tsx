@@ -73,6 +73,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 }
 
 export function PriceChart({ etf }: PriceChartProps) {
+  console.log("etf", etf)
   const [selectedPeriod, setSelectedPeriod] = useState("7d")
   const chartData = generateFakeData(selectedPeriod)
 

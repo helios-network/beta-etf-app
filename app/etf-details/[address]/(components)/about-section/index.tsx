@@ -53,7 +53,8 @@ export function AboutSection({
       await new Promise((resolve) => setTimeout(resolve, 1000))
       toast.success("Information updated successfully")
       setIsEditing(false)
-    } catch (error) {
+    } catch (error: any) {
+      console.error(error)
       toast.error("Error updating information")
     } finally {
       setIsSaving(false)
