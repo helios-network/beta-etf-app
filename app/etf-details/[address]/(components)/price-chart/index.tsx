@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Card } from "@/components/card"
 import { Button } from "@/components/button"
+import { Card } from "@/components/card"
 import { Heading } from "@/components/heading"
+import { RechartsTooltip } from "@/components/recharts/tooltip"
+import clsx from "clsx"
+import { useState } from "react"
 import {
   Area,
   AreaChart,
@@ -13,8 +15,6 @@ import {
   XAxis,
   YAxis
 } from "recharts"
-import { RechartsTooltip } from "@/components/recharts/tooltip"
-import clsx from "clsx"
 import s from "./price-chart.module.scss"
 
 interface ETF {
@@ -48,7 +48,10 @@ const generateFakeData = (period: string) => {
     date.setDate(date.getDate() - i)
     const value = 170 + Math.random() * 20
     data.push({
-      date: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      date: date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      }),
       value: parseFloat(value.toFixed(2))
     })
   }
@@ -88,8 +91,8 @@ export function PriceChart({ etf }: PriceChartProps) {
 
   const xAxisConfig = getXAxisConfig()
 
-  const minValue = Math.min(...chartData.map(d => d.value))
-  const maxValue = Math.max(...chartData.map(d => d.value))
+  const minValue = Math.min(...chartData.map((d) => d.value))
+  const maxValue = Math.max(...chartData.map((d) => d.value))
   const padding = (maxValue - minValue) * 0.1
 
   return (
@@ -115,7 +118,7 @@ export function PriceChart({ etf }: PriceChartProps) {
         </div>
       </div>
       <div className={s.chartContainer}>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250}>
           <AreaChart data={chartData}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">

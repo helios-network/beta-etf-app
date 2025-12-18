@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { Card } from "@/components/card"
 import { Button } from "@/components/button"
-import { Icon } from "@/components/icon"
+import { Card } from "@/components/card"
 import { Heading } from "@/components/heading"
-import { Modal } from "@/components/modal"
+import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
-import { toast } from "sonner"
+import { Modal } from "@/components/modal"
 import { ChainConfig } from "@/config/chain-config"
 import clsx from "clsx"
+import { useState } from "react"
+import { toast } from "sonner"
 import s from "./about-section.module.scss"
 
 interface ETF {
@@ -36,7 +36,11 @@ interface AboutSectionProps {
   chainConfig?: ChainConfig
 }
 
-export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps) {
+export function AboutSection({
+  etf,
+  isCreator,
+  chainConfig
+}: AboutSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [website, setWebsite] = useState(etf.website || "")
   const [description, setDescription] = useState(etf.description)
@@ -46,7 +50,7 @@ export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps)
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       toast.success("Information updated successfully")
       setIsEditing(false)
     } catch (error) {
@@ -79,13 +83,13 @@ export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps)
         <Heading
           icon="hugeicons:information-circle"
           title="About this ETF"
-          description="Key information and details about this ETF"
+          description="Details about this ETF"
         />
         {isCreator && (
           <Button
             variant="secondary"
             size="small"
-            iconLeft="edit"
+            iconLeft="hugeicons:settings-02"
             onClick={() => setIsEditing(true)}
           >
             Edit
@@ -99,21 +103,15 @@ export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps)
         <div className={s.metricsGrid}>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Market Cap</span>
-            <span className={s.metricValue}>
-              {formatCurrency(etf.tvl)}
-            </span>
+            <span className={s.metricValue}>{formatCurrency(etf.tvl)}</span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Supply</span>
-            <span className={s.metricValue}>
-              {etf.totalSupply}
-            </span>
+            <span className={s.metricValue}>{etf.totalSupply}</span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Price</span>
-            <span className={s.metricValue}>
-              ${etf.sharePrice}
-            </span>
+            <span className={s.metricValue}>${etf.sharePrice}</span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>24h Volume</span>
@@ -123,9 +121,7 @@ export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps)
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Created</span>
-            <span className={s.metricValue}>
-              {formatDate(etf.createdAt)}
-            </span>
+            <span className={s.metricValue}>{formatDate(etf.createdAt)}</span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Chain</span>
@@ -138,9 +134,9 @@ export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps)
         {website && (
           <div className={s.website}>
             <Icon icon="link" className={s.linkIcon} />
-            <a 
-              href={website} 
-              target="_blank" 
+            <a
+              href={website}
+              target="_blank"
               rel="noopener noreferrer"
               className={s.websiteLink}
             >
@@ -192,23 +188,23 @@ export function AboutSection({ etf, isCreator, chainConfig }: AboutSectionProps)
               type="text"
               label="Tags (comma separated)"
               value={tags.join(", ")}
-              onChange={(e) => setTags(e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
+              onChange={(e) =>
+                setTags(
+                  e.target.value
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                )
+              }
               placeholder="DeFi, Index, Crypto"
             />
           </div>
 
           <div className={s.formActions}>
-            <Button
-              variant="secondary"
-              onClick={() => setIsEditing(false)}
-            >
+            <Button variant="secondary" onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              disabled={isSaving}
-            >
+            <Button variant="primary" onClick={handleSave} disabled={isSaving}>
               {isSaving ? "Saving..." : "Save"}
             </Button>
           </div>

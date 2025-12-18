@@ -50,7 +50,7 @@ export default function ETFDetailsPage() {
   const params = useParams()
   const etf = fakeETFData
   const chainConfig = CHAIN_CONFIG[etf.chain]
-  const isCreator = false
+  const isCreator = true // TODO: Replace with actual creator check based on wallet address
 
   return (
     <div className={s.page}>

@@ -3,14 +3,13 @@
 .content {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--card-gap) / 2);
-  margin-top: .5rem;
+  margin-top: 0.5rem;
 }
 
 .governanceInfo {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--size-3);
 }
 
 .infoItem {
@@ -27,19 +26,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .label {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.15em;
 }
 
 .actions {
   display: flex;
   gap: 0.5rem;
+  position: absolute;
+  right: 0;
+  top: 0;
 }
 
 .addressValue {

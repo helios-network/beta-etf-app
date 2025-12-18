@@ -1,12 +1,12 @@
 "use client"
 
+import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import { Heading } from "@/components/heading"
-import { Button } from "@/components/button"
 import { ChainConfig } from "@/config/chain-config"
 import { formatHash } from "@/utils/string"
-import { toast } from "sonner"
 import clsx from "clsx"
+import { toast } from "sonner"
 import s from "./basket-governance.module.scss"
 
 interface ETF {
@@ -63,16 +63,14 @@ function AddressItem({ label, address, explorerUrl }: AddressItemProps) {
           />
         </div>
       </div>
-      <div className={s.addressValue}>
-        {formatHash(address, 6, 4)}
-      </div>
+      <div className={s.addressValue}>{formatHash(address, 6, 4)}</div>
       <div className={s.fullAddress}>{address}</div>
     </div>
   )
 }
 
 export function BasketGovernance({ etf, chainConfig }: BasketGovernanceProps) {
-  const rebalanceDate = etf.latestRebalanceDate 
+  const rebalanceDate = etf.latestRebalanceDate
     ? new Date(etf.latestRebalanceDate).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
@@ -85,7 +83,7 @@ export function BasketGovernance({ etf, chainConfig }: BasketGovernanceProps) {
   return (
     <Card className={clsx(s.basketGovernance, "auto")}>
       <Heading
-        icon="hugeicons:building"
+        icon="hugeicons:pie-chart-09"
         title="Basket Governance"
         description="Governance addresses and latest rebalance information"
       />
@@ -114,9 +112,7 @@ export function BasketGovernance({ etf, chainConfig }: BasketGovernanceProps) {
             <div className={s.infoHeader}>
               <span className={s.label}>Latest Rebalance Date</span>
             </div>
-            <div className={s.dateValue}>
-              {rebalanceDate}
-            </div>
+            <div className={s.dateValue}>{rebalanceDate}</div>
           </div>
         </div>
       </div>

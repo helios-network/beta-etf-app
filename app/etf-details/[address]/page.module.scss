@@ -1,16 +1,15 @@
 @use "@/styles/mixins" as *;
 
-
 .container {
   gap: var(--size-6);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 400px;
-  
+
   @include max(1100px) {
     grid-template-columns: 1fr;
   }
-  
+
   @include max(768px) {
   }
 }
@@ -21,7 +20,7 @@
   gap: var(--size-6);
 
   & > * {
-    min-height: 0!important;
+    min-height: 0 !important;
   }
 }
 
@@ -37,10 +36,10 @@
 
 .title {
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 200;
   color: var(--text-primary);
   margin: 0;
-  
+
   @include max(768px) {
     font-size: 1.5rem;
   }
@@ -53,9 +52,9 @@
 }
 
 .price {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--blue);
 }
 
 .priceChange {
@@ -66,8 +65,8 @@
 .sidebar {
   align-self: start;
   position: sticky;
-  top: var(--size-6);
-  
+  top: 125px;
+
   @include max(1100px) {
     position: static;
     order: -1;

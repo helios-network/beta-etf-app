@@ -4,7 +4,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  
+
   @include max(768px) {
     flex-direction: column;
     gap: 1rem;
@@ -26,11 +26,11 @@
   :global(.recharts-area) {
     stroke: var(--primary-medium) !important;
   }
-  
+
   :global(.recharts-area-dot) {
     fill: var(--primary-medium) !important;
   }
-  
+
   :global(.recharts-cartesian-grid) {
     stroke: rgba(var(--tertiary-rgb), 0.1) !important;
   }
