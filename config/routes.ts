@@ -4,6 +4,7 @@ export const routes = {
   etfCreate: "/etf-creator",
   etfMint: "/etf-mint",
   etfWithdraw: "/etf-withdraw",
+  etfDetails: (address: string) => `/etf-details/${address}`,
   leaderboard: "/leaderboard",
   portfolio: "/portfolio"
 }
