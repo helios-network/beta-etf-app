@@ -135,9 +135,9 @@ export default function ETFList() {
   const [etfs, setEtfs] = useState<ETF[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, ] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
-  const [, setPagination] = useState({
+  const [pagination, setPagination] = useState({
     page: 1,
     size: 10,
     total: 0,
@@ -362,6 +362,9 @@ export default function ETFList() {
         const formattedETFs = response.data.map(formatETFResponse)
         setEtfs(formattedETFs)
         setPagination(response.pagination)
+        
+        // Scroll to top when page changes
+        window.scrollTo({ top: 0, behavior: "smooth" })
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to load ETFs"
@@ -876,7 +879,7 @@ export default function ETFList() {
       <div className={s.statsHeader}>
         <div className={s.stat}>
           <span className={s.label}>Total ETFs</span>
-          <span className={s.statValue}>{filteredAndSortedETFs.length}</span>
+          <span className={s.statValue}>{pagination.total}</span>
         </div>
         <div className={s.stat}>
           <span className={s.label}>Total TVL</span>
@@ -1248,6 +1251,97 @@ export default function ETFList() {
               </Card>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && !error && pagination.totalPages > 1 && (
+        <div className={s.pagination}>
+          <Button
+            variant="secondary"
+            icon="hugeicons:arrow-left-01"
+            border
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1 || !pagination.hasPreviousPage}
+          />
+
+          <div className={s.paginationInfo}>
+            <div className={s.pageNumbers}>
+            {(() => {
+              const pages: (number | string)[] = []
+              const totalPages = pagination.totalPages
+              const maxVisible = 5
+
+              if (totalPages <= maxVisible) {
+                // Show all pages if total is 5 or less
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i)
+                }
+              } else {
+                // Always show first page
+                pages.push(1)
+
+                if (currentPage <= 3) {
+                  // Near the beginning
+                  for (let i = 2; i <= 4; i++) {
+                    pages.push(i)
+                  }
+                  pages.push("ellipsis")
+                  pages.push(totalPages)
+                } else if (currentPage >= totalPages - 2) {
+                  // Near the end
+                  pages.push("ellipsis")
+                  for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i)
+                  }
+                } else {
+                  // In the middle
+                  pages.push("ellipsis")
+                  for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    pages.push(i)
+                  }
+                  pages.push("ellipsis")
+                  pages.push(totalPages)
+                }
+              }
+
+              return pages.map((page, index) => {
+                if (page === "ellipsis") {
+                  return (
+                    <span key={`ellipsis-${index}`} className={s.ellipsis}>
+                      ...
+                    </span>
+                  )
+                }
+                return (
+                  <button
+                    key={page}
+                    className={clsx(
+                      s.pageButton,
+                      currentPage === page && s.active
+                    )}
+                    onClick={() => setCurrentPage(page as number)}
+                  >
+                    {page}
+                  </button>
+                )
+              })
+            })()}
+            </div>
+            <div className={s.pageInfo}>
+              Page {pagination.page} sur {pagination.totalPages}
+            </div>
+          </div>
+
+          <Button
+            variant="secondary"
+            iconRight="hugeicons:arrow-right-01"
+            border
+            onClick={() =>
+              setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))
+            }
+            disabled={currentPage === pagination.totalPages || !pagination.hasNextPage}
+          />
         </div>
       )}
 
