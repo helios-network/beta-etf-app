@@ -1,54 +1,96 @@
 @use "@/styles/mixins" as *;
 
-.title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 1rem 0;
-}
-
-.icons {
+.sidebar {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.tokenIcon {
+.headerTop {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.swapIcons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.iconLeft,
+.iconRight {
   font-size: 1.5rem;
+}
+
+.swapArrow {
+  font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+  line-height: 1.4;
 }
 
 .description {
   color: var(--text-secondary);
   line-height: 1.6;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  margin: 0;
 }
 
-.balance {
+.balanceSection {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  background: var(--background-low);
-  border-radius: var(--radius-s);
-  border: 1px solid var(--border-light);
-}
-
-.balanceRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 0.75rem;
 }
 
 .balanceLabel {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.balanceValue {
-  font-size: 1rem;
+.balanceInputSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-s);
+}
+
+.dollarSign {
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.balanceFiller {
+  flex: 1;
+  height: 1px;
+  background: var(--border-light);
+}
+
+.balanceAmount {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.change {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .changeValue {
@@ -64,8 +106,21 @@
 
 .buyButton {
   width: 100%;
+  font-weight: 600;
 }
 
 .sellButton {
   width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--text-primary);
+  }
 }

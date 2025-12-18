@@ -25,9 +25,13 @@ interface ETF {
   depositCount?: number
   redeemCount?: number
   createdAt: string
+  updatedAt: string
   chain: number
   website?: string
   tags?: string[]
+  creatorAddress?: string
+  annualizedFee?: number
+  mintingFee?: number
 }
 
 interface AboutSectionProps {
@@ -53,8 +57,7 @@ export function AboutSection({
       await new Promise((resolve) => setTimeout(resolve, 1000))
       toast.success("Information updated successfully")
       setIsEditing(false)
-    } catch (error: any) {
-      console.error(error)
+    } catch (error) {
       toast.error("Error updating information")
     } finally {
       setIsSaving(false)
@@ -73,10 +76,16 @@ export function AboutSection({
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(value)
   }
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}....${address.slice(-4)}`
+  }
+
+  const supplyChange = Math.random() * 4 - 2
 
   return (
     <Card className={clsx(s.aboutSection, "auto")}>
@@ -84,7 +93,7 @@ export function AboutSection({
         <Heading
           icon="hugeicons:information-circle"
           title="About this ETF"
-          description="Details about this ETF"
+          description="Details and metrics"
         />
         {isCreator && (
           <Button
@@ -92,6 +101,7 @@ export function AboutSection({
             size="small"
             iconLeft="hugeicons:settings-02"
             onClick={() => setIsEditing(true)}
+            className={s.editButton}
           >
             Edit
           </Button>
@@ -101,58 +111,103 @@ export function AboutSection({
       <div className={s.content}>
         <p className={s.description}>{description}</p>
 
-        <div className={s.metricsGrid}>
-          <Card className={s.metric}>
-            <span className={s.metricLabel}>Market Cap</span>
-            <span className={s.metricValue}>{formatCurrency(etf.tvl)}</span>
-          </Card>
-          <Card className={s.metric}>
-            <span className={s.metricLabel}>Supply</span>
-            <span className={s.metricValue}>{etf.totalSupply}</span>
-          </Card>
-          <Card className={s.metric}>
-            <span className={s.metricLabel}>Price</span>
-            <span className={s.metricValue}>${etf.sharePrice}</span>
-          </Card>
-          <Card className={s.metric}>
-            <span className={s.metricLabel}>24h Volume</span>
-            <span className={s.metricValue}>
-              {formatCurrency(etf.dailyVolumeUSD)}
-            </span>
-          </Card>
-          <Card className={s.metric}>
-            <span className={s.metricLabel}>Created</span>
-            <span className={s.metricValue}>{formatDate(etf.createdAt)}</span>
-          </Card>
-          <Card className={s.metric}>
-            <span className={s.metricLabel}>Chain</span>
-            <span className={s.metricValue}>
-              {chainConfig?.name || `Chain ${etf.chain}`}
-            </span>
-          </Card>
+        <div className={s.creatorSection}>
+          <div className={s.creatorCard}>
+            <div className={s.creatorLabel}>Creator</div>
+            <div className={s.creatorContent}>
+              <Icon icon="hugeicons:user-circle" className={s.creatorIconLarge} />
+              <div className={s.creatorDetails}>
+                <div className={s.creatorAddress}>
+                  {etf.creatorAddress ? formatAddress(etf.creatorAddress) : "Unknown"}
+                </div>
+                <button
+                  className={s.copyButton}
+                  onClick={() => {
+                    if (etf.creatorAddress) {
+                      navigator.clipboard.writeText(etf.creatorAddress)
+                      toast.success("Address copied")
+                    }
+                  }}
+                  title="Copy full address"
+                >
+                  <Icon icon="hugeicons:copy-01" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {website && (
+            <div className={s.websiteCard}>
+              <div className={s.websiteLabel}>Official Website</div>
+              <a
+                href={website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={s.websiteLink}
+              >
+                <Icon icon="hugeicons:globe-01" className={s.websiteIcon} />
+                <span>{website.replace(/^https?:\/\//, "").split("/")[0]}</span>
+                <Icon icon="hugeicons:arrow-up-right-01" className={s.externalArrow} />
+              </a>
+            </div>
+          )}
         </div>
 
-        {website && (
-          <div className={s.website}>
-            <Icon icon="link" className={s.linkIcon} />
-            <a
-              href={website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={s.websiteLink}
-            >
-              {website}
-            </a>
+        <div className={s.metricsGrid}>
+          <div className={s.metricCard}>
+            <div className={s.metricLabel}>Market Cap</div>
+            <div className={s.metricValue}>{formatCurrency(etf.tvl)}</div>
+          </div>
+
+          <div className={s.metricCard}>
+            <div className={s.metricLabel}>Created</div>
+            <div className={s.metricValue}>{formatDate(etf.createdAt)}</div>
+          </div>
+
+          <div className={s.metricCard}>
+            <div className={s.metricLabel}>Supply</div>
+            <div className={s.metricValue}>{etf.totalSupply}</div>
+          </div>
+
+          <div className={s.metricCard}>
+            <div className={s.metricLabel}>24h Supply Change</div>
+            <div className={clsx(s.metricValue, supplyChange >= 0 ? s.positive : s.negative)}>
+              {supplyChange >= 0 ? "+" : ""}{supplyChange.toFixed(2)}%
+            </div>
+          </div>
+        </div>
+
+        {(etf.annualizedFee !== undefined || etf.mintingFee !== undefined) && (
+          <div className={s.feesSection}>
+            <div className={s.feesHeader}>Fee Structure</div>
+            <div className={s.feesGrid}>
+              {(etf.annualizedFee !== undefined) && (
+                <div className={s.feeBadge}>
+                  <div className={s.feeBadgeLabel}>Annualized TVL Fee</div>
+                  <div className={s.feeBadgeValue}>{(etf.annualizedFee * 100).toFixed(1)}%</div>
+                </div>
+              )}
+
+              {(etf.mintingFee !== undefined) && (
+                <div className={s.feeBadge}>
+                  <div className={s.feeBadgeLabel}>Minting Fee</div>
+                  <div className={s.feeBadgeValue}>{(etf.mintingFee * 100).toFixed(1)}%</div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {tags.length > 0 && (
-          <div className={s.tags}>
-            {tags.map((tag, index) => (
-              <span key={index} className={s.tag}>
-                {tag}
-              </span>
-            ))}
+          <div className={s.tagsSection}>
+            <div className={s.tagsLabel}>Categories</div>
+            <div className={s.tags}>
+              {tags.map((tag, index) => (
+                <span key={index} className={s.tag}>
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
