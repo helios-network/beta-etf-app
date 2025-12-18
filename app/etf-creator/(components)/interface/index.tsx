@@ -634,7 +634,7 @@ export const ETFCreatorInterface = () => {
                       <span className={s.compMode}>{comp.pricingMode}</span>
                     </div>
                     <div className={s.compDetails}>
-                      <span>Liquidity: ${comp.liquidityUSD.toLocaleString()}</span>
+                      {comp.liquidityUSD >= 0 ? <span>Liquidity: ${comp.liquidityUSD.toLocaleString()}</span> : <span>Liquidity: Oracle Price</span>}
                       <span>Decimals: {comp.decimals}</span>
                     </div>
                   </div>
