@@ -15,7 +15,7 @@ import { routes } from "@/config/routes"
 import { erc20Abi } from "@/constant/helios-contracts"
 import { vaultViewAbi } from "@/constant/vault-abi"
 import { pricerViewAbi } from "@/constant/pricer-abi"
-import { fetchETFs, type ETFResponse } from "@/helpers/request"
+import { fetchETFs, fetchETFStats, type ETFResponse } from "@/helpers/request"
 import { useETFContract } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { CHAIN_CONFIG } from "@/config/chain-config"
@@ -130,23 +130,13 @@ export default function ETFList() {
     setMousePosition({ x: e.clientX, y: e.clientY })
   })
 
+  const [searchInput, setSearchInput] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [selectedRisk, setSelectedRisk] = useState("all")
   const [sortBy, setSortBy] = useState("tvl")
-  const [etfs, setEtfs] = useState<ETF[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
-  const [pagination, setPagination] = useState({
-    page: 1,
-    size: 10,
-    total: 0,
-    totalPages: 0,
-    hasNextPage: false,
-    hasPreviousPage: false
-  })
 
   const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [sellModalOpen, setSellModalOpen] = useState(false)
@@ -208,7 +198,24 @@ export default function ETFList() {
     return chainId === etf.chain
   }
 
-  // Fetch token data for all unique symbols
+  const { data: statsData } = useQuery({
+    queryKey: ["etfStats"],
+    queryFn: () => fetchETFStats(),
+    staleTime: 30 * 1000,
+    refetchInterval: 45 * 1000
+  })
+
+  const { data: etfsData, isLoading, error: etfsError } = useQuery({
+    queryKey: ["etfs", currentPage, pageSize, searchTerm],
+    queryFn: () => fetchETFs(currentPage, pageSize, undefined, searchTerm),
+    staleTime: 30 * 1000
+  })
+
+  const etfs = useMemo(() => {
+    if (!etfsData?.data) return []
+    return etfsData.data.map(formatETFResponse)
+  }, [etfsData])
+
   const allTokenSymbols = useMemo(() => {
     const symbols = new Set<string>()
     etfs.forEach((etf) => {
@@ -223,9 +230,20 @@ export default function ETFList() {
     queryKey: ["tokenData", allTokenSymbols],
     queryFn: () => fetchCGTokenData(allTokenSymbols),
     enabled: allTokenSymbols.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchInterval: 5 * 60 * 1000 // Refetch every 5 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000
   })
+
+  const pagination = etfsData?.pagination || {
+    page: 1,
+    size: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  }
+
+  const error = etfsError ? (etfsError instanceof Error ? etfsError.message : "Failed to load ETFs") : null
 
   // Calculate total value from valuesPerAsset
   const totalEstimatedValue = useMemo(() => {
@@ -356,29 +374,22 @@ export default function ETFList() {
   }
 
   useEffect(() => {
-    async function loadETFs() {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const response = await fetchETFs(currentPage, pageSize)
-        const formattedETFs = response.data.map(formatETFResponse)
-        setEtfs(formattedETFs)
-        setPagination(response.pagination)
-        
-        // Scroll to top when page changes
-        window.scrollTo({ top: 0, behavior: "smooth" })
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load ETFs"
-        setError(errorMessage)
-        toast.error(errorMessage)
-      } finally {
-        setIsLoading(false)
-      }
+    if (currentPage !== pagination.page) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
+  }, [currentPage, pagination.page])
 
-    loadETFs()
-  }, [currentPage, pageSize])
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   const categories = ["all", ...new Set(etfs.map((etf) => etf.category))]
   const riskLevels = ["all", "low", "medium", "high"]
@@ -881,28 +892,32 @@ export default function ETFList() {
       <div className={s.statsHeader}>
         <div className={s.stat}>
           <span className={s.label}>Total ETFs</span>
-          <span className={s.statValue}>{pagination.total}</span>
+          <span className={s.statValue}>
+            {statsData?.data?.totalEtfs ?? pagination.total}
+          </span>
         </div>
         <div className={s.stat}>
           <span className={s.label}>Total TVL</span>
           <span className={s.statValue}>
-            $
-            {formatTokenSupply(filteredAndSortedETFs
-              .reduce(
-                (sum, etf) => sum + Number(etf.tvl),
-                0
-              )
-              .toFixed(2), 0, 2)}
+            ${statsData?.data?.totalTVL 
+              ? formatTokenSupply(statsData.data.totalTVL.toFixed(2), 0, 2)
+              : formatTokenSupply(filteredAndSortedETFs
+                  .reduce(
+                    (sum, etf) => sum + Number(etf.tvl),
+                    0
+                  )
+                  .toFixed(2), 0, 2)}
           </span>
         </div>
         <div className={s.stat}>
           <span className={s.label}>Total Daily Volume</span>
           <span className={s.statValue}>
-            ${
-              formatTokenSupply(filteredAndSortedETFs.reduce(
-                (sum, etf) => sum + etf.dailyVolumeUSD,
-                0
-              ).toFixed(2), 0, 2)}
+            ${statsData?.data?.totalDailyVolume
+              ? formatTokenSupply(statsData.data.totalDailyVolume.toFixed(2), 0, 2)
+              : formatTokenSupply(filteredAndSortedETFs.reduce(
+                  (sum, etf) => sum + etf.dailyVolumeUSD,
+                  0
+                ).toFixed(2), 0, 2)}
           </span>
         </div>
       </div>
@@ -921,8 +936,8 @@ export default function ETFList() {
             <Input
               icon="hugeicons:search-01"
               placeholder="Search ETFs by name, symbol or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className={s.searchInput}
             />
           </div>

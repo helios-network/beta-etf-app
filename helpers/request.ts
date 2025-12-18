@@ -83,6 +83,15 @@ interface ETFResponse {
   __v: number
 }
 
+interface ETFsStatsResponse {
+  success: boolean
+  data: {
+    totalEtfs: number
+    totalTVL: number
+    totalDailyVolume: number
+  }
+}
+
 interface ETFsApiResponse {
   success: boolean
   data: ETFResponse[]
@@ -94,6 +103,36 @@ interface ETFsApiResponse {
     hasNextPage: boolean
     hasPreviousPage: boolean
   }
+}
+
+async function fetchETFStats(): Promise<ETFsStatsResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+  
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/stats`
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ETF stats: ${response.statusText}`)
+  }
+
+  const data: ETFsStatsResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error("API returned unsuccessful response")
+  }
+
+  return data
 }
 
 async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string, search?: string): Promise<ETFsApiResponse> {
@@ -502,5 +541,5 @@ async function fetchUserTotalPoints(
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolioAll, fetchUserTotalPoints }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, PortfolioComplete, UserTotalPointsResponse, UserTotalPointsData }
+export { request, requestWithRpcUrl, fetchETFs, fetchETFStats, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolioAll, fetchUserTotalPoints }
+export type { ETFResponse, ETFsApiResponse, ETFsStatsResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, PortfolioComplete, UserTotalPointsResponse, UserTotalPointsData }
