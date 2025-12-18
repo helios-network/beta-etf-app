@@ -21,22 +21,36 @@
   }
 }
 
+.headingContent {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  @include max(768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .address {
   display: flex;
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-
-  @include max(480px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
 }
 
 .resetButton {
   font-size: 0.875rem;
   padding: 0.5rem 1rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+
+  @include max(768px) {
+    margin-top: 0;
+    width: 100%;
+  }
 }
 
 .filterCardContent {
@@ -244,6 +258,152 @@
   gap: 0.75rem;
 }
 
+.icon {
+  flex-shrink: 0;
+  width: var(--size-8);
+  height: var(--size-8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tokenLogos {
+  --token-logo-size: calc(48px + 2 * (100vw - 320px) / 1080);
+  --div: 2.5;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--token-logo-size);
+  height: var(--token-logo-size);
+  border-radius: var(--radius-s);
+  background: linear-gradient(
+    to bottom,
+    var(--background-low),
+    var(--background-medium)
+  );
+
+  @include max(768px) {
+    --token-logo-size: 40px;
+  }
+
+  &.moreLogos {
+    &::before {
+      content: "+" attr(data-more-tokens);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      background: var(--blue);
+      z-index: 5;
+      letter-spacing: -0.015em;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      width: calc(var(--token-logo-size) / var(--div));
+      height: calc(var(--token-logo-size) / var(--div));
+    }
+  }
+
+  &[data-nb-tokens]:not([data-nb-tokens="1"]):not([data-nb-tokens="2"]):not(
+      [data-nb-tokens="3"]
+    ) {
+    .tokenLogo {
+      &:nth-child(1) {
+        position: absolute;
+        top: 12%;
+        left: 12%;
+      }
+      &:nth-child(2) {
+        position: absolute;
+        top: 12%;
+        right: 12%;
+      }
+      &:nth-child(3) {
+        position: absolute;
+        bottom: 12%;
+        left: 12%;
+      }
+      &:nth-child(4) {
+        position: absolute;
+        bottom: 12%;
+        right: 12%;
+      }
+    }
+  }
+
+  &[data-nb-tokens="1"] {
+    .tokenLogo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  &[data-nb-tokens="2"] {
+    .tokenLogo {
+      &:nth-child(1) {
+        position: absolute;
+        left: 10%;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      &:nth-child(2) {
+        position: absolute;
+        right: 10%;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+    }
+  }
+
+  &[data-nb-tokens="3"] {
+    .tokenLogo {
+      &:nth-child(1) {
+        position: absolute;
+        top: 12%;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      &:nth-child(2) {
+        position: absolute;
+        left: 13%;
+        bottom: 12%;
+        transform: none;
+      }
+      &:nth-child(3) {
+        position: absolute;
+        right: 13%;
+        bottom: 12%;
+        transform: none;
+      }
+    }
+  }
+}
+
+.tokenLogo {
+  width: calc(var(--token-logo-size) / var(--div));
+  height: calc(var(--token-logo-size) / var(--div));
+  border-radius: 50%;
+  transition: width 0.2s ease, height 0.2s ease;
+  object-fit: cover;
+
+  &:first-child {
+    margin-left: 0;
+  }
+
+  &:hover {
+    --div: 2;
+    z-index: 10 !important;
+    filter: drop-shadow(0 0 10px var(--blue));
+  }
+}
+
 .assetName {
   display: block;
   font-weight: 600;
@@ -260,30 +420,41 @@
 }
 
 .nameCol {
-  width: 30%;
+  width: 25%;
 }
 
 .typeCol {
-  width: 15%;
+  width: 12%;
 }
 
 .quantityCol {
-  width: 20%;
+  width: 15%;
   font-family: monospace;
   color: var(--text-primary);
 }
 
 .valueCol {
-  width: 20%;
+  width: 15%;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .allocationCol {
-  width: 15%;
+  width: 12%;
   text-align: left;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+.contractCol {
+  width: 21%;
+  text-align: left;
+  min-width: 200px;
+  max-width: 100%;
+
+  .contractActions {
+    max-width: 100%;
+  }
 }
 
 // Mobile card styles
@@ -335,4 +506,96 @@
   font-size: 0.95rem;
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.contractActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+
+  .contractLink,
+  .contractAddress {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.contractLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--blue);
+  text-decoration: none;
+  font-family: monospace;
+  font-size: clamp(0.75rem, 1.2vw, 0.875rem);
+  transition: color 0.2s ease;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--blue-hover);
+    text-decoration: underline;
+  }
+}
+
+.contractAddress {
+  font-family: monospace;
+  font-size: clamp(0.75rem, 1.2vw, 0.875rem);
+  color: var(--text-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.externalIcon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.contractLink:hover .externalIcon {
+  opacity: 1;
+}
+
+.addWalletButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-s);
+  background: var(--background-low);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+
+  &:hover {
+    background: var(--background-medium);
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }

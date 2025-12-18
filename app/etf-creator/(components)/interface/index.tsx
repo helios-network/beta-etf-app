@@ -47,6 +47,7 @@ export const ETFCreatorInterface = () => {
   const [showManualModal, setShowManualModal] = useState(false)
   const [showNoRebalancingModal, setShowNoRebalancingModal] = useState(false)
   const [showAddTokenModal, setShowAddTokenModal] = useState(false)
+  const [editingToken, setEditingToken] = useState<string | null>(null)
 
   const [form, setForm] = useState<ETFForm>({
     name: "",
@@ -102,47 +103,92 @@ export const ETFCreatorInterface = () => {
     const weight = parseFloat(form.currentTokenWeight)
     const currentTotal = form.components.reduce((sum, c) => sum + c.weight, 0)
 
-    if (currentTotal + weight > 100) {
-      toast.error("Total weight cannot exceed 100%")
-      return
-    }
-
-    // Check if token already exists
-    if (
-      form.components.some(
-        (c) =>
-          c.token.toLowerCase() === form.currentTokenAddress.toLowerCase()
+    if (editingToken) {
+      const existingComponent = form.components.find(
+        (c) => c.token.toLowerCase() === editingToken.toLowerCase()
       )
-    ) {
-      toast.error("Token already added to basket")
-      return
+      if (!existingComponent) {
+        toast.error("Token not found")
+        return
+      }
+
+      const weightDifference = weight - existingComponent.weight
+      if (currentTotal + weightDifference > 100) {
+        toast.error("Total weight cannot exceed 100%")
+        return
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        components: prev.components.map((c) =>
+          c.token.toLowerCase() === editingToken.toLowerCase()
+            ? { token: form.currentTokenAddress, weight: weight }
+            : c
+        ),
+        currentTokenAddress: "",
+        currentTokenWeight: ""
+      }))
+
+      setEditingToken(null)
+      setShowAddTokenModal(false)
+      toast.success("Token updated")
+    } else {
+      if (currentTotal + weight > 100) {
+        toast.error("Total weight cannot exceed 100%")
+        return
+      }
+
+      if (
+        form.components.some(
+          (c) =>
+            c.token.toLowerCase() === form.currentTokenAddress.toLowerCase()
+        )
+      ) {
+        toast.error("Token already added to basket")
+        return
+      }
+
+      const newComponent: TokenComponent = {
+        token: form.currentTokenAddress,
+        weight: weight
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        components: [...prev.components, newComponent],
+        currentTokenAddress: "",
+        currentTokenWeight: ""
+      }))
+
+      setShowAddTokenModal(false)
+      toast.success("Token added to basket")
     }
 
-    const newComponent: TokenComponent = {
-      token: form.currentTokenAddress,
-      weight: weight
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      components: [...prev.components, newComponent],
-      currentTokenAddress: "",
-      currentTokenWeight: ""
-    }))
-
-    // Reset verification when components change
     setVerifyState({
       status: "idle",
       errorMessage: null,
       backendResult: null
     })
+  }
 
-    setShowAddTokenModal(false)
-    toast.success("Token added to basket")
+  const handleEditToken = (tokenAddress: string) => {
+    const component = form.components.find(
+      (c) => c.token.toLowerCase() === tokenAddress.toLowerCase()
+    )
+    if (component) {
+      setEditingToken(tokenAddress)
+      setForm((prev) => ({
+        ...prev,
+        currentTokenAddress: component.token,
+        currentTokenWeight: component.weight.toString()
+      }))
+      setShowAddTokenModal(true)
+    }
   }
 
   const handleCloseAddTokenModal = () => {
     setShowAddTokenModal(false)
+    setEditingToken(null)
     setForm((prev) => ({
       ...prev,
       currentTokenAddress: "",
@@ -538,13 +584,24 @@ export const ETFCreatorInterface = () => {
                       <div className={s.tokenPercentage}>
                         {component.weight}%
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="xsmall"
-                        onClick={() => handleRemoveToken(component.token)}
-                        iconLeft="hugeicons:delete-02"
-                        className={s.removeBtn}
-                      />
+                      <div className={s.tokenActions}>
+                        <Button
+                          variant="secondary"
+                          size="xsmall"
+                          onClick={() => handleEditToken(component.token)}
+                          iconLeft="hugeicons:edit-01"
+                          className={s.editBtn}
+                          title="Edit token"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="xsmall"
+                          onClick={() => handleRemoveToken(component.token)}
+                          iconLeft="hugeicons:delete-02"
+                          className={s.removeBtn}
+                          title="Remove token"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -892,7 +949,7 @@ export const ETFCreatorInterface = () => {
       <Modal
         open={showAddTokenModal}
         onClose={handleCloseAddTokenModal}
-        title="Add Token to Basket"
+        title={editingToken ? "Edit Token" : "Add Token to Basket"}
         className={s.modal}
       >
         <div className={s.addTokenForm}>
@@ -925,7 +982,7 @@ export const ETFCreatorInterface = () => {
             Cancel
           </Button>
           <Button onClick={handleAddToken} disabled={isLoading}>
-            {isLoading ? "Adding..." : "Add Token"}
+            {isLoading ? (editingToken ? "Updating..." : "Adding...") : (editingToken ? "Update Token" : "Add Token")}
           </Button>
         </div>
       </Modal>
