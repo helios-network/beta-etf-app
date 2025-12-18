@@ -1,16 +1,23 @@
 @use "@/styles/mixins" as *;
 
+.page {
+  padding: 2rem 0;
+}
+
 .container {
   gap: var(--size-6);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr 400px;
+  grid-template-columns: 1fr 380px;
+  max-width: 1400px;
 
-  @include max(1100px) {
+  @include max(1200px) {
     grid-template-columns: 1fr;
+    gap: var(--size-5);
   }
 
   @include max(768px) {
+    gap: var(--size-5);
   }
 }
 
@@ -25,41 +32,43 @@
 }
 
 .header {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .titleSection {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 2rem;
 }
 
 .title {
-  font-size: 2rem;
-  font-weight: 200;
+  font-size: 2.25rem;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 
   @include max(768px) {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 }
 
 .priceInfo {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-end;
+  gap: 1.5rem;
 }
 
 .price {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--blue);
+  color: var(--primary);
 }
 
 .priceChange {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--danger-medium);
+  font-weight: 500;
 }
 
 .sidebar {
@@ -67,7 +76,7 @@
   position: sticky;
   top: 125px;
 
-  @include max(1100px) {
+  @include max(1200px) {
     position: static;
     order: -1;
   }

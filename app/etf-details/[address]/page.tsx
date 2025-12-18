@@ -1,5 +1,6 @@
 "use client"
 
+import { useParams } from "next/navigation"
 import { AboutSection } from "./(components)/about-section"
 import { BasketGovernance } from "./(components)/basket-governance"
 import { Disclosures } from "./(components)/disclosures"
@@ -11,7 +12,7 @@ import s from "./page.module.scss"
 
 const fakeETFData = {
   id: "helios-defi-basket",
-  name: "Helios DeFi Basket",
+  name: "Helios DeFi Basket ETF",
   symbol: "HDEFI",
   description: "The Helios DeFi Basket (HDEFI) provides diversified exposure to leading decentralized finance protocols. This ETF focuses on blue-chip DeFi tokens with strong fundamentals, active development, and proven track records in lending, DEXs, and yield optimization.",
   tvl: 2847320,
@@ -33,6 +34,9 @@ const fakeETFData = {
   website: "https://helios.finance",
   tags: ["DeFi", "Yield", "Blue Chip", "Lending"],
   latestRebalanceDate: "2024-12-10T14:45:00.000Z",
+  creatorAddress: "0x1234567890123456789012345678901234567890",
+  annualizedFee: 0.003,
+  mintingFee: 0.003,
   tokens: [
     { symbol: "UNI", percentage: 22.5, tvl: "640500" },
     { symbol: "AAVE", percentage: 18.3, tvl: "521000" },
@@ -46,6 +50,7 @@ const fakeETFData = {
 }
 
 export default function ETFDetailsPage() {
+  const params = useParams()
   const etf = fakeETFData
   const chainConfig = CHAIN_CONFIG[etf.chain]
   const isCreator = true // TODO: Replace with actual creator check based on wallet address
@@ -68,17 +73,17 @@ export default function ETFDetailsPage() {
 
           <TokenComposition etf={etf} />
 
-          <AboutSection 
+          <AboutSection
             etf={etf}
             isCreator={isCreator}
             chainConfig={chainConfig}
           />
-          
-          <BasketGovernance 
+
+          <BasketGovernance
             etf={etf}
             chainConfig={chainConfig}
           />
-          
+
           <Disclosures />
         </div>
 
