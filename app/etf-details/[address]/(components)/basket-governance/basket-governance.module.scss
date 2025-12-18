@@ -1,0 +1,66 @@
+@use "@/styles/mixins" as *;
+
+.content {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.5rem;
+}
+
+.governanceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-3);
+}
+
+.infoItem {
+  padding: 1.5rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-s);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.infoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.addressValue {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: monospace;
+}
+
+.fullAddress {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+  word-break: break-all;
+}
+
+.dateValue {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}

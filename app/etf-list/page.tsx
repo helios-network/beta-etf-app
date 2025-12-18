@@ -10,6 +10,8 @@ import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Select } from "@/components/input/select"
 import { Modal } from "@/components/modal"
+import { Link } from "@/components/link"
+import { routes } from "@/config/routes"
 import { erc20Abi } from "@/constant/helios-contracts"
 import { vaultViewAbi } from "@/constant/vault-abi"
 import { pricerViewAbi } from "@/constant/pricer-abi"
@@ -1013,7 +1015,11 @@ export default function ETFList() {
                       </div>
                     )}
                     <div className={s.titleRowRight}>
-                      <h3>{etf.name}</h3>
+                      <h3>
+                        <Link href={routes.etfDetails(etf.vault)} className={s.titleLink}>
+                          {etf.name}
+                        </Link>
+                      </h3>
                       <p className={s.description}>{etf.description}</p>
                     </div>
                   </div>

@@ -207,7 +207,7 @@
 
   .etfsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: var(--size-6);
   }
 
@@ -280,7 +280,7 @@
     border: 2px solid var(--border-light);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
-    
+
     &:hover {
       transform: scale(1.1);
       border-color: var(--primary-medium);
@@ -297,6 +297,16 @@
 
       @include max(480px) {
         font-size: 1.1rem;
+      }
+    }
+
+    .titleLink {
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: var(--primary);
       }
     }
   }

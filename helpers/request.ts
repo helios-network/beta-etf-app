@@ -140,6 +140,47 @@ async function fetchETFs(page: number = 1, size: number = 10, depositToken?: str
   return data
 }
 
+interface ETFByAddressApiResponse {
+  success: boolean
+  data: ETFResponse
+  message?: string
+}
+
+async function fetchETFByAddress(vaultAddress: string): Promise<ETFByAddressApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+  
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  // Remove trailing slash if present to avoid double slashes
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/vault/${vaultAddress}`
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (response.status === 404) {
+    throw new Error("ETF not found")
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ETF: ${response.statusText}`)
+  }
+
+  const data: ETFByAddressApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
 interface DepositToken {
   address: string
   symbol: string
