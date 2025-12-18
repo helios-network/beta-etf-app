@@ -42,8 +42,7 @@ interface AboutSectionProps {
 
 export function AboutSection({
   etf,
-  isCreator,
-  chainConfig
+  isCreator
 }: AboutSectionProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [website, setWebsite] = useState(etf.website || "")
@@ -57,7 +56,7 @@ export function AboutSection({
       await new Promise((resolve) => setTimeout(resolve, 1000))
       toast.success("Information updated successfully")
       setIsEditing(false)
-    } catch (error) {
+    } catch {
       toast.error("Error updating information")
     } finally {
       setIsSaving(false)
