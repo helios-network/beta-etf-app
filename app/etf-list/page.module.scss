@@ -280,7 +280,7 @@
     border: 2px solid var(--border-light);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
-    
+
     &:hover {
       transform: scale(1.1);
       border-color: var(--primary-medium);
@@ -301,7 +301,7 @@
     }
 
     .titleLink {
-      color: var(--text-high);
+      color: var(--text-primary);
       text-decoration: none;
       transition: color 0.2s ease;
 
