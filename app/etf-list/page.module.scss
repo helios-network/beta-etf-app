@@ -207,7 +207,7 @@
 
   .etfsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: var(--size-6);
   }
 
@@ -235,6 +235,7 @@
     padding: 0;
     background: var(--background-lowest);
     box-shadow: 0 0 40px rgba(var(--blue-rgb), 0);
+    position: relative;
 
     .hover {
       transition: opacity var(--transition);
@@ -266,6 +267,27 @@
     }
   }
 
+  .chainLogo {
+    position: absolute;
+    top: 2.4rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    z-index: 10;
+    background: var(--background-low);
+    padding: 4px;
+    border: 2px solid var(--border-light);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+      border-color: var(--primary-medium);
+      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+    }
+  }
+
   .etfTitle {
     flex: 1;
 
@@ -275,6 +297,16 @@
 
       @include max(480px) {
         font-size: 1.1rem;
+      }
+    }
+
+    .titleLink {
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: var(--primary);
       }
     }
   }
@@ -431,6 +463,15 @@
     position: absolute;
     top: -1px;
     left: var(--padding);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
+    min-width: 0;
   }
 
   .badges {
@@ -557,6 +598,8 @@
       font-weight: 200;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
       padding: var(--padding);
       padding-bottom: 0;
 
@@ -938,4 +981,77 @@
     color: var(--text-secondary);
     white-space: nowrap;
   }
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 2rem 0;
+  margin-top: 2rem;
+
+  @include max(768px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+.paginationInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pageInfo {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.pageButton {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: var(--background-lower);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-rounded);
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-link);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: var(--background-low);
+    border-color: var(--border-medium);
+  }
+
+  &.active {
+    background: var(--blue);
+    color: var(--white);
+    border-color: var(--blue);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.ellipsis {
+  color: var(--text-secondary);
+  padding: 0 0.25rem;
+  font-weight: 500;
 }

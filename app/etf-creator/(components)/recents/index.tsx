@@ -6,9 +6,11 @@ import { Icon } from "@/components/icon"
 import { Button } from "@/components/button"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
+import Image from "next/image"
 import {
     useRecentETFsContext
 } from "@/context/RecentETFsContext"
+import { CHAIN_CONFIG } from "@/config/chain-config"
 import s from "./recents.module.scss"
 
 export const ETFCreatorRecents = () => {
@@ -77,6 +79,16 @@ export const ETFCreatorRecents = () => {
             <div className={s.list}>
                 {recentETFs.map((etf, index) => (
                     <div key={`${etf.address}-${index}`} className={s.etf}>
+                        {etf.chainId && CHAIN_CONFIG[etf.chainId]?.abbreviatedName && (
+                            <Image
+                                src={`/img/chains/${CHAIN_CONFIG[etf.chainId].abbreviatedName}.png`}
+                                alt={CHAIN_CONFIG[etf.chainId].name}
+                                width={24}
+                                height={24}
+                                className={s.chainLogo}
+                                title={`${CHAIN_CONFIG[etf.chainId].name} Network`}
+                            />
+                        )}
                         <div className={s.etfInfo}>
                             <div className={s.etfIcon}>
                                 <Icon icon="hugeicons:package" />

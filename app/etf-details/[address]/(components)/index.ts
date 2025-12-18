@@ -1,0 +1,6 @@
+export { AboutSection } from "./about-section"
+export { BasketGovernance } from "./basket-governance"
+export { Disclosures } from "./disclosures"
+export { PriceChart } from "./price-chart"
+export { TokenComposition } from "./token-composition"
+export { BuySellSidebar } from "./buy-sell-sidebar"

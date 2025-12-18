@@ -1,7 +1,7 @@
 import { RPC_URL_DEFAULT } from "@/config/app"
 import { getRpcUrl } from "@/config/rpc"
 import { env } from "@/env"
-import { LeaderboardEntry } from "@/types/points"
+import { LeaderboardEntry, TransactionCounts, PointsByType } from "@/types/points"
 
 async function requestWithRpcUrl<T>(rpcUrl: string, method: string, params: any[]): Promise<T | null> { 
   const response = await fetch(rpcUrl, {
@@ -62,6 +62,7 @@ interface ETFResponse {
   symbol: string
   totalSupply?: string
   volumeTradedUSD?: number
+  dailyVolumeUSD?: number
   tvl: number
   sharePrice?: string
   eventNonce: number
@@ -74,6 +75,9 @@ interface ETFResponse {
   assets?: ETFAsset[]
   imbalanceThresholdBps?: number
   maxPriceStaleness?: number
+  depositCount?: number
+  redeemCount?: number
+  owner?: string
   createdAt: string
   updatedAt: string
   __v: number
@@ -92,7 +96,7 @@ interface ETFsApiResponse {
   }
 }
 
-async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string): Promise<ETFsApiResponse> {
+async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string, search?: string): Promise<ETFsApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
   
   if (!apiUrl) {
@@ -108,6 +112,10 @@ async function fetchETFs(page: number = 1, size: number = 10, depositToken?: str
   
   if (depositToken) {
     params.append("depositToken", depositToken)
+  }
+  
+  if (search && search.trim()) {
+    params.append("search", search.trim())
   }
   
   const url = `${baseUrl}/api/etfs?${params.toString()}`
@@ -132,6 +140,47 @@ async function fetchETFs(page: number = 1, size: number = 10, depositToken?: str
   return data
 }
 
+interface ETFByAddressApiResponse {
+  success: boolean
+  data: ETFResponse
+  message?: string
+}
+
+async function fetchETFByAddress(vaultAddress: string): Promise<ETFByAddressApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+  
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  // Remove trailing slash if present to avoid double slashes
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/vault/${vaultAddress}`
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (response.status === 404) {
+    throw new Error("ETF not found")
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ETF: ${response.statusText}`)
+  }
+
+  const data: ETFByAddressApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
 interface DepositToken {
   address: string
   symbol: string
@@ -143,7 +192,7 @@ interface DepositTokensApiResponse {
   data: DepositToken[]
 }
 
-async function fetchDepositTokens(): Promise<DepositTokensApiResponse> {
+async function fetchDepositTokens(chainId: number, search?: string): Promise<DepositTokensApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
   
   if (!apiUrl) {
@@ -152,7 +201,15 @@ async function fetchDepositTokens(): Promise<DepositTokensApiResponse> {
 
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
-  const url = `${baseUrl}/api/etfs/deposit-tokens`
+  const params = new URLSearchParams({
+    chainId: chainId.toString()
+  })
+  
+  if (search && search.trim()) {
+    params.append("search", search.trim())
+  }
+  
+  const url = `${baseUrl}/api/etfs/deposit-tokens?${params.toString()}`
   
   const response = await fetch(url, {
     method: "GET",
@@ -251,6 +308,13 @@ interface VerifyETFResponse {
   status: "OK" | "ERROR"
   readyForCreation?: boolean
   errorMessage?: string
+  details?: {
+    details: string
+    message: string
+    requiredUSD: number
+    token: string
+  }
+  reason?: string
   factoryAddress: string
   components?: VerifyETFComponent[]
 }
@@ -278,6 +342,11 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
 
     const data = await response.json()
 
+    if (data?.details?.details != undefined) {
+      console.log("sssss", data)
+      return data.details as VerifyETFResponse;
+    }
+
     if (data?.details?.message) {
       throw new Error(`Failed to verify ETF: ${data?.details?.message}`)
     }
@@ -290,5 +359,148 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF }
-export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent }
+interface PortfolioAsset {
+  chain: number
+  symbol: string
+  etfVaultAddress: string
+  etfTokenAddress: string
+  etfName: string
+  amount: string
+  amountFormatted: string
+  amountUSD: number
+  sharePriceUSD: number
+  decimals: number
+}
+
+interface PortfolioAllocation {
+  symbol: string
+  etfVaultAddress: string
+  amountUSD: number
+  percentage: number
+  chain: number
+}
+
+interface PortfolioResponse {
+  address: string
+  totalValueUSD: number
+  totalAssets: number
+  chains: number[]
+  updatedAt: string
+}
+
+interface PortfolioSummary {
+  address: string
+  totalValueUSD: number
+  totalAssets: number
+  allocation: PortfolioAllocation[]
+  byChain: {
+    [chainId: string]: number
+  }
+}
+
+interface PortfolioApiResponse<T> {
+  success: boolean
+  data: T
+  message?: string
+}
+
+interface PortfolioComplete {
+  address: string
+  totalValueUSD: number
+  totalAssets: number
+  chains: number[]
+  updatedAt: string
+  assets: PortfolioAsset[]
+  allocation: PortfolioAllocation[]
+  byChain: {
+    [chainId: string]: number
+  }
+}
+
+async function fetchPortfolioAll(
+  address: string
+): Promise<PortfolioApiResponse<PortfolioComplete> | null> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/portfolio/${address}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (response.status === 404) {
+    return null
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch portfolio: ${response.statusText}`)
+  }
+
+  const data: PortfolioApiResponse<PortfolioComplete> = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
+interface UserTotalPointsData {
+  address: string
+  totalPoints: number
+  pointsByType: PointsByType
+  transactionCounts: TransactionCounts
+}
+
+interface UserTotalPointsResponse {
+  success: boolean
+  data: UserTotalPointsData
+  message?: string
+}
+
+async function fetchUserTotalPoints(
+  address: string
+): Promise<UserTotalPointsResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/rewards/${address}/total-points`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user total points: ${response.statusText}`)
+  }
+
+  const data: UserTotalPointsResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
+export { request, requestWithRpcUrl, fetchETFs, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolioAll, fetchUserTotalPoints }
+export type { ETFResponse, ETFsApiResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, PortfolioComplete, UserTotalPointsResponse, UserTotalPointsData }

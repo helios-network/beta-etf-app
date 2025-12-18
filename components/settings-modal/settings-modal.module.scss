@@ -264,12 +264,12 @@
 .gasPriceOptionLabel {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-high);
+  color: var(--text-primary);
 }
 
 .gasPriceOptionDescription {
   font-size: 0.75rem;
-  color: var(--text-medium);
+  color: var(--text-secondary);
 }
 
 .gasPriceDescription {
@@ -285,7 +285,7 @@
   gap: var(--size-2);
   margin-top: var(--size-2);
   padding: var(--size-3);
-  background: var(--background-medium);
+  background: var(--background-low);
   border-radius: var(--radius-s);
   border: 1px solid var(--border-medium);
 }
@@ -306,13 +306,13 @@
 .walletInfoLabel {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-medium);
+  color: var(--text-secondary);
 }
 
 .walletInfoValue {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--text-high);
+  color: var(--text-primary);
   font-family: monospace;
   word-break: break-all;
 

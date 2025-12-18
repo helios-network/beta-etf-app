@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { useAccount, useChainId } from "wagmi"
 import s from "./interface.module.scss"
 import { getChainConfig } from "@/config/chain-config"
+import { ASSETS_ADDRS } from "@/helpers/tokens"
 
 type TokenComponent = {
   token: string
@@ -46,6 +47,7 @@ export const ETFCreatorInterface = () => {
   const [showManualModal, setShowManualModal] = useState(false)
   const [showNoRebalancingModal, setShowNoRebalancingModal] = useState(false)
   const [showAddTokenModal, setShowAddTokenModal] = useState(false)
+  const [editingToken, setEditingToken] = useState<string | null>(null)
 
   const [form, setForm] = useState<ETFForm>({
     name: "",
@@ -101,47 +103,92 @@ export const ETFCreatorInterface = () => {
     const weight = parseFloat(form.currentTokenWeight)
     const currentTotal = form.components.reduce((sum, c) => sum + c.weight, 0)
 
-    if (currentTotal + weight > 100) {
-      toast.error("Total weight cannot exceed 100%")
-      return
-    }
-
-    // Check if token already exists
-    if (
-      form.components.some(
-        (c) =>
-          c.token.toLowerCase() === form.currentTokenAddress.toLowerCase()
+    if (editingToken) {
+      const existingComponent = form.components.find(
+        (c) => c.token.toLowerCase() === editingToken.toLowerCase()
       )
-    ) {
-      toast.error("Token already added to basket")
-      return
+      if (!existingComponent) {
+        toast.error("Token not found")
+        return
+      }
+
+      const weightDifference = weight - existingComponent.weight
+      if (currentTotal + weightDifference > 100) {
+        toast.error("Total weight cannot exceed 100%")
+        return
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        components: prev.components.map((c) =>
+          c.token.toLowerCase() === editingToken.toLowerCase()
+            ? { token: form.currentTokenAddress, weight: weight }
+            : c
+        ),
+        currentTokenAddress: "",
+        currentTokenWeight: ""
+      }))
+
+      setEditingToken(null)
+      setShowAddTokenModal(false)
+      toast.success("Token updated")
+    } else {
+      if (currentTotal + weight > 100) {
+        toast.error("Total weight cannot exceed 100%")
+        return
+      }
+
+      if (
+        form.components.some(
+          (c) =>
+            c.token.toLowerCase() === form.currentTokenAddress.toLowerCase()
+        )
+      ) {
+        toast.error("Token already added to basket")
+        return
+      }
+
+      const newComponent: TokenComponent = {
+        token: form.currentTokenAddress,
+        weight: weight
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        components: [...prev.components, newComponent],
+        currentTokenAddress: "",
+        currentTokenWeight: ""
+      }))
+
+      setShowAddTokenModal(false)
+      toast.success("Token added to basket")
     }
 
-    const newComponent: TokenComponent = {
-      token: form.currentTokenAddress,
-      weight: weight
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      components: [...prev.components, newComponent],
-      currentTokenAddress: "",
-      currentTokenWeight: ""
-    }))
-
-    // Reset verification when components change
     setVerifyState({
       status: "idle",
       errorMessage: null,
       backendResult: null
     })
+  }
 
-    setShowAddTokenModal(false)
-    toast.success("Token added to basket")
+  const handleEditToken = (tokenAddress: string) => {
+    const component = form.components.find(
+      (c) => c.token.toLowerCase() === tokenAddress.toLowerCase()
+    )
+    if (component) {
+      setEditingToken(tokenAddress)
+      setForm((prev) => ({
+        ...prev,
+        currentTokenAddress: component.token,
+        currentTokenWeight: component.weight.toString()
+      }))
+      setShowAddTokenModal(true)
+    }
   }
 
   const handleCloseAddTokenModal = () => {
     setShowAddTokenModal(false)
+    setEditingToken(null)
     setForm((prev) => ({
       ...prev,
       currentTokenAddress: "",
@@ -175,19 +222,35 @@ export const ETFCreatorInterface = () => {
     })
 
     try {
+      console.log(chainId, (ASSETS_ADDRS as any)[chainId]?.USDC)
       const data = await verifyETF({
-        chainId: 1, // Ethereum mainnet
-        depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+        chainId: chainId, // Ethereum mainnet
+        depositToken: (ASSETS_ADDRS as any)[chainId]?.USDC || "",
         components: form.components
       })
-
+      
       if (data.status === "ERROR") {
+        if (data.reason == "INSUFFICIENT_LIQUIDITY") {
+          toast.error(`Insufficient liquidity for ${data.details?.token}. Required: $${data.details?.requiredUSD.toLocaleString()}. Please add more liquidity to the token.`, {
+            duration: 10000,
+            closeButton: true
+          })
+          setVerifyState({
+            status: "error",
+            errorMessage: data.reason || "Verification failed",
+            backendResult: data
+          })
+          return
+        }
         setVerifyState({
           status: "error",
-          errorMessage: data.errorMessage || "Verification failed",
+          errorMessage: data.reason || "Verification failed",
           backendResult: data
         })
-        toast.error(data.errorMessage || "Verification failed")
+        toast.error(JSON.stringify(data), {
+          duration: 10000,
+          closeButton: true
+        })
       } else if (data.status === "OK" && data.readyForCreation) {
         setVerifyState({
           status: "success",
@@ -204,6 +267,7 @@ export const ETFCreatorInterface = () => {
         toast.error("Backend returned unexpected status")
       }
     } catch (error: any) {
+      console.error("Error verifying ETF:", error)
       setVerifyState({
         status: "error",
         errorMessage: error?.message || "Failed to verify with backend",
@@ -242,19 +306,38 @@ export const ETFCreatorInterface = () => {
 
       let router = ""
       let quoter = ""
-      if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
-        router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" // Uniswap V2 Router
-        quoter = "0x0000000000000000000000000000000000000000" // None
-      } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
-        router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
-        quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
+      let depositFeed = "";
+
+      switch (chainId) {
+        case 42161:
+          depositFeed = "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3" // USDC/USD feed
+
+          if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
+            router = "0x4752ba5dbc23f44d87826276bf6fd6b1c372ad24" // Uniswap V2 Router
+            quoter = "0x0000000000000000000000000000000000000000" // None
+          } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
+            router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
+            quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
+          }
+          break
+        case 1:
+          depositFeed = "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6" // USDC/USD feed
+
+          if (pricingMode === 0 || pricingMode === 2) { // V2_PLUS_FEED | V2_PLUS_V2
+            router = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D" // Uniswap V2 Router
+            quoter = "0x0000000000000000000000000000000000000000" // None
+          } else if (pricingMode === 1 || pricingMode === 3) { // V3_PLUS_FEED | V3_PLUS_V3
+            router = "0xE592427A0AEce92De3Edee1F18E0157C05861564" // Uniswap V3 Router
+            quoter = "0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6" // Uniswap V3 Quoter
+          }
+          break
       }
 
       // Call the createETF function with new parameters
       const result = await createETF({
         factoryAddress: backendData.factoryAddress,
-        depositToken: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-        depositFeed: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6", // USDC/USD feed
+        depositToken: (ASSETS_ADDRS as any)[chainId]?.USDC || "", // USDC
+        depositFeed: depositFeed, // USDC/USD feed
         router: router,
         quoter: quoter,
         assetTokens,
@@ -280,7 +363,8 @@ export const ETFCreatorInterface = () => {
         address: result.vault,
         shareToken: result.shareToken,
         txHash: result.txHash,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        chainId
       }
 
       setDeployedETF(newETF)
@@ -324,7 +408,7 @@ export const ETFCreatorInterface = () => {
     form.rebalancingMode !== null
 
   const isWalletConnected = !!address
-  const canVerify = isFormValid && !verifyState.backendResult
+  const canVerify = isFormValid && (!verifyState.backendResult || verifyState.status === "error")
   const canDeploy = isFormValid && verifyState.status === "success"
 
   return (
@@ -500,13 +584,24 @@ export const ETFCreatorInterface = () => {
                       <div className={s.tokenPercentage}>
                         {component.weight}%
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="xsmall"
-                        onClick={() => handleRemoveToken(component.token)}
-                        iconLeft="hugeicons:delete-02"
-                        className={s.removeBtn}
-                      />
+                      <div className={s.tokenActions}>
+                        <Button
+                          variant="secondary"
+                          size="xsmall"
+                          onClick={() => handleEditToken(component.token)}
+                          iconLeft="hugeicons:edit-01"
+                          className={s.editBtn}
+                          title="Edit token"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="xsmall"
+                          onClick={() => handleRemoveToken(component.token)}
+                          iconLeft="hugeicons:delete-02"
+                          className={s.removeBtn}
+                          title="Remove token"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -854,7 +949,7 @@ export const ETFCreatorInterface = () => {
       <Modal
         open={showAddTokenModal}
         onClose={handleCloseAddTokenModal}
-        title="Add Token to Basket"
+        title={editingToken ? "Edit Token" : "Add Token to Basket"}
         className={s.modal}
       >
         <div className={s.addTokenForm}>
@@ -887,7 +982,7 @@ export const ETFCreatorInterface = () => {
             Cancel
           </Button>
           <Button onClick={handleAddToken} disabled={isLoading}>
-            {isLoading ? "Adding..." : "Add Token"}
+            {isLoading ? (editingToken ? "Updating..." : "Adding...") : (editingToken ? "Update Token" : "Add Token")}
           </Button>
         </div>
       </Modal>

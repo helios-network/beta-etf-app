@@ -6,6 +6,7 @@ import { Logotype } from "@/components/logotype"
 import { PointsButton } from "@/components/points-button"
 import { SettingsModal } from "@/components/settings-modal"
 import routes from "@/config/routes"
+import { useAccount } from "wagmi"
 import { useState } from "react"
 import { Chains } from "../chains"
 import { Nav } from "../nav"
@@ -14,6 +15,7 @@ import s from "./header.module.scss"
 
 export const Header = () => {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const { isConnected } = useAccount()
 
   const handleSettingsOpen = () => {
     setSettingsOpen(true)
@@ -39,7 +41,7 @@ export const Header = () => {
               title="Settings"
             />
             <Chains />
-            <PointsButton />
+            {isConnected && <PointsButton />}
             <Wallet />
           </div>
         </div>

@@ -207,6 +207,29 @@ export const etfFactoryAbi = [
     type: "function"
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "imbalanceThresholdBps",
+        type: "uint256"
+      },
+      {
+        internalType: "uint256",
+        name: "maxPriceStaleness",
+        type: "uint256"
+      }
+    ],
+    name: "updateParams",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
     anonymous: false,
     inputs: [
       {

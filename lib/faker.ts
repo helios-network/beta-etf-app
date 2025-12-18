@@ -188,26 +188,62 @@ export const generateEthereumAddress = (): string => {
 export const generateLeaderboardData = (count: number) => {
   faker.seed(42)
 
-  return Array.from({ length: count }, (_, i) => ({
-    rank: i + 1,
-    address: generateEthereumAddress(),
-    totalPointsAccrued: faker.number.float({
-      min: 100,
-      max: 2500000,
-      fractionDigits: 2
-    }),
-    feesGenerated: "$" + faker.number.float({
-      min: 10,
-      max: 50000,
-      fractionDigits: 2
-    }).toFixed(2),
-    volumeTraded: "$" + faker.number.float({
-      min: 1000,
-      max: 50000000,
-      fractionDigits: 2
-    }).toFixed(2),
-    transactionsPerformed: faker.number.int({ min: 1, max: 500 }),
-    referralPoints: faker.number.int({ min: 0, max: 2500000 }),
-    iaaStPoints: faker.number.int({ min: 0, max: 50000 })
-  }))
+  const POINTS_PER_TRANSACTION = {
+    createEtf: 2000,
+    deposit: 100,
+    redeem: 100,
+    rebalance: 3000
+  }
+
+  return Array.from({ length: count }, (_, i) => {
+    const createEtf = faker.number.int({ min: 0, max: 10 })
+    const deposit = faker.number.int({ min: 0, max: 200 })
+    const redeem = faker.number.int({ min: 0, max: 150 })
+    const rebalance = faker.number.int({ min: 0, max: 5 })
+
+    const transactionCounts = {
+      createEtf,
+      deposit,
+      redeem,
+      rebalance
+    }
+
+    // Calculate points by type
+    const pointsByType = {
+      createEtf: createEtf * POINTS_PER_TRANSACTION.createEtf,
+      deposit: deposit * POINTS_PER_TRANSACTION.deposit,
+      redeem: redeem * POINTS_PER_TRANSACTION.redeem,
+      rebalance: rebalance * POINTS_PER_TRANSACTION.rebalance
+    }
+
+    // Calculate total points
+    const totalPoints =
+      pointsByType.createEtf +
+      pointsByType.deposit +
+      pointsByType.redeem +
+      pointsByType.rebalance
+
+    const totalTransactions = createEtf + deposit + redeem + rebalance
+
+    return {
+      rank: i + 1,
+      address: generateEthereumAddress(),
+      feesGenerated: "$" + faker.number.float({
+        min: 10,
+        max: 50000,
+        fractionDigits: 2
+      }).toFixed(2),
+      volumeTraded: "$" + faker.number.float({
+        min: 1000,
+        max: 50000000,
+        fractionDigits: 2
+      }).toFixed(2),
+      transactionsPerformed: totalTransactions,
+      referralPoints: faker.number.int({ min: 0, max: 2500000 }),
+      iaaStPoints: faker.number.int({ min: 0, max: 50000 }),
+      transactionCounts,
+      pointsByType,
+      totalPoints
+    }
+  })
 }

@@ -3,19 +3,36 @@
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
 import { Modal } from "@/components/modal"
-import { SeasonTabs } from "@/components/season-tabs"
+// import { SeasonTabs } from "@/components/season-tabs"
 import { useAppStore } from "@/stores/app"
+import { fetchUserTotalPoints } from "@/helpers/request"
+import { useAccount } from "wagmi"
+import { useQuery } from "@tanstack/react-query"
 import Link from "next/link"
 import { useState } from "react"
 import { BorderAnimate } from "../border-animate"
 import s from "./points-modal.module.scss"
 
 export const PointsModal = () => {
-  const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
+  const [activeTab/*, setActiveTab*/] = useState<"season1" | "season2" | "season3">(
     "season1"
   )
 
-  const { points, setPointsModalOpen, pointsModalOpen } = useAppStore()
+  const { setPointsModalOpen, pointsModalOpen } = useAppStore()
+  const { address, isConnected } = useAccount()
+
+  const { data: pointsData, isLoading } = useQuery({
+    queryKey: ["userTotalPoints", address],
+    queryFn: () => {
+      if (!address) throw new Error("No address provided")
+      return fetchUserTotalPoints(address)
+    },
+    enabled: !!address && isConnected,
+    refetchInterval: 30000,
+    staleTime: 10000
+  })
+
+  const points = pointsData?.data?.totalPoints ?? 0
 
   const seasonData = {
     season1: {
@@ -39,11 +56,11 @@ export const PointsModal = () => {
     }
   }
 
-  const seasonLabels = {
-    season1: { label: "Season 1", status: "Active" },
-    season2: { label: "Season 2", status: "Not Started" },
-    season3: { label: "Season 3", status: "Not Started" }
-  }
+  // const seasonLabels = {
+  //   season1: { label: "Season 1", status: "Active" },
+  //   season2: { label: "Season 2", status: "Not Started" },
+  //   season3: { label: "Season 3", status: "Not Started" }
+  // }
 
   const currentSeason = seasonData[activeTab]
 
@@ -54,22 +71,24 @@ export const PointsModal = () => {
   return (
     <Modal open={pointsModalOpen} onClose={handleClose} title="Helios points">
       <div className={s.content}>
-        <SeasonTabs
+        {/* <SeasonTabs
           seasons={seasonLabels}
           activeSeason={activeTab}
           onSeasonChange={(season) => setActiveTab(season as typeof activeTab)}
           disabledSeasons={["season2", "season3"]}
           className={s.seasonTabs}
-        />
+        /> */}
 
         <div className={s.seasonContent}>
           <div className={s.pointsSection}>
             <h3 className={s.sectionTitle}>Points</h3>
             <div className={s.pointsValue}>
-              {currentSeason.points.toLocaleString("en-US", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-              })}
+              {isLoading
+                ? "..."
+                : currentSeason.points.toLocaleString("en-US", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                  })}
             </div>
             <BorderAnimate />
           </div>

@@ -244,6 +244,31 @@
         font-size: var(--size-4);
         color: var(--text-secondary);
       }
+
+      .chainBadge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        padding: 0.15rem 0.4rem;
+        background: var(--background-medium);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-xs);
+        width: fit-content;
+        font-weight: 500;
+      }
+    }
+
+    .chainLogo {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--background-low);
+      padding: 3px;
+      border: 1px solid var(--border-light);
+      object-fit: cover;
+      transition: all 0.2s ease;
     }
 
     .arrow {

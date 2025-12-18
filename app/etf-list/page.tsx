@@ -10,11 +10,15 @@ import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Select } from "@/components/input/select"
 import { Modal } from "@/components/modal"
-import { ETHEREUM_NETWORK_ID } from "@/config/app"
+import { Link } from "@/components/link"
+import { routes } from "@/config/routes"
 import { erc20Abi } from "@/constant/helios-contracts"
+import { vaultViewAbi } from "@/constant/vault-abi"
+import { pricerViewAbi } from "@/constant/pricer-abi"
 import { fetchETFs, type ETFResponse } from "@/helpers/request"
 import { useETFContract } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
+import { CHAIN_CONFIG } from "@/config/chain-config"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { formatTokenSupply } from "@/helpers/format"
 import { fetchCGTokenData } from "@/utils/price"
@@ -37,6 +41,7 @@ interface ETF {
   description: string
   tvl: number
   volumeTradedUSD: number
+  dailyVolumeUSD: number
   totalSupply: string
   sharePrice: string
   apy: string
@@ -56,12 +61,15 @@ interface ETF {
   depositSymbol: string
   depositDecimals: number
   chain: number
+  depositCount?: number
+  redeemCount?: number
   assets?: Array<{
     token: string
     symbol: string
     decimals: number
     targetWeightBps: number
   }>
+  owner: string
 }
 
 function formatETFResponse(etf: ETFResponse): ETF {
@@ -92,6 +100,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     totalSupply: etf.totalSupply || "0.000",
     sharePrice: etf.sharePrice || "0.00",
     volumeTradedUSD: etf.volumeTradedUSD || 0,
+    dailyVolumeUSD: etf.dailyVolumeUSD || 0,
     apy: "0%", // Not available in API response
     change24h: 0, // Not available in API response
     riskLevel: "medium" as const, // Default value
@@ -105,6 +114,9 @@ function formatETFResponse(etf: ETFResponse): ETF {
     depositSymbol: etf.depositSymbol || "TOKEN",
     depositDecimals: etf.depositDecimals || 18,
     chain: etf.chain,
+    depositCount: etf.depositCount,
+    redeemCount: etf.redeemCount,
+    owner: etf.owner || "",
     assets
   }
 }
@@ -125,9 +137,9 @@ export default function ETFList() {
   const [etfs, setEtfs] = useState<ETF[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, ] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(10)
-  const [, setPagination] = useState({
+  const [pagination, setPagination] = useState({
     page: 1,
     size: 10,
     total: 0,
@@ -166,20 +178,30 @@ export default function ETFList() {
     tvl: string
   } | null>(null)
 
+  // Update params modal state
+  const [updateParamsModalOpen, setUpdateParamsModalOpen] = useState(false)
+  const [imbalanceThresholdBps, setImbalanceThresholdBps] = useState("")
+  const [maxPriceStaleness, setMaxPriceStaleness] = useState("")
+  const [currentImbalanceThresholdBps, setCurrentImbalanceThresholdBps] = useState<string | null>(null)
+  const [currentMaxPriceStaleness, setCurrentMaxPriceStaleness] = useState<string | null>(null)
+  const [isLoadingCurrentParams, setIsLoadingCurrentParams] = useState(false)
+  const [updateParamsError, setUpdateParamsError] = useState<string | null>(null)
+
   const {
     deposit,
     redeem,
     rebalance,
     approveToken,
+    updateParams,
     estimateDepositShares,
     estimateRedeemDeposit,
+    estimateUpdateParams,
     isLoading: isContractLoading
   } = useETFContract()
   const web3Provider = useWeb3Provider()
   const [isEstimatingShares, setIsEstimatingShares] = useState(false)
   const [isEstimatingDeposit, setIsEstimatingDeposit] = useState(false)
 
-  const isEthereumNetwork = chainId === ETHEREUM_NETWORK_ID
   const isWalletConnected = !!address
 
   const isETFChainMatch = (etf: ETF) => {
@@ -342,6 +364,9 @@ export default function ETFList() {
         const formattedETFs = response.data.map(formatETFResponse)
         setEtfs(formattedETFs)
         setPagination(response.pagination)
+        
+        // Scroll to top when page changes
+        window.scrollTo({ top: 0, behavior: "smooth" })
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Failed to load ETFs"
@@ -687,6 +712,135 @@ export default function ETFList() {
     }
   }
 
+  const fetchCurrentParams = async (etf: ETF) => {
+    if (!web3Provider) return
+
+    setIsLoadingCurrentParams(true)
+    setUpdateParamsError(null)
+
+    try {
+      // Fetch imbalanceThresholdBps from vault
+      const vaultContract = new web3Provider.eth.Contract(
+        vaultViewAbi as any,
+        etf.vault
+      )
+      const imbalanceThresholdBpsValue = await vaultContract.methods
+        .imbalanceThresholdBps()
+        .call()
+
+      // Fetch maxPriceStaleness from pricer
+      const pricerContract = new web3Provider.eth.Contract(
+        pricerViewAbi as any,
+        etf.pricer
+      )
+      const maxPriceStalenessValue = await pricerContract.methods
+        .maxPriceStaleness()
+        .call()
+
+      setCurrentImbalanceThresholdBps(String(imbalanceThresholdBpsValue))
+      setCurrentMaxPriceStaleness(String(maxPriceStalenessValue))
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch current parameters"
+      setUpdateParamsError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setIsLoadingCurrentParams(false)
+    }
+  }
+
+  const handleOpenUpdateParamsModal = async (etf: ETF) => {
+    if (!isWalletConnected) {
+      toast.error("Please connect your wallet first")
+      return
+    }
+    if (!isETFChainMatch(etf)) {
+      toast.error(
+        `Please switch to the correct network (Chain ID: ${etf.chain})`
+      )
+      return
+    }
+
+    setSelectedETF(etf)
+    setImbalanceThresholdBps("")
+    setMaxPriceStaleness("")
+    setCurrentImbalanceThresholdBps(null)
+    setCurrentMaxPriceStaleness(null)
+    setUpdateParamsError(null)
+    setUpdateParamsModalOpen(true)
+
+    // Fetch current params
+    await fetchCurrentParams(etf)
+  }
+
+  const handleEstimateUpdateParams = async () => {
+    if (!selectedETF) return
+
+    if (!imbalanceThresholdBps || parseFloat(imbalanceThresholdBps) < 0) {
+      toast.error("Please enter a valid imbalance threshold (BPS)")
+      return
+    }
+
+    if (!maxPriceStaleness || parseFloat(maxPriceStaleness) < 0) {
+      toast.error("Please enter a valid max price staleness")
+      return
+    }
+
+    try {
+      await estimateUpdateParams({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        imbalanceThresholdBps,
+        maxPriceStaleness
+      })
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to validate parameters"
+      toast.error(errorMessage)
+      throw error
+    }
+  }
+
+  const handleConfirmUpdateParams = async () => {
+    if (!selectedETF) return
+
+    if (!imbalanceThresholdBps || parseFloat(imbalanceThresholdBps) < 0) {
+      toast.error("Please enter a valid imbalance threshold (BPS)")
+      return
+    }
+
+    if (!maxPriceStaleness || parseFloat(maxPriceStaleness) < 0) {
+      toast.error("Please enter a valid max price staleness")
+      return
+    }
+
+    try {
+      // First estimate to validate
+      await handleEstimateUpdateParams()
+
+      // If estimation succeeds, proceed with the update
+      await updateParams({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        imbalanceThresholdBps,
+        maxPriceStaleness
+      })
+
+      toast.success(`Successfully updated parameters for ${selectedETF.symbol}`)
+      setUpdateParamsModalOpen(false)
+      setImbalanceThresholdBps("")
+      setMaxPriceStaleness("")
+      setSelectedETF(null)
+      setCurrentImbalanceThresholdBps(null)
+      setCurrentMaxPriceStaleness(null)
+      setUpdateParamsError(null)
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update parameters"
+      toast.error(errorMessage)
+    }
+  }
+
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case "low":
@@ -727,29 +881,28 @@ export default function ETFList() {
       <div className={s.statsHeader}>
         <div className={s.stat}>
           <span className={s.label}>Total ETFs</span>
-          <span className={s.statValue}>{filteredAndSortedETFs.length}</span>
+          <span className={s.statValue}>{pagination.total}</span>
         </div>
         <div className={s.stat}>
           <span className={s.label}>Total TVL</span>
           <span className={s.statValue}>
             $
-            {filteredAndSortedETFs
+            {formatTokenSupply(filteredAndSortedETFs
               .reduce(
                 (sum, etf) => sum + Number(etf.tvl),
                 0
               )
-              .toFixed(2)}
+              .toFixed(2), 0, 2)}
           </span>
         </div>
         <div className={s.stat}>
           <span className={s.label}>Total Daily Volume</span>
           <span className={s.statValue}>
-            ${(
-              filteredAndSortedETFs.reduce(
-                (sum, etf) => sum + etf.volumeTradedUSD,
+            ${
+              formatTokenSupply(filteredAndSortedETFs.reduce(
+                (sum, etf) => sum + etf.dailyVolumeUSD,
                 0
-              )
-            ).toFixed(2)}
+              ).toFixed(2), 0, 2)}
           </span>
         </div>
       </div>
@@ -761,13 +914,6 @@ export default function ETFList() {
           description="Browse and trade available ETF baskets. Buy, sell, mint, or withdraw your positions."
         />
       </div>
-
-      {!isEthereumNetwork && isWalletConnected && (
-        <div className={s.networkWarning}>
-          <Icon icon="hugeicons:alert-circle" />
-          <span>Please switch to Ethereum network to trade ETFs</span>
-        </div>
-      )}
 
       <div className={s.filterCardContent}>
         <div className={s.filterGrid}>
@@ -826,6 +972,16 @@ export default function ETFList() {
           {filteredAndSortedETFs.map((etf) => (
             <Card key={etf.id} className={s.etfCard}>
               <BorderAnimate className={s.hover} />
+              {CHAIN_CONFIG[etf.chain]?.abbreviatedName && (
+                <Image
+                  src={`/img/chains/${CHAIN_CONFIG[etf.chain].abbreviatedName}.png`}
+                  alt={CHAIN_CONFIG[etf.chain].name}
+                  width={32}
+                  height={32}
+                  className={s.chainLogo}
+                  title={`${CHAIN_CONFIG[etf.chain].name} Network`}
+                />
+              )}
               <Card className={s.cardHeader}>
                 <div className={s.etfTitle}>
                   <div className={s.titleRow}>
@@ -859,19 +1015,32 @@ export default function ETFList() {
                       </div>
                     )}
                     <div className={s.titleRowRight}>
-                      <h3>{etf.name}</h3>
+                      <h3>
+                        <Link href={routes.etfDetails(etf.vault)} className={s.titleLink}>
+                          {etf.name}
+                        </Link>
+                      </h3>
                       <p className={s.description}>{etf.description}</p>
                     </div>
                   </div>
                 </div>
-                <span className={s.symbol}>
-                  {etf.symbol} <BorderAnimate />
-                </span>
+                {/* <span className={s.symbol}>
+                  <Icon icon="hugeicons:link-square-01" />{etf.symbol} <BorderAnimate />
+                </span> */}
+                <a
+                    href={getExplorerUrl(etf.shareToken, etf.chain)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={s.symbol}
+                    title={`View on ${getChainName(etf.chain)} explorer`}
+                  >
+                    <Icon icon="hugeicons:link-square-01" />
+                    {etf.symbol} <BorderAnimate />
+                </a>
                 <div className={s.badges}>
                   <Badge status={getRiskColor(etf.riskLevel)}>
                     {etf.riskLevel.toUpperCase()}
                   </Badge>
-                  <Badge status="primary">{etf.category}</Badge>
                   <a
                     href={getExplorerUrl(etf.vault, etf.chain)}
                     target="_blank"
@@ -892,6 +1061,12 @@ export default function ETFList() {
                     <Icon icon="hugeicons:link-square-01" />
                     pricer
                   </a>
+                  {etf.depositCount !== undefined && etf.redeemCount !== undefined && 
+                   (etf.depositCount === 0 || etf.redeemCount === 0) && (
+                    <Badge status="warning">
+                      Not Tested
+                    </Badge>
+                  )}
                 </div>
                 <div className={s.metricsGrid}>
                   <Card className={s.metric}>
@@ -930,6 +1105,15 @@ export default function ETFList() {
                 <div className={s.composition}>
                   <h4>
                     Composition <span>{etf.tokens.length} tokens</span>
+                    {etf.owner && address && etf.owner.toLowerCase() === address.toLowerCase() && (
+                      <Button
+                        variant="secondary"
+                        size="xsmall"
+                        onClick={() => handleOpenUpdateParamsModal(etf)}
+                        iconLeft="hugeicons:settings-01"
+                        title="Update Parameters"
+                      />
+                    )}
                   </h4>
                   <div className={s.tokens}>
                     {etf.tokens.map((token) => {
@@ -1073,6 +1257,97 @@ export default function ETFList() {
               </Card>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && !error && pagination.totalPages > 1 && (
+        <div className={s.pagination}>
+          <Button
+            variant="secondary"
+            icon="hugeicons:arrow-left-01"
+            border
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1 || !pagination.hasPreviousPage}
+          />
+
+          <div className={s.paginationInfo}>
+            <div className={s.pageNumbers}>
+            {(() => {
+              const pages: (number | string)[] = []
+              const totalPages = pagination.totalPages
+              const maxVisible = 5
+
+              if (totalPages <= maxVisible) {
+                // Show all pages if total is 5 or less
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i)
+                }
+              } else {
+                // Always show first page
+                pages.push(1)
+
+                if (currentPage <= 3) {
+                  // Near the beginning
+                  for (let i = 2; i <= 4; i++) {
+                    pages.push(i)
+                  }
+                  pages.push("ellipsis")
+                  pages.push(totalPages)
+                } else if (currentPage >= totalPages - 2) {
+                  // Near the end
+                  pages.push("ellipsis")
+                  for (let i = totalPages - 3; i <= totalPages; i++) {
+                    pages.push(i)
+                  }
+                } else {
+                  // In the middle
+                  pages.push("ellipsis")
+                  for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                    pages.push(i)
+                  }
+                  pages.push("ellipsis")
+                  pages.push(totalPages)
+                }
+              }
+
+              return pages.map((page, index) => {
+                if (page === "ellipsis") {
+                  return (
+                    <span key={`ellipsis-${index}`} className={s.ellipsis}>
+                      ...
+                    </span>
+                  )
+                }
+                return (
+                  <button
+                    key={page}
+                    className={clsx(
+                      s.pageButton,
+                      currentPage === page && s.active
+                    )}
+                    onClick={() => setCurrentPage(page as number)}
+                  >
+                    {page}
+                  </button>
+                )
+              })
+            })()}
+            </div>
+            <div className={s.pageInfo}>
+              Page {pagination.page} sur {pagination.totalPages}
+            </div>
+          </div>
+
+          <Button
+            variant="secondary"
+            iconRight="hugeicons:arrow-right-01"
+            border
+            onClick={() =>
+              setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))
+            }
+            disabled={currentPage === pagination.totalPages || !pagination.hasNextPage}
+          />
         </div>
       )}
 
@@ -1911,6 +2186,133 @@ export default function ETFList() {
               </Button>
             )}
           </div>
+        </div>
+      </Modal>
+
+      {/* Update Params Modal */}
+      <Modal
+        open={updateParamsModalOpen}
+        onClose={() => {
+          setUpdateParamsModalOpen(false)
+          setSelectedETF(null)
+          setImbalanceThresholdBps("")
+          setMaxPriceStaleness("")
+          setCurrentImbalanceThresholdBps(null)
+          setCurrentMaxPriceStaleness(null)
+          setUpdateParamsError(null)
+        }}
+        title={`Update Parameters - ${selectedETF?.symbol || ""}`}
+      >
+        <div className={s.modalContent}>
+          <p className={s.modalDescription}>
+            Update vault parameters for this ETF. Only the owner can modify these settings.
+          </p>
+
+          {isLoadingCurrentParams ? (
+            <div style={{ padding: "1rem", textAlign: "center" }}>
+              Loading current parameters...
+            </div>
+          ) : (
+            <>
+              {currentImbalanceThresholdBps !== null && currentMaxPriceStaleness !== null && (
+                <div style={{
+                  padding: "0.75rem 1rem",
+                  background: "var(--background-low)",
+                  borderRadius: "var(--radius-s)",
+                  border: "1px solid var(--border-light)",
+                  marginBottom: "1rem"
+                }}>
+                  <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                    Current Values:
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                    <div style={{ fontSize: "0.85rem" }}>
+                      <strong>Imbalance Threshold:</strong> {currentImbalanceThresholdBps} BPS
+                    </div>
+                    <div 
+                      style={{ fontSize: "0.85rem" }}
+                      title={`${(parseInt(currentMaxPriceStaleness || "0") / 60).toFixed(2)} minutes, ${(parseInt(currentMaxPriceStaleness || "0") / 3600).toFixed(2)} hours, ${((parseInt(currentMaxPriceStaleness || "0") / 3600) / 24).toFixed(2)} days`}
+                    >
+                      <strong>Max Price Staleness:</strong> {currentMaxPriceStaleness} seconds
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {updateParamsError && (
+                <div style={{
+                  padding: "0.75rem 1rem",
+                  background: "var(--danger-lowest)",
+                  border: "1px solid var(--danger-low)",
+                  borderRadius: "var(--radius-s)",
+                  color: "var(--danger-high)",
+                  marginBottom: "1rem",
+                  fontSize: "0.9rem"
+                }}>
+                  {updateParamsError}
+                </div>
+              )}
+
+              <Input
+                label="Imbalance Threshold (BPS)"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 100"
+                value={imbalanceThresholdBps}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, "")
+                  setImbalanceThresholdBps(value)
+                  setUpdateParamsError(null)
+                }}
+                icon="hugeicons:percent"
+                helperText="Basis Points (1 BPS = 0.01%)"
+              />
+
+              <Input
+                label="Max Price Staleness"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 3600"
+                value={maxPriceStaleness}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, "")
+                  setMaxPriceStaleness(value)
+                  setUpdateParamsError(null)
+                }}
+                icon="hugeicons:clock-01"
+                helperText="Maximum age of price data in seconds"
+              />
+
+              <div className={s.modalActions}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setUpdateParamsModalOpen(false)
+                    setSelectedETF(null)
+                    setImbalanceThresholdBps("")
+                    setMaxPriceStaleness("")
+                    setCurrentImbalanceThresholdBps(null)
+                    setCurrentMaxPriceStaleness(null)
+                    setUpdateParamsError(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleConfirmUpdateParams}
+                  disabled={isContractLoading || !imbalanceThresholdBps || !maxPriceStaleness}
+                  iconLeft={
+                    isContractLoading
+                      ? "hugeicons:loading-01"
+                      : "hugeicons:checkmark-circle-02"
+                  }
+                >
+                  {isContractLoading ? "Processing..." : "Confirm Update"}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
 

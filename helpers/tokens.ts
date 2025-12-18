@@ -1,0 +1,12 @@
+export const ASSETS_ADDRS = {
+    [1]: { // Ethereum mainnet
+      HLS: '0x970a341B4E311A5c7248Dc9c3d8d4f35fEdFA73e',
+      USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      WETH: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    },
+    [42161]: { // Arbitrum mainnet
+      WETH: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
+      USDC: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+      HLS: '0x4267ac2b815664047855b6c64be5605af9d51304',
+    },
+  };

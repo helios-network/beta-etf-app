@@ -22,16 +22,7 @@ import { ETFSelectModal } from "./(components)/etf-select-modal"
 import { SlippageModal } from "./(components)/slippage-modal"
 import { TokenSelectModal } from "./(components)/token-select-modal"
 import s from "./page.module.scss"
-
-interface ETF {
-  id: string
-  name: string
-  symbol: string
-  tokens: Array<{
-    symbol: string
-    percentage: number
-  }>
-}
+import { CHAIN_CONFIG } from "@/config/chain-config"
 
 export default function Home() {
   const chainId = useChainId()
@@ -81,7 +72,7 @@ export default function Home() {
   // Fetch deposit tokens
   const { data: depositTokensData } = useQuery({
     queryKey: ["depositTokens"],
-    queryFn: fetchDepositTokens,
+    queryFn: () => fetchDepositTokens(chainId),
     staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000
   })
@@ -218,7 +209,6 @@ export default function Home() {
 
   const handleETFSelect = async (etf: ETFResponse) => {
     setSelectedETF(etf)
-    setSellAmount("")
     setBuyAmount("")
     setDepositTokenAllowance(false)
     setShareTokenAllowance(false)
@@ -252,7 +242,6 @@ export default function Home() {
 
   const handleSwapDirection = () => {
     setIsReversed(!isReversed)
-    setSelectedETF(null)
     setSellAmount("")
     setBuyAmount("")
     setDepositTokenAllowance(false)
@@ -267,8 +256,6 @@ export default function Home() {
 
   // Handle sell amount change (deposit token -> ETF or ETF shares -> deposit token)
   const handleSellAmountChange = async (value: string) => {
-    if (!selectedETF) return
-    
     const decimals = isReversed ? 18 : (selectedDepositToken?.decimals || 18)
     const validatedValue = validateDecimalInput(value, decimals)
     setSellAmount(validatedValue)
@@ -283,6 +270,9 @@ export default function Home() {
       setImpermanentLossPercentage(null)
       return
     }
+
+    // Si aucun ETF n'est sélectionné, on met juste à jour le montant sans estimation
+    if (!selectedETF) return
 
     setIsEstimating(true)
     setIsCheckingAllowance(true)
@@ -600,6 +590,23 @@ export default function Home() {
     }
   }
 
+  // Effect to reset state when chain changes
+  useEffect(() => {
+    // Reset all form state when chain changes
+    setSelectedDepositToken(null)
+    setSelectedETF(null)
+    setSellAmount("")
+    setBuyAmount("")
+    setDepositTokenBalance(null)
+    setShareTokenBalance(null)
+    setDepositTokenAllowance(false)
+    setShareTokenAllowance(false)
+    setEstimatedAmountsOut([])
+    setEstimatedValuesPerAsset([])
+    setEstimatedSoldAmounts([])
+    setImpermanentLossPercentage(null)
+  }, [chainId])
+
   // Effect to fetch balances when selections change
   useEffect(() => {
     const fetchBalances = async () => {
@@ -618,7 +625,15 @@ export default function Home() {
     }
 
     fetchBalances()
-  }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF, fetchTokenBalance])
+  }, [address, web3Provider, isReversed, selectedDepositToken, selectedETF, fetchTokenBalance, chainId])
+
+  // Effect to trigger estimation when ETF is selected and amount already exists
+  useEffect(() => {
+    if (selectedETF && sellAmount && parseFloat(sellAmount) > 0) {
+      handleSellAmountChange(sellAmount)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedETF])
 
   const isWalletConnected = !!address
   const isETFChainMatch = selectedETF ? chainId === selectedETF.chain : true
@@ -634,26 +649,6 @@ export default function Home() {
     buyAmount &&
     parseFloat(buyAmount) > 0
 
-  // Convert ETFResponse to ETF for modal compatibility
-  const etfsForModal: ETF[] = useMemo(() => {
-    return etfs.map((etf) => ({
-      id: etf._id,
-      name: etf.name,
-      symbol: etf.symbol,
-      tokens: etf.assets?.map((asset) => ({
-        symbol: asset.symbol,
-        percentage: asset.targetWeightBps / 100
-      })) || []
-    }))
-  }, [etfs])
-
-  // Convert DepositToken to Token for modal compatibility
-  const tokensForModal = useMemo(() => {
-    return depositTokens.map((token) => ({
-      symbol: token.symbol,
-      name: token.symbol // We don't have the full name from API
-    }))
-  }, [depositTokens])
 
   // Calculate total value from valuesPerAsset
   const totalEstimatedValue = useMemo(() => {
@@ -1106,7 +1101,7 @@ export default function Home() {
           </Button>
         ) : !isETFChainMatch && selectedETF ? (
           <Button className={s.start} disabled>
-            Wrong Network (Chain ID: {selectedETF.chain})
+            Wrong Network ({CHAIN_CONFIG[selectedETF.chain]?.name ?? `Chain ${selectedETF.chain}`})
           </Button>
         ) : !selectedETF || (!isReversed && !selectedDepositToken) ? (
           <Button className={s.start} disabled>
@@ -1143,26 +1138,18 @@ export default function Home() {
       <TokenSelectModal
         open={tokenModalOpen}
         onClose={() => setTokenModalOpen(false)}
-        onSelect={(token) => {
-          const depositToken = depositTokens.find(t => t.symbol === token.symbol)
-          if (depositToken) {
-            handleDepositTokenSelect(depositToken)
-          }
+        onSelect={(depositToken) => {
+          handleDepositTokenSelect(depositToken)
         }}
-        tokens={tokensForModal}
-        tokenData={tokenData}
+        chainId={chainId}
       />
       <ETFSelectModal
         open={etfModalOpen}
         onClose={() => setEtfModalOpen(false)}
-        onSelect={(etf) => {
-          const etfResponse = etfs.find(e => e._id === etf.id)
-          if (etfResponse) {
-            handleETFSelect(etfResponse)
-          }
+        onSelect={(etfResponse) => {
+          handleETFSelect(etfResponse)
         }}
-        etfs={etfsForModal}
-        tokenData={tokenData}
+        depositToken={isReversed ? undefined : selectedDepositToken?.address}
       />
 
       <SlippageModal

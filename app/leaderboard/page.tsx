@@ -4,7 +4,7 @@ import { Button } from "@/components/button"
 import { DataState } from "@/components/data-state"
 import { Heading } from "@/components/heading"
 import { Input } from "@/components/input"
-import { SeasonTabs } from "@/components/season-tabs"
+// import { SeasonTabs } from "@/components/season-tabs"
 import { fetchLeaderboard } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import type { LeaderboardEntry } from "@/types/points"
@@ -13,9 +13,9 @@ import { useEffect, useState } from "react"
 import s from "./leaderboard.module.scss"
 
 export default function LeaderboardPage() {
-  const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
-    "season1"
-  )
+  // const [activeTab, setActiveTab] = useState<"season1" | "season2" | "season3">(
+  //   "season1"
+  // )
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([])
@@ -49,11 +49,11 @@ export default function LeaderboardPage() {
     entry.address.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const seasonLabels = {
-    season1: { label: "Season 1", status: "Active" },
-    season2: { label: "Season 2", status: "Not Started" },
-    season3: { label: "Season 3", status: "Not Started" }
-  }
+  // const seasonLabels = {
+  //   season1: { label: "Season 1", status: "Active" },
+  //   season2: { label: "Season 2", status: "Not Started" },
+  //   season3: { label: "Season 3", status: "Not Started" }
+  // }
 
   return (
     <>
@@ -65,7 +65,7 @@ export default function LeaderboardPage() {
         />
       </div>
 
-      <SeasonTabs
+      {/* <SeasonTabs
         seasons={seasonLabels}
         activeSeason={activeTab}
         onSeasonChange={(season) => {
@@ -73,7 +73,7 @@ export default function LeaderboardPage() {
           setCurrentPage(1)
         }}
         disabledSeasons={["season2", "season3"]}
-      />
+      /> */}
 
       <div className={s.content}>
         <div className={s.filterCardContent}>
@@ -114,9 +114,9 @@ export default function LeaderboardPage() {
                 <tr>
                   <th className={s.rankCol}>Rank</th>
                   <th className={s.addressCol}>Address</th>
-                  <th className={s.pointsCol}>Total Points accrued</th>
+                  <th className={s.pointsCol}>Total Points</th>
                   <th className={s.volumeCol}>Volume traded</th>
-                  <th className={s.transactionsCol}>Transactions performed</th>
+                  <th className={s.transactionsCol}>Transactions</th>
                   <th className={s.tvlCol}>TVL</th>
                   <th className={s.lastActivityCol}>Last Activity</th>
                 </tr>
@@ -128,13 +128,18 @@ export default function LeaderboardPage() {
                       <span className={s.rankBadge}>{entry.rank}</span>
                     </td>
                     <td className={s.addressCol} data-th="Address">
-                      <span className={s.address}>
+                      <span
+                        className={s.address}
+                        onClick={() => console.log(entry.address)}
+                        style={{ cursor: "pointer" }}
+                        title="Click to see full address in console"
+                      >
                         {truncateAddress(entry.address)}
                       </span>
                     </td>
-                    <td className={s.pointsCol} data-th="Total Points accrued">
+                    <td className={s.pointsCol} data-th="Total Points">
                       <span className={s.points}>
-                        {Number(entry.totalPointsAccrued).toLocaleString(
+                        {Number(entry.totalPoints).toLocaleString(
                           "en-US",
                           {
                             minimumFractionDigits: 0,
@@ -160,9 +165,14 @@ export default function LeaderboardPage() {
                     </td>
                     <td
                       className={s.transactionsCol}
-                      data-th="Transactions performed"
+                      data-th="Transactions"
                     >
-                      {entry.transactionsPerformed}
+                      {entry.transactionCounts
+                        ? Object.values(entry.transactionCounts).reduce(
+                            (sum, count) => sum + count,
+                            0
+                          )
+                        : entry.transactionsPerformed}
                     </td>
                     <td className={s.tvlCol} data-th="TVL">
                       {entry.tvl
