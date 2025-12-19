@@ -398,6 +398,55 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   return data
 }
 
+interface ChartDataPoint {
+  timestamp: number
+  volume: {
+    min: number
+    average: number
+    max: number
+  }
+  price: {
+    min: number
+    average: number
+    max: number
+  }
+}
+
+interface ChartApiResponse {
+  success: boolean
+  data: ChartDataPoint[]
+}
+
+async function fetchETFChart(vaultAddress: string, period: string): Promise<ChartApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+  
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/chart?vaultAddress=${vaultAddress}&period=${period}`
+  
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch chart data: ${response.statusText}`)
+  }
+
+  const data: ChartApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error("API returned unsuccessful response")
+  }
+
+  return data
+}
+
 interface PortfolioAsset {
   chain: number
   symbol: string
@@ -541,5 +590,5 @@ async function fetchUserTotalPoints(
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchETFStats, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolioAll, fetchUserTotalPoints }
-export type { ETFResponse, ETFsApiResponse, ETFsStatsResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, PortfolioComplete, UserTotalPointsResponse, UserTotalPointsData }
+export { request, requestWithRpcUrl, fetchETFs, fetchETFStats, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolioAll, fetchUserTotalPoints, fetchETFChart }
+export type { ETFResponse, ETFsApiResponse, ETFsStatsResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, PortfolioComplete, UserTotalPointsResponse, UserTotalPointsData, ChartDataPoint, ChartApiResponse }

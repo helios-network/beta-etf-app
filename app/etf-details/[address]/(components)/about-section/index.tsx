@@ -7,6 +7,8 @@ import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
 import { ChainConfig } from "@/config/chain-config"
+import { formatTokenAmount } from "@/lib/utils/number"
+import { formatTokenSupply } from "@/helpers/format"
 import clsx from "clsx"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -108,11 +110,13 @@ export function AboutSection({
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Supply</span>
-            <span className={s.metricValue}>{etf.totalSupply}</span>
+            <span className={s.metricValue}>
+              {formatTokenSupply(etf.totalSupply, 18, 4)}
+            </span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Price</span>
-            <span className={s.metricValue}>${etf.sharePrice}</span>
+            <span className={s.metricValue}>${formatTokenAmount(etf.sharePrice)}</span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>24h Volume</span>
