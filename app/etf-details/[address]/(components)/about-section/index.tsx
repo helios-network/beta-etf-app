@@ -9,8 +9,10 @@ import { Modal } from "@/components/modal"
 import { ChainConfig } from "@/config/chain-config"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { formatTokenSupply } from "@/helpers/format"
+import { fetchETFChart } from "@/helpers/request"
+import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import s from "./about-section.module.scss"
 
@@ -28,6 +30,7 @@ interface ETF {
   redeemCount?: number
   createdAt: string
   chain: number
+  vault: string
   website?: string
   tags?: string[]
 }
@@ -48,6 +51,22 @@ export function AboutSection({
   const [description, setDescription] = useState(etf.description)
   const [tags, setTags] = useState<string[]>(etf.tags || [])
   const [isSaving, setIsSaving] = useState(false)
+
+  const { data: chartResponse } = useQuery({
+    queryKey: ["etfChart24h", etf.vault],
+    queryFn: () => fetchETFChart(etf.vault, "7d"),
+    staleTime: 30 * 1000,
+    enabled: !!etf.vault
+  })
+  const dailyVolume = useMemo(() => {
+    if (!chartResponse?.data || chartResponse.data.length === 0) {
+      return etf.dailyVolumeUSD
+    }
+    const firstPrice = chartResponse.data[0].price?.average || 0
+    const lastPrice = chartResponse.data[chartResponse.data.length - 1].price?.average || 0
+
+    return Math.abs(lastPrice - firstPrice)
+  }, [chartResponse, etf.dailyVolumeUSD])
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -128,7 +147,7 @@ export function AboutSection({
           <Card className={s.metric}>
             <span className={s.metricLabel}>24h Volume</span>
             <span className={s.metricValue}>
-              {formatCurrency(etf.dailyVolumeUSD)}
+              {formatCurrency(dailyVolume)}
             </span>
           </Card>
           <Card className={s.metric}>
