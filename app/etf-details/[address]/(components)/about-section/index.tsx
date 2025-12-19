@@ -64,11 +64,18 @@ export function AboutSection({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const date = new Date(dateString)
+    const dateStr = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric"
     })
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })
+    return `${dateStr} ${timeStr}`
   }
 
   const formatCurrency = (value: number) => {
