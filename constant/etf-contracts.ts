@@ -128,6 +128,11 @@ export const etfFactoryAbi = [
         type: "uint256"
       },
       {
+        internalType: "uint256",
+        name: "slippageBps",
+        type: "uint256"
+      },
+      {
         internalType: "bool",
         name: "simulate",
         type: "bool"
@@ -172,6 +177,11 @@ export const etfFactoryAbi = [
         type: "uint256"
       },
       {
+        internalType: "uint256",
+        name: "slippageBps",
+        type: "uint256"
+      },
+      {
         internalType: "bool",
         name: "simulate",
         type: "bool"
@@ -199,6 +209,45 @@ export const etfFactoryAbi = [
         internalType: "address",
         name: "vault",
         type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "shares",
+        type: "uint256"
+      },
+      {
+        internalType: "bool",
+        name: "simulate",
+        type: "bool"
+      },
+      {
+        internalType: "bool",
+        name: "withReturn",
+        type: "bool"
+      }
+    ],
+    name: "redeemTokens",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "depositOutRet",
+        type: "uint256"
+      }
+    ],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "vault",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "slippageBps",
+        type: "uint256"
       }
     ],
     name: "rebalance",

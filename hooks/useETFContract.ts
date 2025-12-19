@@ -37,6 +37,7 @@ interface DepositParams {
   depositToken: string
   amount: string
   minSharesOut: string
+  slippageBps: string
 }
 
 interface DepositResult {
@@ -56,6 +57,7 @@ interface RedeemParams {
   shareToken: string
   shares: string
   minOut: string
+  slippageBps: string
 }
 
 interface RedeemResult {
@@ -71,6 +73,7 @@ interface RedeemResult {
 interface RebalanceParams {
   factory: string
   vault: string
+  slippageBps: string
 }
 
 interface RebalanceResult {
@@ -101,6 +104,15 @@ interface UpdateParamsParams {
 interface UpdateParamsResult {
   txHash: string
   blockNumber: number
+}
+
+/**
+ * Convert a percentage value to basis points (BPS)
+ * @param percentage - Percentage value (e.g., 0.25 for 0.25%, 5 for 5%)
+ * @returns Basis points as string (e.g., "25" for 0.25%, "500" for 5%)
+ */
+export function percentageToBps(percentage: number): string {
+  return Math.round(percentage * 100).toString()
 }
 
 export const useETFContract = () => {
@@ -315,12 +327,12 @@ export const useETFContract = () => {
 
         // Simulate the transaction and get the return value
         const depositResult: any = await factoryContract.methods
-          .deposit(params.vault, params.amount, params.minSharesOut, false)
+          .deposit(params.vault, params.amount, params.minSharesOut, params.slippageBps, false)
           .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .deposit(params.vault, params.amount, params.minSharesOut, false)
+          .deposit(params.vault, params.amount, params.minSharesOut, params.slippageBps, false)
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -336,7 +348,7 @@ export const useETFContract = () => {
               from: address,
               to: factoryAddress,
               data: factoryContract.methods
-                .deposit(params.vault, params.amount, params.minSharesOut, false)
+                .deposit(params.vault, params.amount, params.minSharesOut, params.slippageBps, false)
                 .encodeABI(),
               gas: gasLimit.toString(),
               gasPrice: bestGasPrice.toString()
@@ -413,12 +425,12 @@ export const useETFContract = () => {
 
         // Simulate the transaction and get the return value
         const redeemResult: any = await factoryContract.methods
-          .redeem(params.vault, params.shares, params.minOut, false)
+          .redeem(params.vault, params.shares, params.minOut, params.slippageBps, false)
           .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .redeem(params.vault, params.shares, params.minOut, false)
+          .redeem(params.vault, params.shares, params.minOut, params.slippageBps, false)
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -434,7 +446,7 @@ export const useETFContract = () => {
               from: address,
               to: factoryAddress,
               data: factoryContract.methods
-                .redeem(params.vault, params.shares, params.minOut, false)
+                .redeem(params.vault, params.shares, params.minOut, params.slippageBps, false)
                 .encodeABI(),
               gas: gasLimit.toString(),
               gasPrice: bestGasPrice.toString()
@@ -513,11 +525,11 @@ export const useETFContract = () => {
         )
 
         // Simulate the transaction
-        await factoryContract.methods.rebalance(params.vault).call({ from: address })
+        await factoryContract.methods.rebalance(params.vault, params.slippageBps).call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .rebalance(params.vault)
+          .rebalance(params.vault, params.slippageBps)
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -532,7 +544,7 @@ export const useETFContract = () => {
             .sendTransaction({
               from: address,
               to: factoryAddress,
-              data: factoryContract.methods.rebalance(params.vault).encodeABI(),
+              data: factoryContract.methods.rebalance(params.vault, params.slippageBps).encodeABI(),
               gas: gasLimit.toString(),
               gasPrice: bestGasPrice.toString()
             })
@@ -592,6 +604,7 @@ export const useETFContract = () => {
     vault: string
     amount: string,
     allowance: bigint
+    slippageBps: string
   }): Promise<{
     sharesOut: string
     amountsOut: string[]
@@ -613,7 +626,7 @@ export const useETFContract = () => {
       // Call deposit with minSharesOut = 0 and simulate = true to get the estimated shares
       // The function now returns { sharesOutRet, amountsOut, valuesPerAsset }
       const depositResult: any = await factoryContract.methods
-        .deposit(params.vault, params.amount, "0", needEstimateBool)
+        .deposit(params.vault, params.amount, "0", params.slippageBps, needEstimateBool)
         .call({ from: address })
 
       console.log("depositResult", depositResult)
@@ -636,6 +649,7 @@ export const useETFContract = () => {
     vault: string
     shares: string
     allowance: bigint
+    slippageBps: string
   }): Promise<{
     depositOut: string
     soldAmounts: string[]
@@ -656,7 +670,7 @@ export const useETFContract = () => {
       // Call redeem with minOut = 0 and simulate = true to get the estimated deposit tokens
       // The function now returns { depositOutRet, soldAmounts }
       const redeemResult: any = await factoryContract.methods
-        .redeem(params.vault, params.shares, "0", needEstimateBool)
+        .redeem(params.vault, params.shares, "0", params.slippageBps, needEstimateBool)
         .call({ from: address })
       
       

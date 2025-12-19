@@ -8,7 +8,7 @@ import { Symbol } from "@/components/symbol"
 import { Tunnel } from "@/components/tunnel"
 import { erc20Abi } from "@/constant/helios-contracts"
 import { fetchDepositTokens, fetchETFs, type DepositToken, type ETFResponse } from "@/helpers/request"
-import { useETFContract } from "@/hooks/useETFContract"
+import { useETFContract, percentageToBps } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { getAssetColor, getAssetIcon } from "@/utils/assets"
 import { fetchCGTokenData } from "@/utils/price"
@@ -304,7 +304,8 @@ export default function Home() {
           factory: selectedETF.factory,
           vault: selectedETF.vault,
           amount: amountWei,
-          allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
+          allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
+          slippageBps: percentageToBps(slippage)
         })
 
         // Store estimated amounts and values for display
@@ -373,7 +374,8 @@ export default function Home() {
           factory: selectedETF.factory,
           vault: selectedETF.vault,
           shares: sharesWei,
-          allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
+          allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
+          slippageBps: percentageToBps(slippage)
         })
 
         // Store estimated sold amounts for display
@@ -514,7 +516,8 @@ export default function Home() {
           vault: selectedETF.vault,
           depositToken: selectedETF.depositToken,
           amount: amountWei,
-          minSharesOut: minSharesOutWei
+          minSharesOut: minSharesOutWei,
+          slippageBps: percentageToBps(slippage)
         })
 
         const sharesReceived = Number(result.sharesOut) / Number(sharesMultiplier)
@@ -565,7 +568,8 @@ export default function Home() {
           vault: selectedETF.vault,
           shareToken: selectedETF.shareToken,
           shares: sharesWei,
-          minOut: minOutWei
+          minOut: minOutWei,
+          slippageBps: percentageToBps(slippage)
         })
 
         const receivedAmount = Number(result.depositOut) / Number(depositMultiplier)

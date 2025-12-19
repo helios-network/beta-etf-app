@@ -16,7 +16,7 @@ import { erc20Abi } from "@/constant/helios-contracts"
 import { vaultViewAbi } from "@/constant/vault-abi"
 import { pricerViewAbi } from "@/constant/pricer-abi"
 import { fetchETFs, fetchETFStats, type ETFResponse } from "@/helpers/request"
-import { useETFContract } from "@/hooks/useETFContract"
+import { useETFContract, percentageToBps } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { CHAIN_CONFIG } from "@/config/chain-config"
 import { formatTokenAmount } from "@/lib/utils/number"
@@ -565,7 +565,8 @@ export default function ETFList() {
         vault: selectedETF.vault,
         depositToken: selectedETF.depositToken,
         amount: amountWei,
-        minSharesOut: minSharesOutWei
+        minSharesOut: minSharesOutWei,
+        slippageBps: percentageToBps(slippageBuy)
       })
 
       // Convert shares back from wei to human-readable
@@ -673,7 +674,8 @@ export default function ETFList() {
         vault: selectedETF.vault,
         shareToken: selectedETF.shareToken,
         shares: sharesWei,
-        minOut: minOutWei
+        minOut: minOutWei,
+        slippageBps: percentageToBps(slippageSell)
       })
 
       // Format the received amount using correct decimals
@@ -713,7 +715,7 @@ export default function ETFList() {
     }
 
     try {
-      await rebalance({ factory: etf.factory, vault: etf.vault })
+      await rebalance({ factory: etf.factory, vault: etf.vault, slippageBps: percentageToBps(0.5) })
       toast.success(`Successfully rebalanced ${etf.symbol}`)
     } catch (error: unknown) {
       console.error("Error during rebalance", error)
@@ -1435,7 +1437,8 @@ export default function ETFList() {
                     factory: selectedETF.factory,
                     vault: selectedETF.vault,
                     amount: amountWei,
-                    allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
+                    allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
+                    slippageBps: percentageToBps(slippageBuy)
                   })
 
                   // Store estimated amounts and values for display
@@ -1541,7 +1544,8 @@ export default function ETFList() {
                       factory: selectedETF.factory,
                       vault: selectedETF.vault,
                       amount: amountWei,
-                      allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
+                      allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
+                      slippageBps: percentageToBps(slippageBuy)
                     })
 
                     // Store estimated amounts and values for display
@@ -1920,7 +1924,8 @@ export default function ETFList() {
                     factory: selectedETF.factory,
                     vault: selectedETF.vault,
                     shares: sharesWei,
-                    allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
+                    allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
+                    slippageBps: percentageToBps(slippageSell)
                   })
 
                   // Store estimated sold amounts for display
@@ -2000,7 +2005,8 @@ export default function ETFList() {
                       factory: selectedETF.factory,
                       vault: selectedETF.vault,
                       shares: sharesWei,
-                      allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
+                      allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
+                      slippageBps: percentageToBps(slippageSell)
                     })
 
                     // Store estimated sold amounts for display
