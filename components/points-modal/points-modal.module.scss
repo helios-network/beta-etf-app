@@ -117,17 +117,40 @@
     border: none !important;
     padding: 0 !important;
     height: auto !important;
-    color: var(--primary-high) !important;
+    color: white !important;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 0.4em;
+    position: relative;
     transition: color var(--transition-link);
 
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: white;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.2s ease;
+    }
+
     &:hover {
-      color: var(--primary-medium);
+      color: white;
+
+      &::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
+    }
+
+    &:active {
+      transform: none;
     }
 
     svg {
