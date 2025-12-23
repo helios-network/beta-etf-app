@@ -8,7 +8,7 @@ import { TokenComposition } from "./(components)/token-composition"
 import { BuySellSidebar } from "./(components)/buy-sell-sidebar"
 import { CHAIN_CONFIG } from "@/config/chain-config"
 import { useParams } from "next/navigation"
-import { fetchETFs, type ETFResponse } from "@/helpers/request"
+import { fetchETFByVaultAddress, type ETFResponse } from "@/helpers/request"
 import { DataState } from "@/components/data-state"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { useQuery } from "@tanstack/react-query"
@@ -100,22 +100,19 @@ export default function ETFDetailsPage() {
   const params = useParams()
   const vaultAddress = params?.address as string
 
-  const { data: etfsData, isLoading, error } = useQuery({
-    queryKey: ["etfs", vaultAddress],
-    queryFn: () => fetchETFs(1, 100, undefined, ""),
+  const { data: etfData, isLoading, error } = useQuery({
+    queryKey: ["etf", vaultAddress],
+    queryFn: () => fetchETFByVaultAddress(vaultAddress),
     staleTime: 30 * 1000,
     enabled: !!vaultAddress
   })
 
   const etf = useMemo(() => {
-    if (!etfsData?.data || !vaultAddress) return null
+    if (!etfData?.data || !vaultAddress) return null
 
-    const found = etfsData.data.find(
-      (e: ETFResponse) => e.vault.toLowerCase() === vaultAddress.toLowerCase()
-    )
 
-    return found ? formatETFResponse(found) : null
-  }, [etfsData, vaultAddress])
+    return formatETFResponse(etfData.data)
+  }, [etfData, vaultAddress])
 
   if (isLoading) {
     return <DataState type="loading" message="Loading ETF details..." />
