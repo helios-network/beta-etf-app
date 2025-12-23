@@ -251,7 +251,45 @@ export const etfFactoryAbi = [
       }
     ],
     name: "rebalance",
-    outputs: [],
+    outputs: [
+      {
+        components: [
+          {
+            internalType: "uint256",
+            name: "totalSoldValueUSD",
+            type: "uint256"
+          },
+          {
+            internalType: "uint256",
+            name: "totalBoughtValueUSD",
+            type: "uint256"
+          },
+          {
+            internalType: "uint256[]",
+            name: "soldAmounts",
+            type: "uint256[]"
+          },
+          {
+            internalType: "uint256[]",
+            name: "boughtAmounts",
+            type: "uint256[]"
+          },
+          {
+            internalType: "uint256[]",
+            name: "soldValuesUSD",
+            type: "uint256[]"
+          },
+          {
+            internalType: "uint256[]",
+            name: "boughtValuesUSD",
+            type: "uint256[]"
+          }
+        ],
+        internalType: "struct RebalanceResult",
+        name: "result",
+        type: "tuple"
+      }
+    ],
     stateMutability: "nonpayable",
     type: "function"
   },
@@ -271,6 +309,16 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "maxPriceStaleness",
         type: "uint256"
+      },
+      {
+        internalType: "uint64",
+        name: "rebalanceCooldown",
+        type: "uint64"
+      },
+      {
+        internalType: "uint128",
+        name: "maxCapacityUSD",
+        type: "uint128"
       }
     ],
     name: "updateParams",
@@ -400,20 +448,38 @@ export const etfFactoryAbi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "fromIndex",
+        name: "totalSoldValueUSD",
         type: "uint256"
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "toIndex",
+        name: "totalBoughtValueUSD",
         type: "uint256"
       },
       {
         indexed: false,
-        internalType: "uint256",
-        name: "moveValue",
-        type: "uint256"
+        internalType: "uint256[]",
+        name: "soldAmounts",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "boughtAmounts",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "soldValuesUSD",
+        type: "uint256[]"
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "boughtValuesUSD",
+        type: "uint256[]"
       },
       {
         indexed: false,
@@ -425,12 +491,6 @@ export const etfFactoryAbi = [
         indexed: false,
         internalType: "uint256",
         name: "eventHeight",
-        type: "uint256"
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "bought",
         type: "uint256"
       }
     ],
@@ -457,6 +517,18 @@ export const etfFactoryAbi = [
         internalType: "uint256",
         name: "maxPriceStaleness",
         type: "uint256"
+      },
+      {
+        indexed: false,
+        internalType: "uint64",
+        name: "rebalanceCooldown",
+        type: "uint64"
+      },
+      {
+        indexed: false,
+        internalType: "uint128",
+        name: "maxCapacityUSD",
+        type: "uint128"
       },
       {
         indexed: false,

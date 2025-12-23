@@ -78,12 +78,14 @@ interface RebalanceParams {
 
 interface RebalanceResult {
   user: string
-  fromIndex: string
-  toIndex: string
-  moveValue: string
+  totalSoldValueUSD: string
+  totalBoughtValueUSD: string
+  soldAmounts: string[]
+  boughtAmounts: string[]
+  soldValuesUSD: string[]
+  boughtValuesUSD: string[]
   eventNonce: string
   eventHeight: string
-  bought: string
   txHash: string
   blockNumber: number
 }
@@ -99,6 +101,8 @@ interface UpdateParamsParams {
   vault: string
   imbalanceThresholdBps: string
   maxPriceStaleness: string
+  rebalanceCooldown: string
+  maxCapacityUSD: string
 }
 
 interface UpdateParamsResult {
@@ -524,8 +528,10 @@ export const useETFContract = () => {
           factoryAddress
         )
 
-        // Simulate the transaction
-        await factoryContract.methods.rebalance(params.vault, params.slippageBps).call({ from: address })
+        // Simulate the transaction to get preview data
+        const previewResult: any = await factoryContract.methods
+          .rebalance(params.vault, params.slippageBps)
+          .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
@@ -577,16 +583,28 @@ export const useETFContract = () => {
           throw new Error("Could not find Rebalance event in transaction receipt")
         }
 
-        const { user, fromIndex, toIndex, moveValue, eventNonce, eventHeight, bought } = rebalanceEvent.args
+        const { 
+          user, 
+          totalSoldValueUSD, 
+          totalBoughtValueUSD, 
+          soldAmounts, 
+          boughtAmounts, 
+          soldValuesUSD, 
+          boughtValuesUSD, 
+          eventNonce, 
+          eventHeight 
+        } = rebalanceEvent.args
 
         return {
           user,
-          fromIndex,
-          toIndex,
-          moveValue,
+          totalSoldValueUSD: String(totalSoldValueUSD),
+          totalBoughtValueUSD: String(totalBoughtValueUSD),
+          soldAmounts: (soldAmounts || []).map((amt: any) => String(amt)),
+          boughtAmounts: (boughtAmounts || []).map((amt: any) => String(amt)),
+          soldValuesUSD: (soldValuesUSD || []).map((val: any) => String(val)),
+          boughtValuesUSD: (boughtValuesUSD || []).map((val: any) => String(val)),
           eventNonce,
           eventHeight,
-          bought,
           txHash: receipt.transactionHash,
           blockNumber: Number(receipt.blockNumber)
         }
@@ -686,6 +704,49 @@ export const useETFContract = () => {
     }
   }
 
+  const estimateRebalance = async (params: RebalanceParams): Promise<{
+    totalSoldValueUSD: string
+    totalBoughtValueUSD: string
+    soldAmounts: string[]
+    boughtAmounts: string[]
+    soldValuesUSD: string[]
+    boughtValuesUSD: string[]
+  }> => {
+    if (!web3Provider || !address) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        params.factory
+      )
+
+      // Simulate the transaction to get the estimated values
+      const result: any = await factoryContract.methods
+        .rebalance(params.vault, params.slippageBps)
+        .call({ from: address })
+
+      // Extract the RebalanceResult struct from the return value
+      // Web3.js returns structs as objects with property names
+      const rebalanceResult = result.result || result
+
+      return {
+        totalSoldValueUSD: String(rebalanceResult.totalSoldValueUSD || "0"),
+        totalBoughtValueUSD: String(rebalanceResult.totalBoughtValueUSD || "0"),
+        soldAmounts: (rebalanceResult.soldAmounts || []).map((amt: any) => String(amt)),
+        boughtAmounts: (rebalanceResult.boughtAmounts || []).map((amt: any) => String(amt)),
+        soldValuesUSD: (rebalanceResult.soldValuesUSD || []).map((val: any) => String(val)),
+        boughtValuesUSD: (rebalanceResult.boughtValuesUSD || []).map((val: any) => String(val))
+      }
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error estimating rebalance")
+    }
+  }
+
   const estimateUpdateParams = async (params: UpdateParamsParams): Promise<void> => {
     if (!web3Provider || !address) {
       throw new Error("No wallet connected")
@@ -702,7 +763,9 @@ export const useETFContract = () => {
         .updateParams(
           params.vault,
           params.imbalanceThresholdBps,
-          params.maxPriceStaleness
+          params.maxPriceStaleness,
+          params.rebalanceCooldown,
+          params.maxCapacityUSD
         )
         .call({ from: address })
     } catch (error: unknown) {
@@ -736,7 +799,9 @@ export const useETFContract = () => {
           .updateParams(
             params.vault,
             params.imbalanceThresholdBps,
-            params.maxPriceStaleness
+            params.maxPriceStaleness,
+            params.rebalanceCooldown,
+            params.maxCapacityUSD
           )
           .call({ from: address })
 
@@ -745,7 +810,9 @@ export const useETFContract = () => {
           .updateParams(
             params.vault,
             params.imbalanceThresholdBps,
-            params.maxPriceStaleness
+            params.maxPriceStaleness,
+            params.rebalanceCooldown,
+            params.maxCapacityUSD
           )
           .estimateGas({ from: address })
 
@@ -765,7 +832,9 @@ export const useETFContract = () => {
                 .updateParams(
                   params.vault,
                   params.imbalanceThresholdBps,
-                  params.maxPriceStaleness
+                  params.maxPriceStaleness,
+                  params.rebalanceCooldown,
+                  params.maxCapacityUSD
                 )
                 .encodeABI(),
               gas: gasLimit.toString(),
@@ -823,6 +892,7 @@ export const useETFContract = () => {
     updateParams: updateParams.mutateAsync,
     estimateDepositShares,
     estimateRedeemDeposit,
+    estimateRebalance,
     estimateUpdateParams,
     isLoading: createETF.isPending || deposit.isPending || redeem.isPending || rebalance.isPending || approveToken.isPending || updateParams.isPending,
     error: createETF.error || deposit.error || redeem.error || rebalance.error || approveToken.error || updateParams.error
