@@ -764,6 +764,8 @@ export default function ETFList() {
         vault: selectedETF.vault,
         slippageBps: percentageToBps(0.5)
       })
+
+      console.log("result", result)
       
       toast.success(`Successfully rebalanced ${selectedETF.symbol}`)
       setRebalanceModalOpen(false)
