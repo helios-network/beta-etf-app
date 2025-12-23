@@ -16,7 +16,7 @@ import { erc20Abi } from "@/constant/helios-contracts"
 import { vaultViewAbi } from "@/constant/vault-abi"
 import { pricerViewAbi } from "@/constant/pricer-abi"
 import { fetchETFs, fetchETFStats, type ETFResponse } from "@/helpers/request"
-import { useETFContract } from "@/hooks/useETFContract"
+import { useETFContract, percentageToBps } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { CHAIN_CONFIG } from "@/config/chain-config"
 import { formatTokenAmount } from "@/lib/utils/number"
@@ -172,8 +172,12 @@ export default function ETFList() {
   const [updateParamsModalOpen, setUpdateParamsModalOpen] = useState(false)
   const [imbalanceThresholdBps, setImbalanceThresholdBps] = useState("")
   const [maxPriceStaleness, setMaxPriceStaleness] = useState("")
+  const [rebalanceCooldown, setRebalanceCooldown] = useState("")
+  const [maxCapacityUSD, setMaxCapacityUSD] = useState("")
   const [currentImbalanceThresholdBps, setCurrentImbalanceThresholdBps] = useState<string | null>(null)
   const [currentMaxPriceStaleness, setCurrentMaxPriceStaleness] = useState<string | null>(null)
+  const [currentRebalanceCooldown, setCurrentRebalanceCooldown] = useState<string | null>(null)
+  const [currentMaxCapacityUSD, setCurrentMaxCapacityUSD] = useState<string | null>(null)
   const [isLoadingCurrentParams, setIsLoadingCurrentParams] = useState(false)
   const [updateParamsError, setUpdateParamsError] = useState<string | null>(null)
 
@@ -185,12 +189,26 @@ export default function ETFList() {
     updateParams,
     estimateDepositShares,
     estimateRedeemDeposit,
+    estimateRebalance,
     estimateUpdateParams,
     isLoading: isContractLoading
   } = useETFContract()
   const web3Provider = useWeb3Provider()
   const [isEstimatingShares, setIsEstimatingShares] = useState(false)
   const [isEstimatingDeposit, setIsEstimatingDeposit] = useState(false)
+  
+  // Rebalance modal state
+  const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false)
+  const [isEstimatingRebalance, setIsEstimatingRebalance] = useState(false)
+  const [rebalanceError, setRebalanceError] = useState<string | null>(null)
+  const [rebalancePreview, setRebalancePreview] = useState<{
+    totalSoldValueUSD: string
+    totalBoughtValueUSD: string
+    soldAmounts: string[]
+    boughtAmounts: string[]
+    soldValuesUSD: string[]
+    boughtValuesUSD: string[]
+  } | null>(null)
 
   const isWalletConnected = !!address
 
@@ -565,7 +583,8 @@ export default function ETFList() {
         vault: selectedETF.vault,
         depositToken: selectedETF.depositToken,
         amount: amountWei,
-        minSharesOut: minSharesOutWei
+        minSharesOut: minSharesOutWei,
+        slippageBps: percentageToBps(slippageBuy)
       })
 
       // Convert shares back from wei to human-readable
@@ -673,7 +692,8 @@ export default function ETFList() {
         vault: selectedETF.vault,
         shareToken: selectedETF.shareToken,
         shares: sharesWei,
-        minOut: minOutWei
+        minOut: minOutWei,
+        slippageBps: percentageToBps(slippageSell)
       })
 
       // Format the received amount using correct decimals
@@ -700,7 +720,7 @@ export default function ETFList() {
     }
   }
 
-  const handleRebalance = async (etf: ETF) => {
+  const handleOpenRebalanceModal = async (etf: ETF) => {
     if (!isWalletConnected) {
       toast.error("Please connect your wallet first")
       return
@@ -712,9 +732,44 @@ export default function ETFList() {
       return
     }
 
+    setSelectedETF(etf)
+    setRebalanceError(null)
+    setRebalancePreview(null)
+    setRebalanceModalOpen(true)
+
+    // Estimate rebalance immediately when opening modal
+    setIsEstimatingRebalance(true)
     try {
-      await rebalance({ factory: etf.factory, vault: etf.vault })
-      toast.success(`Successfully rebalanced ${etf.symbol}`)
+      const preview = await estimateRebalance({
+        factory: etf.factory,
+        vault: etf.vault,
+        slippageBps: percentageToBps(0.5)
+      })
+      setRebalancePreview(preview)
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to estimate rebalance"
+      setRebalanceError(errorMessage)
+    } finally {
+      setIsEstimatingRebalance(false)
+    }
+  }
+
+  const handleConfirmRebalance = async () => {
+    if (!selectedETF) return
+
+    try {
+      const result = await rebalance({
+        factory: selectedETF.factory,
+        vault: selectedETF.vault,
+        slippageBps: percentageToBps(0.5)
+      })
+      
+      toast.success(`Successfully rebalanced ${selectedETF.symbol}`)
+      setRebalanceModalOpen(false)
+      setSelectedETF(null)
+      setRebalancePreview(null)
+      setRebalanceError(null)
     } catch (error: unknown) {
       console.error("Error during rebalance", error)
       const errorMessage =
@@ -739,6 +794,11 @@ export default function ETFList() {
         .imbalanceThresholdBps()
         .call()
 
+      // Fetch vaultConfig from vault (contains rebalanceCooldown and maxCapacityUSD)
+      const vaultConfig: any = await vaultContract.methods
+        .vaultConfig()
+        .call()
+
       // Fetch maxPriceStaleness from pricer
       const pricerContract = new web3Provider.eth.Contract(
         pricerViewAbi as any,
@@ -750,6 +810,18 @@ export default function ETFList() {
 
       setCurrentImbalanceThresholdBps(String(imbalanceThresholdBpsValue))
       setCurrentMaxPriceStaleness(String(maxPriceStalenessValue))
+      
+      // Extract vaultConfig values (Web3.js returns structs as objects with property names)
+      // The struct has: lastRebalanceTimestamp, rebalanceCooldown, maxCapacityUSD
+      const config = vaultConfig.rebalanceCooldown !== undefined 
+        ? vaultConfig 
+        : { 
+            rebalanceCooldown: vaultConfig[1] || "0",
+            maxCapacityUSD: vaultConfig[2] || "0"
+          }
+      
+      setCurrentRebalanceCooldown(String(config.rebalanceCooldown || "0"))
+      setCurrentMaxCapacityUSD(String(config.maxCapacityUSD || "0"))
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to fetch current parameters"
@@ -775,8 +847,12 @@ export default function ETFList() {
     setSelectedETF(etf)
     setImbalanceThresholdBps("")
     setMaxPriceStaleness("")
+    setRebalanceCooldown("")
+    setMaxCapacityUSD("")
     setCurrentImbalanceThresholdBps(null)
     setCurrentMaxPriceStaleness(null)
+    setCurrentRebalanceCooldown(null)
+    setCurrentMaxCapacityUSD(null)
     setUpdateParamsError(null)
     setUpdateParamsModalOpen(true)
 
@@ -797,12 +873,35 @@ export default function ETFList() {
       return
     }
 
+    if (!rebalanceCooldown || parseFloat(rebalanceCooldown) < 0) {
+      toast.error("Please enter a valid rebalance cooldown (seconds)")
+      return
+    }
+
+    if (!maxCapacityUSD || parseFloat(maxCapacityUSD) < 0) {
+      toast.error("Please enter a valid max capacity USD")
+      return
+    }
+
     try {
+      // Convert maxCapacityUSD to wei (18 decimals)
+      const maxCapacityMultiplier = BigInt(10) ** BigInt(18)
+      const [integerPart = "0", fractionalPart = ""] = maxCapacityUSD.split(".")
+      const paddedFractional = fractionalPart
+        .padEnd(18, "0")
+        .slice(0, 18)
+      const maxCapacityUSDWei = (
+        BigInt(integerPart) * maxCapacityMultiplier +
+        BigInt(paddedFractional)
+      ).toString()
+
       await estimateUpdateParams({
         factory: selectedETF.factory,
         vault: selectedETF.vault,
         imbalanceThresholdBps,
-        maxPriceStaleness
+        maxPriceStaleness,
+        rebalanceCooldown,
+        maxCapacityUSD: maxCapacityUSDWei
       })
     } catch (error: unknown) {
       const errorMessage =
@@ -825,25 +924,52 @@ export default function ETFList() {
       return
     }
 
+    if (!rebalanceCooldown || parseFloat(rebalanceCooldown) < 0) {
+      toast.error("Please enter a valid rebalance cooldown (seconds)")
+      return
+    }
+
+    if (!maxCapacityUSD || parseFloat(maxCapacityUSD) < 0) {
+      toast.error("Please enter a valid max capacity USD")
+      return
+    }
+
     try {
       // First estimate to validate
       await handleEstimateUpdateParams()
+
+      // Convert maxCapacityUSD to wei (18 decimals)
+      const maxCapacityMultiplier = BigInt(10) ** BigInt(18)
+      const [integerPart = "0", fractionalPart = ""] = maxCapacityUSD.split(".")
+      const paddedFractional = fractionalPart
+        .padEnd(18, "0")
+        .slice(0, 18)
+      const maxCapacityUSDWei = (
+        BigInt(integerPart) * maxCapacityMultiplier +
+        BigInt(paddedFractional)
+      ).toString()
 
       // If estimation succeeds, proceed with the update
       await updateParams({
         factory: selectedETF.factory,
         vault: selectedETF.vault,
         imbalanceThresholdBps,
-        maxPriceStaleness
+        maxPriceStaleness,
+        rebalanceCooldown,
+        maxCapacityUSD: maxCapacityUSDWei
       })
 
       toast.success(`Successfully updated parameters for ${selectedETF.symbol}`)
       setUpdateParamsModalOpen(false)
       setImbalanceThresholdBps("")
       setMaxPriceStaleness("")
+      setRebalanceCooldown("")
+      setMaxCapacityUSD("")
       setSelectedETF(null)
       setCurrentImbalanceThresholdBps(null)
       setCurrentMaxPriceStaleness(null)
+      setCurrentRebalanceCooldown(null)
+      setCurrentMaxCapacityUSD(null)
       setUpdateParamsError(null)
     } catch (error: unknown) {
       const errorMessage =
@@ -1236,7 +1362,7 @@ export default function ETFList() {
                 <Button
                   variant="secondary"
                   size="small"
-                  onClick={() => handleRebalance(etf)}
+                  onClick={() => handleOpenRebalanceModal(etf)}
                   disabled={
                     !isWalletConnected ||
                     !isETFChainMatch(etf) ||
@@ -1435,7 +1561,8 @@ export default function ETFList() {
                     factory: selectedETF.factory,
                     vault: selectedETF.vault,
                     amount: amountWei,
-                    allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
+                    allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
+                    slippageBps: percentageToBps(slippageBuy)
                   })
 
                   // Store estimated amounts and values for display
@@ -1541,7 +1668,8 @@ export default function ETFList() {
                       factory: selectedETF.factory,
                       vault: selectedETF.vault,
                       amount: amountWei,
-                      allowance: hasAllowance ? BigInt(amountWei) : BigInt(0)
+                      allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
+                      slippageBps: percentageToBps(slippageBuy)
                     })
 
                     // Store estimated amounts and values for display
@@ -1920,7 +2048,8 @@ export default function ETFList() {
                     factory: selectedETF.factory,
                     vault: selectedETF.vault,
                     shares: sharesWei,
-                    allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
+                    allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
+                    slippageBps: percentageToBps(slippageSell)
                   })
 
                   // Store estimated sold amounts for display
@@ -2000,7 +2129,8 @@ export default function ETFList() {
                       factory: selectedETF.factory,
                       vault: selectedETF.vault,
                       shares: sharesWei,
-                      allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0)
+                      allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
+                      slippageBps: percentageToBps(slippageSell)
                     })
 
                     // Store estimated sold amounts for display
@@ -2212,8 +2342,12 @@ export default function ETFList() {
           setSelectedETF(null)
           setImbalanceThresholdBps("")
           setMaxPriceStaleness("")
+          setRebalanceCooldown("")
+          setMaxCapacityUSD("")
           setCurrentImbalanceThresholdBps(null)
           setCurrentMaxPriceStaleness(null)
+          setCurrentRebalanceCooldown(null)
+          setCurrentMaxCapacityUSD(null)
           setUpdateParamsError(null)
         }}
         title={`Update Parameters - ${selectedETF?.symbol || ""}`}
@@ -2250,6 +2384,19 @@ export default function ETFList() {
                     >
                       <strong>Max Price Staleness:</strong> {currentMaxPriceStaleness} seconds
                     </div>
+                    {currentRebalanceCooldown !== null && (
+                      <div 
+                        style={{ fontSize: "0.85rem" }}
+                        title={`${(parseInt(currentRebalanceCooldown || "0") / 60).toFixed(2)} minutes, ${(parseInt(currentRebalanceCooldown || "0") / 3600).toFixed(2)} hours, ${((parseInt(currentRebalanceCooldown || "0") / 3600) / 24).toFixed(2)} days`}
+                      >
+                        <strong>Rebalance Cooldown:</strong> {currentRebalanceCooldown} seconds
+                      </div>
+                    )}
+                    {currentMaxCapacityUSD !== null && (
+                      <div style={{ fontSize: "0.85rem" }}>
+                        <strong>Max Capacity USD:</strong> ${(Number(currentMaxCapacityUSD) / 1e18).toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -2298,6 +2445,36 @@ export default function ETFList() {
                 helperText="Maximum age of price data in seconds"
               />
 
+              <Input
+                label="Rebalance Cooldown"
+                type="text"
+                inputMode="numeric"
+                placeholder="e.g., 3600"
+                value={rebalanceCooldown}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^\d]/g, "")
+                  setRebalanceCooldown(value)
+                  setUpdateParamsError(null)
+                }}
+                icon="hugeicons:timer-01"
+                helperText="Minimum time between rebalances in seconds"
+              />
+
+              <Input
+                label="Max Capacity USD"
+                type="text"
+                inputMode="decimal"
+                placeholder="e.g., 1000000"
+                value={maxCapacityUSD}
+                onChange={(e) => {
+                  const validatedValue = validateDecimalInput(e.target.value, 18)
+                  setMaxCapacityUSD(validatedValue)
+                  setUpdateParamsError(null)
+                }}
+                icon="hugeicons:dollar-circle"
+                helperText="Maximum total value in USD (with 18 decimals)"
+              />
+
               <div className={s.modalActions}>
                 <Button
                   variant="secondary"
@@ -2306,8 +2483,12 @@ export default function ETFList() {
                     setSelectedETF(null)
                     setImbalanceThresholdBps("")
                     setMaxPriceStaleness("")
+                    setRebalanceCooldown("")
+                    setMaxCapacityUSD("")
                     setCurrentImbalanceThresholdBps(null)
                     setCurrentMaxPriceStaleness(null)
+                    setCurrentRebalanceCooldown(null)
+                    setCurrentMaxCapacityUSD(null)
                     setUpdateParamsError(null)
                   }}
                 >
@@ -2316,7 +2497,7 @@ export default function ETFList() {
                 <Button
                   variant="primary"
                   onClick={handleConfirmUpdateParams}
-                  disabled={isContractLoading || !imbalanceThresholdBps || !maxPriceStaleness}
+                  disabled={isContractLoading || !imbalanceThresholdBps || !maxPriceStaleness || !rebalanceCooldown || !maxCapacityUSD}
                   iconLeft={
                     isContractLoading
                       ? "hugeicons:loading-01"
@@ -2328,6 +2509,240 @@ export default function ETFList() {
               </div>
             </>
           )}
+        </div>
+      </Modal>
+
+      {/* Rebalance Modal */}
+      <Modal
+        open={rebalanceModalOpen}
+        onClose={() => {
+          setRebalanceModalOpen(false)
+          setSelectedETF(null)
+          setRebalancePreview(null)
+          setRebalanceError(null)
+        }}
+        title={`Rebalance ${selectedETF?.symbol || ""}`}
+      >
+        <div className={s.modalContent}>
+          <p className={s.modalDescription}>
+            Rebalance the ETF to align asset weights with target allocations.
+          </p>
+
+          {isEstimatingRebalance ? (
+            <div style={{ padding: "1rem", textAlign: "center" }}>
+              <Icon icon="hugeicons:loading-01" style={{ fontSize: "2rem", animation: "spin 1s linear infinite" }} />
+              <p style={{ marginTop: "0.5rem" }}>Estimating rebalance...</p>
+            </div>
+          ) : rebalanceError ? (
+            <div style={{
+              padding: "1rem",
+              background: "var(--danger-lowest)",
+              border: "1px solid var(--danger-low)",
+              borderRadius: "var(--radius-s)",
+              color: "var(--danger-high)",
+              marginBottom: "1rem"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <Icon icon="hugeicons:alert-circle" />
+                <strong>Error</strong>
+              </div>
+              <p style={{ fontSize: "0.9rem", margin: 0 }}>{rebalanceError}</p>
+            </div>
+          ) : rebalancePreview ? (
+            <>
+              {/* Summary */}
+              <div style={{
+                padding: "0.75rem 1rem",
+                background: "var(--background-low)",
+                borderRadius: "var(--radius-s)",
+                border: "1px solid var(--border-light)",
+                marginBottom: "1rem"
+              }}>
+                <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                  Rebalance Summary:
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                  <div style={{ fontSize: "0.85rem", display: "flex", justifyContent: "space-between" }}>
+                    <span>Total Sold Value:</span>
+                    <strong>
+                      ${(Number(rebalancePreview.totalSoldValueUSD) / 1e18).toFixed(2)}
+                    </strong>
+                  </div>
+                  <div style={{ fontSize: "0.85rem", display: "flex", justifyContent: "space-between" }}>
+                    <span>Total Bought Value:</span>
+                    <strong>
+                      ${(Number(rebalancePreview.totalBoughtValueUSD) / 1e18).toFixed(2)}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tokens to be sold */}
+              {rebalancePreview.soldAmounts.length > 0 && selectedETF?.assets && (
+                <div className={s.tokenDistribution} style={{ marginBottom: "1rem" }}>
+                  <div className={s.tokenDistributionHeader}>
+                    <Icon icon="hugeicons:arrow-down-01" />
+                    <span>Tokens to be Sold</span>
+                  </div>
+                  <div className={s.tokenDistributionList}>
+                    {selectedETF.assets.map((asset, index) => {
+                      if (index >= rebalancePreview.soldAmounts.length) return null
+                      
+                      const soldAmount = rebalancePreview.soldAmounts[index]
+                      const soldValueUSD = rebalancePreview.soldValuesUSD[index]
+                      
+                      if (!soldAmount || soldAmount === "0") return null
+                      
+                      const decimals = asset.decimals || 18
+                      const multiplier = BigInt(10) ** BigInt(decimals)
+                      const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
+                      const valueNumber = Number(BigInt(soldValueUSD || "0")) / 1e18
+                      
+                      const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                      
+                      return (
+                        <div key={`sold-${asset.token}`} className={s.tokenDistributionItem}>
+                          <div className={s.tokenInfo}>
+                            {logo ? (
+                              <Image
+                                src={logo}
+                                alt={asset.symbol}
+                                width={20}
+                                height={20}
+                                className={s.tokenLogo}
+                              />
+                            ) : (
+                              <div className={s.tokenLogo} style={{
+                                backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.7rem',
+                                fontWeight: '600'
+                              }}>
+                                {asset.symbol.charAt(0)}
+                              </div>
+                            )}
+                            <span className={s.tokenSymbol}>{asset.symbol}</span>
+                          </div>
+                          <div className={s.tokenAmounts}>
+                            <span className={s.tokenAmount} style={{ color: "var(--danger-high)" }}>
+                              -{amountNumber.toFixed(6)} {asset.symbol}
+                            </span>
+                            <span className={s.tokenValue}>
+                              ≈ ${valueNumber.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Tokens to be bought */}
+              {rebalancePreview.boughtAmounts.length > 0 && selectedETF?.assets && (
+                <div className={s.tokenDistribution} style={{ marginBottom: "1rem" }}>
+                  <div className={s.tokenDistributionHeader}>
+                    <Icon icon="hugeicons:arrow-up-01" />
+                    <span>Tokens to be Bought</span>
+                  </div>
+                  <div className={s.tokenDistributionList}>
+                    {selectedETF.assets.map((asset, index) => {
+                      if (index >= rebalancePreview.boughtAmounts.length) return null
+                      
+                      const boughtAmount = rebalancePreview.boughtAmounts[index]
+                      const boughtValueUSD = rebalancePreview.boughtValuesUSD[index]
+                      
+                      if (!boughtAmount || boughtAmount === "0") return null
+                      
+                      const decimals = asset.decimals || 18
+                      const multiplier = BigInt(10) ** BigInt(decimals)
+                      const amountNumber = Number(BigInt(boughtAmount)) / Number(multiplier)
+                      const valueNumber = Number(BigInt(boughtValueUSD || "0")) / 1e18
+                      
+                      const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                      
+                      return (
+                        <div key={`bought-${asset.token}`} className={s.tokenDistributionItem}>
+                          <div className={s.tokenInfo}>
+                            {logo ? (
+                              <Image
+                                src={logo}
+                                alt={asset.symbol}
+                                width={20}
+                                height={20}
+                                className={s.tokenLogo}
+                              />
+                            ) : (
+                              <div className={s.tokenLogo} style={{
+                                backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.7rem',
+                                fontWeight: '600'
+                              }}>
+                                {asset.symbol.charAt(0)}
+                              </div>
+                            )}
+                            <span className={s.tokenSymbol}>{asset.symbol}</span>
+                          </div>
+                          <div className={s.tokenAmounts}>
+                            <span className={s.tokenAmount} style={{ color: "var(--success-high)" }}>
+                              +{amountNumber.toFixed(6)} {asset.symbol}
+                            </span>
+                            <span className={s.tokenValue}>
+                              ≈ ${valueNumber.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {rebalancePreview.soldAmounts.length === 0 && rebalancePreview.boughtAmounts.length === 0 && (
+                <div style={{
+                  padding: "1rem",
+                  background: "var(--background-low)",
+                  borderRadius: "var(--radius-s)",
+                  textAlign: "center",
+                  color: "var(--text-secondary)",
+                  marginBottom: "1rem"
+                }}>
+                  No rebalancing needed. All assets are within target weights.
+                </div>
+              )}
+
+              <div className={s.modalActions}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setRebalanceModalOpen(false)
+                    setSelectedETF(null)
+                    setRebalancePreview(null)
+                    setRebalanceError(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleConfirmRebalance}
+                  disabled={isContractLoading || !!rebalanceError}
+                  iconLeft={
+                    isContractLoading
+                      ? "hugeicons:loading-01"
+                      : "hugeicons:checkmark-circle-02"
+                  }
+                >
+                  {isContractLoading ? "Processing..." : "Execute Rebalance"}
+                </Button>
+              </div>
+            </>
+          ) : null}
         </div>
       </Modal>
 
