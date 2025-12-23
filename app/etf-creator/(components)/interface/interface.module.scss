@@ -730,3 +730,42 @@
   flex: 1;
 }
 
+.inputWithHelp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.labelWithHelp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.helpButton {
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: var(--blue);
+  }
+}
+

@@ -87,6 +87,11 @@ export const etfFactoryAbi = [
         internalType: "string[]",
         name: "params",
         type: "string[]"
+      },
+      {
+        internalType: "uint256",
+        name: "_initialSharePrice",
+        type: "uint256"
       }
     ],
     name: "createETF",

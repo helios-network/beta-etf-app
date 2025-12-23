@@ -21,6 +21,7 @@ interface CreateETFParams {
   name: string
   symbol: string
   pricingMode: number
+  initialSharePrice: string
 }
 
 interface CreateETFResult {
@@ -161,6 +162,7 @@ export const useETFContract = () => {
         console.log("targetWeightsBps", params.targetWeightsBps)
         console.log("swapPathsData", params.swapPathsData)
         console.log("etfParams", etfParams)
+        console.log("initialSharePrice", params.initialSharePrice)
 
         // Simulate the transaction
         const resultOfSimulation = await factoryContract.methods
@@ -170,7 +172,8 @@ export const useETFContract = () => {
             params.priceFeeds,
             params.targetWeightsBps,
             params.swapPathsData,
-            etfParams
+            etfParams,
+            params.initialSharePrice
           )
           .call({
             from: address
@@ -188,7 +191,8 @@ export const useETFContract = () => {
             params.priceFeeds,
             params.targetWeightsBps,
             params.swapPathsData,
-            etfParams
+            etfParams,
+            params.initialSharePrice
           )
           .estimateGas({
             from: address
@@ -213,7 +217,8 @@ export const useETFContract = () => {
                   params.priceFeeds,
                   params.targetWeightsBps,
                   params.swapPathsData,
-                  etfParams
+                  etfParams,
+                  params.initialSharePrice
                 )
                 .encodeABI(),
               gas: gasLimit.toString(),

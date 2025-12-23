@@ -28,6 +28,7 @@ type ETFForm = {
   currentTokenAddress: string
   currentTokenWeight: string
   rebalancingMode: "automatic" | "manual" | "no-rebalancing" | null
+  initialSharePrice: string
 }
 
 type VerifyState = {
@@ -47,6 +48,7 @@ export const ETFCreatorInterface = () => {
   const [showManualModal, setShowManualModal] = useState(false)
   const [showNoRebalancingModal, setShowNoRebalancingModal] = useState(false)
   const [showAddTokenModal, setShowAddTokenModal] = useState(false)
+  const [showInitialPriceModal, setShowInitialPriceModal] = useState(false)
   const [editingToken, setEditingToken] = useState<string | null>(null)
 
   const [form, setForm] = useState<ETFForm>({
@@ -55,7 +57,8 @@ export const ETFCreatorInterface = () => {
     components: [],
     currentTokenAddress: "",
     currentTokenWeight: "",
-    rebalancingMode: null
+    rebalancingMode: null,
+    initialSharePrice: "1.00"
   })
 
   const [verifyState, setVerifyState] = useState<VerifyState>({
@@ -68,7 +71,7 @@ export const ETFCreatorInterface = () => {
   const { createETF, isLoading: isCreatingETF } = useETFContract()
   const isLoadingDeploy = isLoading || isCreatingETF
 
-  const handleInputChange =
+      const handleInputChange =
     (field: keyof ETFForm) =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = e.target.value
@@ -80,6 +83,16 @@ export const ETFCreatorInterface = () => {
           (isNaN(weightValue) ||
             weightValue < 0 ||
             weightValue > 100)
+        ) {
+          return
+        }
+      }
+
+      if (field === "initialSharePrice") {
+        const priceValue = parseFloat(value)
+        if (
+          value !== "" &&
+          (isNaN(priceValue) || priceValue <= 0)
         ) {
           return
         }
@@ -333,6 +346,18 @@ export const ETFCreatorInterface = () => {
           break
       }
 
+      // Convert initial share price to wei (18 decimals)
+      const sharePriceDecimals = 18
+      const sharePriceMultiplier = BigInt(10) ** BigInt(sharePriceDecimals)
+      const [priceInteger = "0", priceFractional = ""] = form.initialSharePrice.split(".")
+      const paddedPriceFractional = priceFractional
+        .padEnd(sharePriceDecimals, "0")
+        .slice(0, sharePriceDecimals)
+      const initialSharePriceWei = (
+        BigInt(priceInteger) * sharePriceMultiplier +
+        BigInt(paddedPriceFractional)
+      ).toString()
+
       // Call the createETF function with new parameters
       const result = await createETF({
         factoryAddress: backendData.factoryAddress,
@@ -346,7 +371,8 @@ export const ETFCreatorInterface = () => {
         swapPathsData,
         name: form.name,
         symbol: form.symbol.toUpperCase(),
-        pricingMode
+        pricingMode,
+        initialSharePrice: initialSharePriceWei
       })
 
       // Transform components to TokenInBasket format with symbols from backend
@@ -387,7 +413,8 @@ export const ETFCreatorInterface = () => {
       components: [],
       currentTokenAddress: "",
       currentTokenWeight: "",
-      rebalancingMode: null
+      rebalancingMode: null,
+      initialSharePrice: "1.00"
     })
     setVerifyState({
       status: "idle",
@@ -405,7 +432,9 @@ export const ETFCreatorInterface = () => {
     form.symbol &&
     form.components.length > 0 &&
     getTotalWeight() === 100 &&
-    form.rebalancingMode !== null
+    form.rebalancingMode !== null &&
+    form.initialSharePrice &&
+    parseFloat(form.initialSharePrice) > 0
 
   const isWalletConnected = !!address
   const canVerify = isFormValid && (!verifyState.backendResult || verifyState.status === "error")
@@ -444,6 +473,30 @@ export const ETFCreatorInterface = () => {
               onChange={handleInputChange("name")}
               maxLength={50}
             />
+
+            {/* Initial Share Price */}
+            <div className={s.inputWithHelp}>
+              <div className={s.labelWithHelp}>
+                <label className={s.label}>Initial Share Price</label>
+                <button
+                  className={s.helpButton}
+                  onClick={() => setShowInitialPriceModal(true)}
+                  type="button"
+                  title="Learn more about Initial Share Price"
+                >
+                  <Icon icon="hugeicons:help-circle" />
+                </button>
+              </div>
+              <Input
+                icon="hugeicons:currency-dollar"
+                type="number"
+                value={form.initialSharePrice}
+                placeholder="e.g., 1.0"
+                onChange={handleInputChange("initialSharePrice")}
+                min="0"
+                step="0.000000000000000001"
+              />
+            </div>
 
             {/* Rebalancing Mode Selection */}
             <div className={s.modeSection}>
@@ -985,6 +1038,40 @@ export const ETFCreatorInterface = () => {
             {isLoading ? (editingToken ? "Updating..." : "Adding...") : (editingToken ? "Update Token" : "Add Token")}
           </Button>
         </div>
+      </Modal>
+
+      {/* Initial Share Price Modal */}
+      <Modal
+        open={showInitialPriceModal}
+        onClose={() => setShowInitialPriceModal(false)}
+        title="Initial Share Price"
+        className={s.modal}
+      >
+        <Card className={s.infoCard}>
+          <div className={s.infoContent}>
+            <div className={s.infoSection}>
+              <h4>What is it?</h4>
+              <p>
+                The initial share price defines the starting price at which your ETF shares will be displayed. This value helps establish a baseline for the basket&apos;s valuation at creation.
+              </p>
+            </div>
+            <div className={s.infoSection}>
+              <h4>Why is it important?</h4>
+              <p>
+                Setting an appropriate initial share price based on the values of your assets at the start helps provide a good reference point for understanding the basket&apos;s composition and value. It serves as the foundation for calculating share prices as the ETF evolves.
+              </p>
+            </div>
+            <div className={s.infoSection}>
+              <h4>How to choose:</h4>
+              <ul>
+                <li>Consider the total value of assets in your basket</li>
+                <li>Set a price that reflects the initial asset composition</li>
+                <li>Use a value that makes sense for your target market (e.g., 1.00 for a $1 basket)</li>
+                <li>This price will be used as the starting point for share calculations</li>
+              </ul>
+            </div>
+          </div>
+        </Card>
       </Modal>
     </>
   )
