@@ -7,48 +7,123 @@ import { PriceChart } from "./(components)/price-chart"
 import { TokenComposition } from "./(components)/token-composition"
 import { BuySellSidebar } from "./(components)/buy-sell-sidebar"
 import { CHAIN_CONFIG } from "@/config/chain-config"
+import { useParams } from "next/navigation"
+import { fetchETFByVaultAddress, type ETFResponse } from "@/helpers/request"
+import { DataState } from "@/components/data-state"
+import { formatTokenAmount } from "@/lib/utils/number"
+import { useQuery } from "@tanstack/react-query"
+import { useMemo } from "react"
 import s from "./page.module.scss"
 
-const fakeETFData = {
-  id: "helios-defi-basket",
-  name: "Helios DeFi Basket",
-  symbol: "HDEFI",
-  description: "The Helios DeFi Basket (HDEFI) provides diversified exposure to leading decentralized finance protocols. This ETF focuses on blue-chip DeFi tokens with strong fundamentals, active development, and proven track records in lending, DEXs, and yield optimization.",
-  tvl: 2847320,
-  totalSupply: "18420",
-  sharePrice: "154.58",
-  volumeTradedUSD: 892000,
-  dailyVolumeUSD: 67500,
-  depositCount: 234,
-  redeemCount: 112,
-  createdAt: "2024-08-15T00:00:00.000Z",
-  updatedAt: "2024-12-17T00:00:00.000Z",
-  chain: 42161,
-  vault: "0x7a3c5e8b2d1f9a4c6e8b0d2f4a6c8e0b2d4f6a8c",
-  pricer: "0x3b5c7d9e1f2a4b6c8d0e2f4a6b8c0d2e4f6a8b0c",
-  shareToken: "0x9c1e3a5b7d2f4e6a8c0b2d4f6e8a0c2e4b6d8f0a",
-  depositToken: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
-  depositSymbol: "USDC",
-  depositDecimals: 6,
-  website: "https://helios.finance",
-  tags: ["DeFi", "Yield", "Blue Chip", "Lending"],
-  latestRebalanceDate: "2024-12-10T14:45:00.000Z",
-  tokens: [
-    { symbol: "UNI", percentage: 22.5, tvl: "640500" },
-    { symbol: "AAVE", percentage: 18.3, tvl: "521000" },
-    { symbol: "MKR", percentage: 15.7, tvl: "447000" },
-    { symbol: "CRV", percentage: 12.4, tvl: "353000" },
-    { symbol: "LINK", percentage: 10.8, tvl: "307500" },
-    { symbol: "SNX", percentage: 8.2, tvl: "233500" },
-    { symbol: "COMP", percentage: 6.5, tvl: "185000" },
-    { symbol: "SUSHI", percentage: 5.6, tvl: "159320" }
-  ]
+interface ETF {
+  id: string
+  name: string
+  symbol: string
+  description: string
+  tvl: number
+  totalSupply: string
+  sharePrice: string
+  volumeTradedUSD: number
+  dailyVolumeUSD: number
+  depositCount?: number
+  redeemCount?: number
+  createdAt: string
+  chain: number
+  vault: string
+  pricer: string
+  shareToken: string
+  depositToken: string
+  depositSymbol: string
+  depositDecimals: number
+  website?: string
+  tags?: string[]
+  latestRebalanceDate?: string
+  tokens: Array<{
+    symbol: string
+    percentage: number
+    tvl: string
+  }>
+  assets?: Array<{
+    token: string
+    symbol: string
+    decimals: number
+    targetWeightBps: number
+  }>
+  owner?: string
+  factory?: string
+}
+
+function formatETFResponse(etf: ETFResponse): ETF {
+  const tokens =
+    etf.assets?.map((asset) => ({
+      symbol: asset.symbol,
+      percentage: asset.targetWeightBps / 100,
+      tvl: asset.tvl || "0"
+    })) || []
+
+  const assets =
+    etf.assets?.map((asset) => ({
+      token: asset.token,
+      symbol: asset.symbol,
+      decimals: asset.decimals,
+      targetWeightBps: asset.targetWeightBps
+    })) || []
+
+  return {
+    id: etf._id,
+    name: etf.name,
+    symbol: etf.symbol,
+    description: etf.name ? `${etf.name} ETF basket` : "ETF basket",
+    tvl: etf.tvl,
+    totalSupply: etf.totalSupply || "0.000",
+    sharePrice: etf.sharePrice || "0.00",
+    volumeTradedUSD: etf.volumeTradedUSD || 0,
+    dailyVolumeUSD: etf.dailyVolumeUSD || 0,
+    createdAt: etf.createdAt || new Date().toISOString(),
+    tokens,
+    vault: etf.vault,
+    pricer: etf.pricer,
+    shareToken: etf.shareToken,
+    depositToken: etf.depositToken,
+    depositSymbol: etf.depositSymbol || "TOKEN",
+    depositDecimals: etf.depositDecimals || 18,
+    chain: etf.chain,
+    depositCount: etf.depositCount,
+    redeemCount: etf.redeemCount,
+    owner: etf.owner || "",
+    assets,
+    factory: etf.factory
+  }
 }
 
 export default function ETFDetailsPage() {
-  const etf = fakeETFData
+  const params = useParams()
+  const vaultAddress = params?.address as string
+
+  const { data: etfData, isLoading, error } = useQuery({
+    queryKey: ["etf", vaultAddress],
+    queryFn: () => fetchETFByVaultAddress(vaultAddress),
+    staleTime: 30 * 1000,
+    enabled: !!vaultAddress
+  })
+
+  const etf = useMemo(() => {
+    if (!etfData?.data || !vaultAddress) return null
+
+
+    return formatETFResponse(etfData.data)
+  }, [etfData, vaultAddress])
+
+  if (isLoading) {
+    return <DataState type="loading" message="Loading ETF details..." />
+  }
+
+  if (error || !etf) {
+    return <DataState type="error" message={error ? (error instanceof Error ? error.message : "Failed to load ETF") : "ETF not found"} />
+  }
+
   const chainConfig = CHAIN_CONFIG[etf.chain]
-  const isCreator = true // TODO: Replace with actual creator check based on wallet address
+  const isCreator = true
 
   return (
     <div className={s.page}>
@@ -58,7 +133,7 @@ export default function ETFDetailsPage() {
             <div className={s.titleSection}>
               <h1 className={s.title}>{etf.name}</h1>
               <div className={s.priceInfo}>
-                <span className={s.price}>${etf.sharePrice}</span>
+                <span className={s.price}>${formatTokenAmount(etf.sharePrice)}</span>
                 <span className={s.priceChange}>-9.38% (7d)</span>
               </div>
             </div>
@@ -68,17 +143,17 @@ export default function ETFDetailsPage() {
 
           <TokenComposition etf={etf} />
 
-          <AboutSection 
+          <AboutSection
             etf={etf}
             isCreator={isCreator}
             chainConfig={chainConfig}
           />
-          
-          <BasketGovernance 
+
+          <BasketGovernance
             etf={etf}
             chainConfig={chainConfig}
           />
-          
+
           <Disclosures />
         </div>
 

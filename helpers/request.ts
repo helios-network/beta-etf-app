@@ -107,14 +107,14 @@ interface ETFsApiResponse {
 
 async function fetchETFStats(): Promise<ETFsStatsResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
-  
+
   if (!apiUrl) {
     throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
   }
 
   const baseUrl = apiUrl.replace(/\/+$/, "")
   const url = `${baseUrl}/api/etfs/stats`
-  
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -137,7 +137,7 @@ async function fetchETFStats(): Promise<ETFsStatsResponse> {
 
 async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string, search?: string): Promise<ETFsApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
-  
+
   if (!apiUrl) {
     throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
   }
@@ -148,17 +148,17 @@ async function fetchETFs(page: number = 1, size: number = 10, depositToken?: str
     page: page.toString(),
     size: size.toString()
   })
-  
+
   if (depositToken) {
     params.append("depositToken", depositToken)
   }
-  
+
   if (search && search.trim()) {
     params.append("search", search.trim())
   }
-  
+
   const url = `${baseUrl}/api/etfs?${params.toString()}`
-  
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -185,9 +185,9 @@ interface ETFByAddressApiResponse {
   message?: string
 }
 
-async function fetchETFByAddress(vaultAddress: string): Promise<ETFByAddressApiResponse> {
+async function fetchETFByVaultAddress(vaultAddress: string): Promise<ETFByAddressApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
-  
+
   if (!apiUrl) {
     throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
   }
@@ -195,7 +195,7 @@ async function fetchETFByAddress(vaultAddress: string): Promise<ETFByAddressApiR
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
   const url = `${baseUrl}/api/etfs/vault/${vaultAddress}`
-  
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -233,7 +233,7 @@ interface DepositTokensApiResponse {
 
 async function fetchDepositTokens(chainId: number, search?: string): Promise<DepositTokensApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
-  
+
   if (!apiUrl) {
     throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
   }
@@ -243,13 +243,13 @@ async function fetchDepositTokens(chainId: number, search?: string): Promise<Dep
   const params = new URLSearchParams({
     chainId: chainId.toString()
   })
-  
+
   if (search && search.trim()) {
     params.append("search", search.trim())
   }
-  
+
   const url = `${baseUrl}/api/etfs/deposit-tokens?${params.toString()}`
-  
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -285,7 +285,7 @@ interface LeaderboardApiResponse {
 
 async function fetchLeaderboard(page: number = 1, size: number = 25): Promise<LeaderboardApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
-  
+
   if (!apiUrl) {
     throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
   }
@@ -293,7 +293,7 @@ async function fetchLeaderboard(page: number = 1, size: number = 25): Promise<Le
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
   const url = `${baseUrl}/api/leaderBoard?page=${page}&limit=${size}`
-  
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -360,7 +360,7 @@ interface VerifyETFResponse {
 
 async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
-  
+
   if (!apiUrl) {
     throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
   }
@@ -368,7 +368,7 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   // Remove trailing slash if present to avoid double slashes
   const baseUrl = apiUrl.replace(/\/+$/, "")
   const url = `${baseUrl}/api/etfs/verify`
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: {
@@ -378,12 +378,11 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   })
 
   if (!response.ok) {
-
     const data = await response.json()
 
     if (data?.details?.details != undefined) {
       console.log("sssss", data)
-      return data.details as VerifyETFResponse;
+      return data.details as VerifyETFResponse
     }
 
     if (data?.details?.message) {
@@ -394,6 +393,55 @@ async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> 
   }
 
   const data: VerifyETFResponse = await response.json()
+
+  return data
+}
+
+interface ChartDataPoint {
+  timestamp: number
+  volume: {
+    min: number
+    average: number
+    max: number
+  }
+  price: {
+    min: number
+    average: number
+    max: number
+  }
+}
+
+interface ChartApiResponse {
+  success: boolean
+  data: ChartDataPoint[]
+}
+
+async function fetchETFChart(vaultAddress: string, period: string): Promise<ChartApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etfs/vault/${vaultAddress}/chart?period=${period}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch chart data: ${response.statusText}`)
+  }
+
+  const data: ChartApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error("API returned unsuccessful response")
+  }
 
   return data
 }
@@ -541,5 +589,38 @@ async function fetchUserTotalPoints(
   return data
 }
 
-export { request, requestWithRpcUrl, fetchETFs, fetchETFStats, fetchDepositTokens, fetchLeaderboard, verifyETF, fetchPortfolioAll, fetchUserTotalPoints }
-export type { ETFResponse, ETFsApiResponse, ETFsStatsResponse, ETFAsset, DepositToken, DepositTokensApiResponse, LeaderboardApiResponse, VerifyETFRequest, VerifyETFResponse, VerifyETFComponent, PortfolioAsset, PortfolioSummary, PortfolioResponse, PortfolioApiResponse, PortfolioAllocation, PortfolioComplete, UserTotalPointsResponse, UserTotalPointsData }
+export {
+  request,
+  requestWithRpcUrl,
+  fetchETFs,
+  fetchETFStats,
+  fetchDepositTokens,
+  fetchLeaderboard,
+  verifyETF,
+  fetchPortfolioAll,
+  fetchUserTotalPoints,
+  fetchETFChart,
+  fetchETFByVaultAddress
+}
+export type {
+  ETFResponse,
+  ETFsApiResponse,
+  ETFsStatsResponse,
+  ETFAsset,
+  DepositToken,
+  DepositTokensApiResponse,
+  LeaderboardApiResponse,
+  VerifyETFRequest,
+  VerifyETFResponse,
+  VerifyETFComponent,
+  PortfolioAsset,
+  PortfolioSummary,
+  PortfolioResponse,
+  PortfolioApiResponse,
+  PortfolioAllocation,
+  PortfolioComplete,
+  UserTotalPointsResponse,
+  UserTotalPointsData,
+  ChartDataPoint,
+  ChartApiResponse
+}
