@@ -1,7 +1,7 @@
-export const vaultViewAbi = [
+export const pricerViewAbi = [
   {
     inputs: [],
-    name: "imbalanceThresholdBps",
+    name: "maxPriceStaleness",
     outputs: [
       {
         internalType: "uint256",
@@ -13,4 +13,3 @@ export const vaultViewAbi = [
     type: "function"
   }
 ]
-
