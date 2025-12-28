@@ -1,8 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
 import { useAccount, useChainId } from "wagmi"
 import { useWeb3Provider } from "./useWeb3Provider"
-import { ETF_FACTORY_CONTRACT_ADDRESS as ETF_FACTORY_ADDRESS, etfFactoryAbi as factoryAbi } from "@/constant/etf-contracts"
-import { erc20Abi } from "@/constant/helios-contracts"
+import { erc20Abi, etfFactoryAbi as factoryAbi } from "@/constant/abis"
 import { getBestGasPrice } from "@/lib/utils/gas"
 import { decodeEventLog, TransactionReceipt, Abi } from "viem"
 import { getErrorMessage } from "@/utils/string"
@@ -239,7 +238,7 @@ export const useETFContract = () => {
             const evt = decodeEventLog({
               abi: factoryAbi,
               data: log.data,
-              topics: log.topics,
+              topics: log.topics
             })
 
             if (evt.eventName === "ETFCreated") {
@@ -250,7 +249,9 @@ export const useETFContract = () => {
         }
 
         if (!etfCreatedEvent) {
-          throw new Error("Could not find ETFCreated event in transaction receipt")
+          throw new Error(
+            "Could not find ETFCreated event in transaction receipt"
+          )
         }
 
         const { vault, shareToken, pricer } = etfCreatedEvent.args
@@ -310,7 +311,9 @@ export const useETFContract = () => {
         if (error instanceof ResponseError) {
           throw new Error(error.data.message)
         }
-        throw new Error((error as Error).message || "Error during token approval")
+        throw new Error(
+          (error as Error).message || "Error during token approval"
+        )
       }
     }
   })
@@ -378,28 +381,41 @@ export const useETFContract = () => {
             const evt = decodeEventLog({
               abi: factoryAbi,
               data: log.data,
-              topics: log.topics,
+              topics: log.topics
             })
-        
+
             if (evt.eventName === "Deposit") {
               depositEvent = evt
               break
             }
           } catch {}
         }
-        
+
         if (!depositEvent) {
           throw new Error("Could not find Deposit event in transaction receipt")
         }
-        
-        const { depositAmount, sharesOut, amountsOut: eventAmountsOut, valuesPerAsset: eventValuesPerAsset, eventNonce, eventHeight } = depositEvent.args
-        
+
+        const {
+          depositAmount,
+          sharesOut,
+          amountsOut: eventAmountsOut,
+          valuesPerAsset: eventValuesPerAsset,
+          eventNonce,
+          eventHeight
+        } = depositEvent.args
+
         // Use event data if available, fallback to function return values
         return {
           depositAmount,
           sharesOut: String(sharesOut || depositResult.sharesOutRet),
-          amountsOut: ((eventAmountsOut || depositResult.amountsOut) || []).map((amt: any) => String(amt)),
-          valuesPerAsset: ((eventValuesPerAsset || depositResult.valuesPerAsset) || []).map((val: any) => String(val)),
+          amountsOut: (eventAmountsOut || depositResult.amountsOut || []).map(
+            (amt: any) => String(amt)
+          ),
+          valuesPerAsset: (
+            eventValuesPerAsset ||
+            depositResult.valuesPerAsset ||
+            []
+          ).map((val: any) => String(val)),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -476,7 +492,7 @@ export const useETFContract = () => {
             const evt = decodeEventLog({
               abi: factoryAbi,
               data: log.data,
-              topics: log.topics,
+              topics: log.topics
             })
 
             if (evt.eventName === "Redeem") {
@@ -490,17 +506,25 @@ export const useETFContract = () => {
           throw new Error("Could not find Redeem event in transaction receipt")
         }
 
-        const { sharesIn, depositOut, soldAmounts: eventSoldAmounts, eventNonce, eventHeight } = redeemEvent.args
+        const {
+          sharesIn,
+          depositOut,
+          soldAmounts: eventSoldAmounts,
+          eventNonce,
+          eventHeight
+        } = redeemEvent.args
 
         // Use the return values from the function call
         // redeemResult contains: { depositOutRet, soldAmounts }
         const { depositOutRet, soldAmounts } = redeemResult
-        
+
         // Use event data if available, fallback to function return values
         return {
           sharesIn,
           depositOut: String(depositOut || depositOutRet),
-          soldAmounts: ((eventSoldAmounts || soldAmounts) || []).map((amt: any) => String(amt)),
+          soldAmounts: (eventSoldAmounts || soldAmounts || []).map((amt: any) =>
+            String(amt)
+          ),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -574,7 +598,7 @@ export const useETFContract = () => {
             const evt = decodeEventLog({
               abi: factoryAbi,
               data: log.data,
-              topics: log.topics,
+              topics: log.topics
             })
 
             if (evt.eventName === "Rebalance") {
@@ -585,7 +609,9 @@ export const useETFContract = () => {
         }
 
         if (!rebalanceEvent) {
-          throw new Error("Could not find Rebalance event in transaction receipt")
+          throw new Error(
+            "Could not find Rebalance event in transaction receipt"
+          )
         }
 
         const { 
@@ -625,7 +651,7 @@ export const useETFContract = () => {
   const estimateDepositShares = async (params: {
     factory: string
     vault: string
-    amount: string,
+    amount: string
     allowance: bigint
     slippageBps: string
   }): Promise<{
@@ -653,17 +679,23 @@ export const useETFContract = () => {
         .call({ from: address })
 
       console.log("depositResult", depositResult)
-      
+
       return {
         sharesOut: String(depositResult.sharesOutRet),
-        amountsOut: (depositResult.amountsOut || []).map((amt: any) => String(amt)),
-        valuesPerAsset: (depositResult.valuesPerAsset || []).map((val: any) => String(val))
+        amountsOut: (depositResult.amountsOut || []).map((amt: any) =>
+          String(amt)
+        ),
+        valuesPerAsset: (depositResult.valuesPerAsset || []).map((val: any) =>
+          String(val)
+        )
       }
     } catch (error: unknown) {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
       }
-      throw new Error((error as Error).message || "Error estimating deposit shares")
+      throw new Error(
+        (error as Error).message || "Error estimating deposit shares"
+      )
     }
   }
 
@@ -695,17 +727,20 @@ export const useETFContract = () => {
       const redeemResult: any = await factoryContract.methods
         .redeem(params.vault, params.shares, "0", params.slippageBps, needEstimateBool)
         .call({ from: address })
-      
-      
+
       return {
         depositOut: String(redeemResult.depositOutRet),
-        soldAmounts: (redeemResult.soldAmounts || []).map((amt: any) => String(amt))
+        soldAmounts: (redeemResult.soldAmounts || []).map((amt: any) =>
+          String(amt)
+        )
       }
     } catch (error: unknown) {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
       }
-      throw new Error((error as Error).message || "Error estimating redeem deposit")
+      throw new Error(
+        (error as Error).message || "Error estimating redeem deposit"
+      )
     }
   }
 
@@ -777,12 +812,16 @@ export const useETFContract = () => {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
       }
-      throw new Error((error as Error).message || "Error estimating update params")
+      throw new Error(
+        (error as Error).message || "Error estimating update params"
+      )
     }
   }
 
   const updateParams = useMutation({
-    mutationFn: async (params: UpdateParamsParams): Promise<UpdateParamsResult> => {
+    mutationFn: async (
+      params: UpdateParamsParams
+    ): Promise<UpdateParamsResult> => {
       if (!web3Provider || !address) {
         throw new Error("No wallet connected")
       }
@@ -861,7 +900,7 @@ export const useETFContract = () => {
             const evt = decodeEventLog({
               abi: factoryAbi,
               data: log.data,
-              topics: log.topics,
+              topics: log.topics
             })
 
             if (evt.eventName === "ParamsUpdated") {
@@ -872,7 +911,9 @@ export const useETFContract = () => {
         }
 
         if (!paramsUpdatedEvent) {
-          throw new Error("Could not find ParamsUpdated event in transaction receipt")
+          throw new Error(
+            "Could not find ParamsUpdated event in transaction receipt"
+          )
         }
 
         return {
@@ -899,8 +940,19 @@ export const useETFContract = () => {
     estimateRedeemDeposit,
     estimateRebalance,
     estimateUpdateParams,
-    isLoading: createETF.isPending || deposit.isPending || redeem.isPending || rebalance.isPending || approveToken.isPending || updateParams.isPending,
-    error: createETF.error || deposit.error || redeem.error || rebalance.error || approveToken.error || updateParams.error
+    isLoading:
+      createETF.isPending ||
+      deposit.isPending ||
+      redeem.isPending ||
+      rebalance.isPending ||
+      approveToken.isPending ||
+      updateParams.isPending,
+    error:
+      createETF.error ||
+      deposit.error ||
+      redeem.error ||
+      rebalance.error ||
+      approveToken.error ||
+      updateParams.error
   }
 }
-

@@ -162,10 +162,11 @@ export const formatTokenSupply = (
     try {
         // Use BigInt to handle large numbers without precision loss
         let supply: bigint
-        if (totalSupply && (totalSupply.includes('e') || totalSupply.includes('E'))) {
-            supply = scientificNotationToBigInt(totalSupply)
+        const totalSupplyStr = String(totalSupply)
+        if (totalSupplyStr.includes('e') || totalSupplyStr.includes('E')) {
+            supply = scientificNotationToBigInt(totalSupplyStr)
         } else {
-            supply = safeToBigInt(totalSupply as string)
+            supply = safeToBigInt(totalSupplyStr)
         }
         const divisor = BigInt(10) ** BigInt(actualDecimals)
 

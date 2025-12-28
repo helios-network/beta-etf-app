@@ -7,8 +7,12 @@ import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
 import { ChainConfig } from "@/config/chain-config"
+import { formatTokenAmount } from "@/lib/utils/number"
+import { formatTokenSupply } from "@/helpers/format"
+import { fetchETFChart } from "@/helpers/request"
+import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import s from "./about-section.module.scss"
 
@@ -26,6 +30,7 @@ interface ETF {
   redeemCount?: number
   createdAt: string
   chain: number
+  vault: string
   website?: string
   tags?: string[]
 }
@@ -47,6 +52,22 @@ export function AboutSection({
   const [tags, setTags] = useState<string[]>(etf.tags || [])
   const [isSaving, setIsSaving] = useState(false)
 
+  const { data: chartResponse } = useQuery({
+    queryKey: ["etfChart24h", etf.vault],
+    queryFn: () => fetchETFChart(etf.vault, "7d"),
+    staleTime: 30 * 1000,
+    enabled: !!etf.vault
+  })
+  const dailyVolume = useMemo(() => {
+    if (!chartResponse?.data || chartResponse.data.length === 0) {
+      return etf.dailyVolumeUSD
+    }
+    const firstPrice = chartResponse.data[0].price?.average || 0
+    const lastPrice = chartResponse.data[chartResponse.data.length - 1].price?.average || 0
+
+    return Math.abs(lastPrice - firstPrice)
+  }, [chartResponse, etf.dailyVolumeUSD])
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
@@ -62,11 +83,18 @@ export function AboutSection({
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    const date = new Date(dateString)
+    const dateStr = date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric"
     })
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })
+    return `${dateStr} ${timeStr}`
   }
 
   const formatCurrency = (value: number) => {
@@ -108,16 +136,18 @@ export function AboutSection({
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Supply</span>
-            <span className={s.metricValue}>{etf.totalSupply}</span>
+            <span className={s.metricValue}>
+              {formatTokenSupply(etf.totalSupply, 18, 4)}
+            </span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>Price</span>
-            <span className={s.metricValue}>${etf.sharePrice}</span>
+            <span className={s.metricValue}>${formatTokenAmount(etf.sharePrice)}</span>
           </Card>
           <Card className={s.metric}>
             <span className={s.metricLabel}>24h Volume</span>
             <span className={s.metricValue}>
-              {formatCurrency(etf.dailyVolumeUSD)}
+              {formatCurrency(dailyVolume)}
             </span>
           </Card>
           <Card className={s.metric}>

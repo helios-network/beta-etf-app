@@ -13,4 +13,3 @@ export const pricerViewAbi = [
     type: "function"
   }
 ]
-
