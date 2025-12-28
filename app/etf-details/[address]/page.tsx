@@ -13,45 +13,8 @@ import { DataState } from "@/components/data-state"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
+import { type ETF } from "@/components/etf-modals"
 import s from "./page.module.scss"
-
-interface ETF {
-  id: string
-  name: string
-  symbol: string
-  description: string
-  tvl: number
-  totalSupply: string
-  sharePrice: string
-  volumeTradedUSD: number
-  dailyVolumeUSD: number
-  depositCount?: number
-  redeemCount?: number
-  createdAt: string
-  chain: number
-  vault: string
-  pricer: string
-  shareToken: string
-  depositToken: string
-  depositSymbol: string
-  depositDecimals: number
-  website?: string
-  tags?: string[]
-  latestRebalanceDate?: string
-  tokens: Array<{
-    symbol: string
-    percentage: number
-    tvl: string
-  }>
-  assets?: Array<{
-    token: string
-    symbol: string
-    decimals: number
-    targetWeightBps: number
-  }>
-  owner?: string
-  factory?: string
-}
 
 function formatETFResponse(etf: ETFResponse): ETF {
   const tokens =
@@ -71,14 +34,20 @@ function formatETFResponse(etf: ETFResponse): ETF {
 
   return {
     id: etf._id,
+    factory: etf.factory,
     name: etf.name,
     symbol: etf.symbol,
     description: etf.name ? `${etf.name} ETF basket` : "ETF basket",
     tvl: etf.tvl,
     totalSupply: etf.totalSupply || "0.000",
     sharePrice: etf.sharePrice || "0.00",
+    price: etf.sharePrice || "0.00",
     volumeTradedUSD: etf.volumeTradedUSD || 0,
     dailyVolumeUSD: etf.dailyVolumeUSD || 0,
+    apy: "0.00",
+    change24h: 0,
+    riskLevel: "medium" as const,
+    category: "DeFi",
     createdAt: etf.createdAt || new Date().toISOString(),
     tokens,
     vault: etf.vault,
@@ -91,8 +60,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     depositCount: etf.depositCount,
     redeemCount: etf.redeemCount,
     owner: etf.owner || "",
-    assets,
-    factory: etf.factory
+    assets
   }
 }
 

@@ -11,8 +11,9 @@ import { Input } from "@/components/input"
 import { Select } from "@/components/input/select"
 import { Modal } from "@/components/modal"
 import { Link } from "@/components/link"
+import { BuyETFModal, SellETFModal, type ETF } from "@/components/etf-modals"
 import { routes } from "@/config/routes"
-import { erc20Abi , vaultViewAbi,  pricerViewAbi } from "@/constant/abis"
+import { vaultViewAbi,  pricerViewAbi } from "@/constant/abis"
 import { fetchETFs, fetchETFStats, type ETFResponse } from "@/helpers/request"
 import { useETFContract, percentageToBps } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
@@ -30,45 +31,6 @@ import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
 import Image from "next/image"
 import s from "./page.module.scss"
-
-interface ETF {
-  factory: string
-  id: string
-  name: string
-  symbol: string
-  description: string
-  tvl: number
-  volumeTradedUSD: number
-  dailyVolumeUSD: number
-  totalSupply: string
-  sharePrice: string
-  apy: string
-  change24h: number
-  riskLevel: "low" | "medium" | "high"
-  category: string
-  tokens: Array<{
-    symbol: string
-    percentage: number
-    tvl: string
-  }>
-  price: string
-  vault: string
-  pricer: string
-  shareToken: string
-  depositToken: string
-  depositSymbol: string
-  depositDecimals: number
-  chain: number
-  depositCount?: number
-  redeemCount?: number
-  assets?: Array<{
-    token: string
-    symbol: string
-    decimals: number
-    targetWeightBps: number
-  }>
-  owner: string
-}
 
 function formatETFResponse(etf: ETFResponse): ETF {
   // Convert assets from API to tokens format
@@ -115,7 +77,8 @@ function formatETFResponse(etf: ETFResponse): ETF {
     depositCount: etf.depositCount,
     redeemCount: etf.redeemCount,
     owner: etf.owner || "",
-    assets
+    assets,
+    createdAt: etf.createdAt || new Date().toISOString()
   }
 }
 
@@ -139,27 +102,6 @@ export default function ETFList() {
   const [buyModalOpen, setBuyModalOpen] = useState(false)
   const [sellModalOpen, setSellModalOpen] = useState(false)
   const [selectedETF, setSelectedETF] = useState<ETF | null>(null)
-  const [buyAmount, setBuyAmount] = useState("")
-  const [sellShares, setSellShares] = useState("")
-  const [minSharesOut, setMinSharesOut] = useState("")
-  const [minOut, setMinOut] = useState("")
-  const [slippageBuy, setSlippageBuy] = useState(0.25) // Default 0.25%
-  const [slippageSell, setSlippageSell] = useState(0.25) // Default 0.25%
-  const [depositTokenBalance, setDepositTokenBalance] = useState<string | null>(
-    null
-  )
-  const [shareTokenBalance, setShareTokenBalance] = useState<string | null>(
-    null
-  )
-  const [, setIsLoadingBalance] = useState(false)
-  const [depositTokenAllowance, setDepositTokenAllowance] =
-    useState<boolean>(false)
-  const [shareTokenAllowance, setShareTokenAllowance] = useState<boolean>(false)
-  const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
-  const [estimatedAmountsOut, setEstimatedAmountsOut] = useState<string[]>([])
-  const [estimatedValuesPerAsset, setEstimatedValuesPerAsset] = useState<string[]>([])
-  const [estimatedSoldAmounts, setEstimatedSoldAmounts] = useState<string[]>([])
-  const [impermanentLossPercentage, setImpermanentLossPercentage] = useState<number | null>(null)
   const [hoveredToken, setHoveredToken] = useState<{
     targetPercentage: number
     currentPercentage: number
@@ -180,20 +122,13 @@ export default function ETFList() {
   const [updateParamsError, setUpdateParamsError] = useState<string | null>(null)
 
   const {
-    deposit,
-    redeem,
     rebalance,
-    approveToken,
     updateParams,
-    estimateDepositShares,
-    estimateRedeemDeposit,
     estimateRebalance,
     estimateUpdateParams,
     isLoading: isContractLoading
   } = useETFContract()
   const web3Provider = useWeb3Provider()
-  const [isEstimatingShares, setIsEstimatingShares] = useState(false)
-  const [isEstimatingDeposit, setIsEstimatingDeposit] = useState(false)
   
   // Rebalance modal state
   const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false)
@@ -261,43 +196,6 @@ export default function ETFList() {
 
   const error = etfsError ? (etfsError instanceof Error ? etfsError.message : "Failed to load ETFs") : null
 
-  // Calculate total value from valuesPerAsset
-  const totalEstimatedValue = useMemo(() => {
-    if (estimatedValuesPerAsset.length === 0) return null
-    
-    try {
-      const total = estimatedValuesPerAsset.reduce((sum, value) => {
-        if (!value || value === "0") return sum
-        return sum + BigInt(value)
-      }, 0n)
-      
-      // valuesPerAsset are in USD with 18 decimals
-      const multiplier = BigInt(10) ** BigInt(18)
-      const totalNumber = Number(total) / Number(multiplier)
-      return totalNumber
-    } catch (error) {
-      console.error("Error calculating total value:", error)
-      return null
-    }
-  }, [estimatedValuesPerAsset])
-
-
-  // Format number to string without scientific notation
-  const formatNumberToString = (
-    num: number,
-    maxDecimals: number = 18
-  ): string => {
-    if (num === 0) return "0"
-
-    // Use toFixed with max decimals to avoid scientific notation
-    let str = num.toFixed(maxDecimals)
-
-    // Remove trailing zeros
-    str = str.replace(/\.?0+$/, "")
-
-    return str
-  }
-
   // Validate and format decimal number input (max 18 decimals, point as separator)
   const validateDecimalInput = (
     value: string,
@@ -321,72 +219,6 @@ export default function ETFList() {
     }
 
     return cleaned
-  }
-
-  const fetchTokenBalance = async (
-    tokenAddress: string,
-    decimals: number
-  ): Promise<string | null> => {
-    if (!web3Provider || !address) return null
-
-    try {
-      const tokenContract = new web3Provider.eth.Contract(
-        erc20Abi as any,
-        tokenAddress
-      )
-      const balance = await tokenContract.methods.balanceOf(address).call()
-      console.log("balance", balance)
-      // Web3.js returns balance as a string or BigInt, convert to BigInt
-      const balanceStr = String(balance)
-      const balanceBigInt = BigInt(balanceStr)
-      const balanceMultiplier = BigInt(10) ** BigInt(decimals)
-
-      // Use BigInt division to preserve precision
-      // Calculate integer and fractional parts separately to avoid precision loss
-      const integerPart = balanceBigInt / balanceMultiplier
-      const remainder = balanceBigInt % balanceMultiplier
-
-      // Convert remainder to a decimal string with proper padding
-      const remainderStr = remainder.toString().padStart(decimals, "0")
-      // Take only the significant digits (remove trailing zeros)
-      const remainderTrimmed = remainderStr.replace(/0+$/, "")
-
-      // Build the decimal number as a string first, then parse
-      const decimalString =
-        remainderTrimmed.length > 0
-          ? `${integerPart.toString()}.${remainderTrimmed}`
-          : integerPart.toString()
-
-      // Return as string to preserve full precision
-      return decimalString
-    } catch (error) {
-      console.error("Error fetching token balance:", error)
-      return null
-    }
-  }
-
-  const checkAllowance = async (
-    tokenAddress: string,
-    spenderAddress: string,
-    amount: string
-  ): Promise<boolean> => {
-    if (!web3Provider || !address) return false
-
-    try {
-      const tokenContract = new web3Provider.eth.Contract(
-        erc20Abi as any,
-        tokenAddress
-      )
-      const allowanceStr: string = await tokenContract.methods
-        .allowance(address, spenderAddress)
-        .call()
-      const allowance = BigInt(allowanceStr)
-      const requiredAmount = BigInt(amount)
-      return allowance >= requiredAmount
-    } catch (error) {
-      console.error("Error checking allowance:", error)
-      return false
-    }
   }
 
   useEffect(() => {
@@ -439,7 +271,7 @@ export default function ETFList() {
     })
   }, [etfs, searchTerm, selectedCategory, selectedRisk, sortBy])
 
-  const handleBuy = async (etf: ETF) => {
+  const handleBuy = (etf: ETF) => {
     if (!isWalletConnected) {
       toast.error("Please connect your wallet first")
       return
@@ -451,23 +283,10 @@ export default function ETFList() {
       return
     }
     setSelectedETF(etf)
-    setBuyAmount("")
-    setMinSharesOut("")
-    setDepositTokenBalance(null)
-    setDepositTokenAllowance(false)
     setBuyModalOpen(true)
-
-    // Fetch deposit token balance
-    setIsLoadingBalance(true)
-    const balance = await fetchTokenBalance(
-      etf.depositToken,
-      etf.depositDecimals
-    )
-    setDepositTokenBalance(balance)
-    setIsLoadingBalance(false)
   }
 
-  const handleSell = async (etf: ETF) => {
+  const handleSell = (etf: ETF) => {
     if (!isWalletConnected) {
       toast.error("Please connect your wallet first")
       return
@@ -479,244 +298,9 @@ export default function ETFList() {
       return
     }
     setSelectedETF(etf)
-    setSellShares("")
-    setMinOut("")
-    setShareTokenBalance(null)
-    setShareTokenAllowance(false)
     setSellModalOpen(true)
-
-    // Fetch share token balance
-    setIsLoadingBalance(true)
-    const balance = await fetchTokenBalance(etf.shareToken, 18) // Share tokens typically have 18 decimals
-    console.log("balance", balance)
-    setShareTokenBalance(balance)
-    setIsLoadingBalance(false)
   }
 
-  const handleApproveBuy = async () => {
-    if (!selectedETF) return
-
-    if (!buyAmount || parseFloat(buyAmount) <= 0) {
-      toast.error("Please enter a valid amount")
-      return
-    }
-
-    try {
-      // Convert amount using correct decimals for deposit token
-      const depositDecimals = selectedETF.depositDecimals || 18
-      const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
-      const [integerPart = "0", fractionalPart = ""] = buyAmount.split(".")
-      const paddedFractional = fractionalPart
-        .padEnd(depositDecimals, "0")
-        .slice(0, depositDecimals)
-      const amountWei = (
-        BigInt(integerPart) * depositMultiplier +
-        BigInt(paddedFractional)
-      ).toString()
-
-      await approveToken({
-        tokenAddress: selectedETF.depositToken,
-        spenderAddress: selectedETF.vault,
-        amount: amountWei
-      })
-
-      toast.success("Token approved successfully!")
-      // Recheck allowance after approval
-      const hasAllowance = await checkAllowance(
-        selectedETF.depositToken,
-        selectedETF.vault,
-        amountWei
-      )
-      setDepositTokenAllowance(hasAllowance)
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Approval failed"
-      toast.error(errorMessage)
-    }
-  }
-
-  const handleConfirmBuy = async () => {
-    if (!selectedETF) return
-
-    if (!buyAmount || parseFloat(buyAmount) <= 0) {
-      toast.error("Please enter a valid amount")
-      return
-    }
-
-    if (!minSharesOut || parseFloat(minSharesOut) < 0) {
-      toast.error("Please enter a valid minimum shares out")
-      return
-    }
-
-    try {
-      // Convert amount using correct decimals for deposit token
-      const depositDecimals = selectedETF.depositDecimals || 18
-      const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
-      // Convert human-readable amount to wei: multiply by 10^decimals
-      // Handle decimal numbers by splitting integer and fractional parts
-      const [integerPart = "0", fractionalPart = ""] = buyAmount.split(".")
-      const paddedFractional = fractionalPart
-        .padEnd(depositDecimals, "0")
-        .slice(0, depositDecimals)
-      const amountWei = (
-        BigInt(integerPart) * depositMultiplier +
-        BigInt(paddedFractional)
-      ).toString()
-
-      // For shares, assume 18 decimals (standard for ERC20)
-      const sharesDecimals = 18
-      const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-      const [sharesInteger = "0", sharesFractional = ""] =
-        minSharesOut.split(".")
-      const paddedSharesFractional = sharesFractional
-        .padEnd(sharesDecimals, "0")
-        .slice(0, sharesDecimals)
-      const minSharesOutWei = (
-        BigInt(sharesInteger) * sharesMultiplier +
-        BigInt(paddedSharesFractional)
-      ).toString()
-
-      const result = await deposit({
-        factory: selectedETF.factory,
-        vault: selectedETF.vault,
-        depositToken: selectedETF.depositToken,
-        amount: amountWei,
-        minSharesOut: minSharesOutWei,
-        slippageBps: percentageToBps(slippageBuy)
-      })
-
-      // Convert shares back from wei to human-readable
-      const sharesReceived = Number(result.sharesOut) / Number(sharesMultiplier)
-
-      toast.success(
-        `Successfully deposited! Received ${sharesReceived.toFixed(6)} shares`
-      )
-      setBuyModalOpen(false)
-      setBuyAmount("")
-      setMinSharesOut("")
-      setSelectedETF(null)
-      setEstimatedAmountsOut([])
-      setEstimatedValuesPerAsset([])
-      setImpermanentLossPercentage(null)
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Deposit failed"
-      toast.error(errorMessage)
-    }
-  }
-
-  const handleApproveSell = async () => {
-    if (!selectedETF) return
-
-    if (!sellShares || parseFloat(sellShares) <= 0) {
-      toast.error("Please enter a valid number of shares")
-      return
-    }
-
-    try {
-      // Convert shares to wei (assuming 18 decimals for share token)
-      const sharesDecimals = 18
-      const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-      const [sharesInteger = "0", sharesFractional = ""] = sellShares.split(".")
-      const paddedSharesFractional = sharesFractional
-        .padEnd(sharesDecimals, "0")
-        .slice(0, sharesDecimals)
-      const sharesWei = (
-        BigInt(sharesInteger) * sharesMultiplier +
-        BigInt(paddedSharesFractional)
-      ).toString()
-
-      await approveToken({
-        tokenAddress: selectedETF.shareToken,
-        spenderAddress: selectedETF.vault,
-        amount: sharesWei
-      })
-
-      toast.success("Token approved successfully!")
-      // Recheck allowance after approval
-      const hasAllowance = await checkAllowance(
-        selectedETF.shareToken,
-        selectedETF.vault,
-        sharesWei
-      )
-      setShareTokenAllowance(hasAllowance)
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Approval failed"
-      toast.error(errorMessage)
-    }
-  }
-
-  const handleConfirmSell = async () => {
-    if (!selectedETF) return
-
-    if (!sellShares || parseFloat(sellShares) <= 0) {
-      toast.error("Please enter a valid number of shares")
-      return
-    }
-
-    if (!minOut || parseFloat(minOut) < 0) {
-      toast.error("Please enter a valid minimum output")
-      return
-    }
-
-    try {
-      // Convert shares to wei (assuming 18 decimals for share token)
-      const sharesDecimals = 18
-      const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-      const [sharesInteger = "0", sharesFractional = ""] = sellShares.split(".")
-      const paddedSharesFractional = sharesFractional
-        .padEnd(sharesDecimals, "0")
-        .slice(0, sharesDecimals)
-      const sharesWei = (
-        BigInt(sharesInteger) * sharesMultiplier +
-        BigInt(paddedSharesFractional)
-      ).toString()
-
-      // Convert minOut using correct decimals for deposit token
-      const depositDecimals = selectedETF.depositDecimals || 18
-      const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
-      const [minOutInteger = "0", minOutFractional = ""] = minOut.split(".")
-      const paddedMinOutFractional = minOutFractional
-        .padEnd(depositDecimals, "0")
-        .slice(0, depositDecimals)
-      const minOutWei = (
-        BigInt(minOutInteger) * depositMultiplier +
-        BigInt(paddedMinOutFractional)
-      ).toString()
-
-      const result = await redeem({
-        factory: selectedETF.factory,
-        vault: selectedETF.vault,
-        shareToken: selectedETF.shareToken,
-        shares: sharesWei,
-        minOut: minOutWei,
-        slippageBps: percentageToBps(slippageSell)
-      })
-
-      // Format the received amount using correct decimals
-      const receivedAmount =
-        Number(result.depositOut) / Number(depositMultiplier)
-      const depositSymbol =
-        selectedETF.depositSymbol || selectedETF.depositToken
-
-      toast.success(
-        `Successfully redeemed! Received ${receivedAmount.toFixed(
-          6
-        )} ${depositSymbol} tokens`
-      )
-      setSellModalOpen(false)
-      setSellShares("")
-      setMinOut("")
-      setSelectedETF(null)
-      setShareTokenAllowance(false)
-      setEstimatedSoldAmounts([])
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Redeem failed"
-      toast.error(errorMessage)
-    }
-  }
 
   const handleOpenRebalanceModal = async (etf: ETF) => {
     if (!isWalletConnected) {
@@ -745,9 +329,16 @@ export default function ETFList() {
       })
       setRebalancePreview(preview)
     } catch (error: unknown) {
+      console.error("Error estimating rebalance", error)
       const errorMessage =
         error instanceof Error ? error.message : "Failed to estimate rebalance"
-      setRebalanceError(errorMessage)
+      
+      // If the error is "execution reverted", it means rebalance is not necessary
+      if (errorMessage.toLowerCase().includes("execution reverted")) {
+        setRebalanceError("Rebalance is not necessary at the moment.")
+      } else {
+        setRebalanceError(errorMessage)
+      }
     } finally {
       setIsEstimatingRebalance(false)
     }
@@ -1493,846 +1084,24 @@ export default function ETFList() {
       )}
 
       {/* Buy Modal */}
-      <Modal
+      <BuyETFModal
         open={buyModalOpen}
         onClose={() => {
           setBuyModalOpen(false)
           setSelectedETF(null)
-          setBuyAmount("")
-          setMinSharesOut("")
-          setDepositTokenAllowance(false)
-          setEstimatedAmountsOut([])
-          setEstimatedValuesPerAsset([])
-          setImpermanentLossPercentage(null)
         }}
-        title={`Buy ${selectedETF?.symbol || ""}`}
-      >
-        <div className={s.modalContent}>
-          <p className={s.modalDescription}>
-            Deposit {selectedETF?.depositSymbol || "tokens"} to receive ETF
-            shares
-          </p>
-          <Input
-            label={`Amount to Deposit (${
-              selectedETF?.depositSymbol || "TOKEN"
-            })`}
-            type="text"
-            inputMode="decimal"
-            placeholder="0.0"
-            value={buyAmount}
-            onChange={async (e) => {
-              const validatedValue = validateDecimalInput(
-                e.target.value,
-                selectedETF?.depositDecimals || 18
-              )
-              setBuyAmount(validatedValue)
-              // Check allowance and estimate shares when amount changes
-              if (
-                selectedETF &&
-                validatedValue &&
-                parseFloat(validatedValue) > 0
-              ) {
-                const depositDecimals = selectedETF.depositDecimals || 18
-                const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
-                const [integerPart = "0", fractionalPart = ""] =
-                  validatedValue.split(".")
-                const paddedFractional = fractionalPart
-                  .padEnd(depositDecimals, "0")
-                  .slice(0, depositDecimals)
-                const amountWei = (
-                  BigInt(integerPart) * depositMultiplier +
-                  BigInt(paddedFractional)
-                ).toString()
-
-                setIsCheckingAllowance(true)
-                setIsEstimatingShares(true)
-
-                // Check allowance
-                const hasAllowance = await checkAllowance(
-                  selectedETF.depositToken,
-                  selectedETF.vault,
-                  amountWei
-                )
-                setDepositTokenAllowance(hasAllowance)
-
-                // Estimate shares by calling deposit with minSharesOut = 0
-                try {
-                  const estimateResult = await estimateDepositShares({
-                    factory: selectedETF.factory,
-                    vault: selectedETF.vault,
-                    amount: amountWei,
-                    allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
-                    slippageBps: percentageToBps(slippageBuy)
-                  })
-
-                  // Store estimated amounts and values for display
-                  setEstimatedAmountsOut(estimateResult.amountsOut)
-                  setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
-
-                  // Calculate impermanent loss
-                  try {
-                    const total = estimateResult.valuesPerAsset.reduce((sum, value) => {
-                      if (!value || value === "0") return sum
-                      return sum + BigInt(value)
-                    }, 0n)
-                    
-                    const multiplier = BigInt(10) ** BigInt(18)
-                    const totalValue = Number(total) / Number(multiplier)
-                    const depositAmount = parseFloat(validatedValue)
-                    
-                    if (depositAmount > 0 && totalValue > 0) {
-                      const lossPercentage = ((depositAmount - totalValue) / depositAmount) * 100
-                      setImpermanentLossPercentage(lossPercentage)
-                    } else {
-                      setImpermanentLossPercentage(null)
-                    }
-                  } catch (err) {
-                    console.error("Error calculating impermanent loss:", err)
-                    setImpermanentLossPercentage(null)
-                  }
-
-                  // Convert shares from wei to human-readable format and apply slippage
-                  if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
-                    const sharesDecimals = 18
-                    const sharesMultiplier =
-                      BigInt(10) ** BigInt(sharesDecimals)
-                    const sharesBigInt = BigInt(estimateResult.sharesOut)
-
-                    // Apply slippage to the BigInt value
-                    const slippageMultiplier = BigInt(
-                      Math.floor((100 - slippageBuy) * 100)
-                    )
-                    const sharesWithSlippage =
-                      (sharesBigInt * slippageMultiplier) / 10000n
-
-                    const sharesNumber =
-                      Number(sharesWithSlippage) / Number(sharesMultiplier)
-                    const estimatedShares = formatNumberToString(
-                      sharesNumber,
-                      sharesDecimals
-                    )
-                    setMinSharesOut(estimatedShares)
-                  }
-                } catch (error) {
-                  console.error("Error estimating shares:", error)
-                  setEstimatedAmountsOut([])
-                  setEstimatedValuesPerAsset([])
-                  setImpermanentLossPercentage(null)
-                  // Don't show error to user, just log it
-                }
-
-                setIsCheckingAllowance(false)
-                setIsEstimatingShares(false)
-              } else {
-                setDepositTokenAllowance(false)
-                setMinSharesOut("")
-              }
-            }}
-            icon="hugeicons:wallet-01"
-            balance={depositTokenBalance ?? undefined}
-            showMaxButton={
-              !!depositTokenBalance && parseFloat(depositTokenBalance) > 0
-            }
-            onMaxClick={async () => {
-              if (depositTokenBalance !== null) {
-                setBuyAmount(depositTokenBalance)
-                // Check allowance and estimate shares after setting max
-                if (selectedETF) {
-                  const depositDecimals = selectedETF.depositDecimals || 18
-                  const depositMultiplier =
-                    BigInt(10) ** BigInt(depositDecimals)
-                  const [integerPart = "0", fractionalPart = ""] =
-                    depositTokenBalance.split(".")
-                  const paddedFractional = fractionalPart
-                    .padEnd(depositDecimals, "0")
-                    .slice(0, depositDecimals)
-                  const amountWei = (
-                    BigInt(integerPart) * depositMultiplier +
-                    BigInt(paddedFractional)
-                  ).toString()
-
-                  setIsCheckingAllowance(true)
-                  setIsEstimatingShares(true)
-
-                  const hasAllowance = await checkAllowance(
-                    selectedETF.depositToken,
-                    selectedETF.vault,
-                    amountWei
-                  )
-                  setDepositTokenAllowance(hasAllowance)
-
-                  // Estimate shares
-                  try {
-                    console.log("estimatedSharesWei", amountWei)
-                    const estimateResult = await estimateDepositShares({
-                      factory: selectedETF.factory,
-                      vault: selectedETF.vault,
-                      amount: amountWei,
-                      allowance: hasAllowance ? BigInt(amountWei) : BigInt(0),
-                      slippageBps: percentageToBps(slippageBuy)
-                    })
-
-                    // Store estimated amounts and values for display
-                    setEstimatedAmountsOut(estimateResult.amountsOut)
-                    setEstimatedValuesPerAsset(estimateResult.valuesPerAsset)
-
-                    // Calculate impermanent loss
-                    try {
-                      const total = estimateResult.valuesPerAsset.reduce((sum, value) => {
-                        if (!value || value === "0") return sum
-                        return sum + BigInt(value)
-                      }, 0n)
-                      
-                      const multiplier = BigInt(10) ** BigInt(18)
-                      const totalValue = Number(total) / Number(multiplier)
-                      const depositAmount = parseFloat(depositTokenBalance || "0")
-                      
-                      if (depositAmount > 0 && totalValue > 0) {
-                        const lossPercentage = ((depositAmount - totalValue) / depositAmount) * 100
-                        setImpermanentLossPercentage(lossPercentage)
-                      } else {
-                        setImpermanentLossPercentage(null)
-                      }
-                    } catch (err) {
-                      console.error("Error calculating impermanent loss:", err)
-                      setImpermanentLossPercentage(null)
-                    }
-
-                    if (estimateResult.sharesOut && estimateResult.sharesOut !== "0") {
-                      const sharesDecimals = 18
-                      const sharesMultiplier =
-                        BigInt(10) ** BigInt(sharesDecimals)
-                      const sharesBigInt = BigInt(estimateResult.sharesOut)
-                      const sharesNumber =
-                        Number(sharesBigInt) / Number(sharesMultiplier)
-                      const estimatedShares = formatNumberToString(
-                        sharesNumber,
-                        sharesDecimals
-                      )
-                      setMinSharesOut(estimatedShares)
-                    }
-                  } catch (error) {
-                    console.error("Error estimating shares:", error)
-                    setEstimatedAmountsOut([])
-                    setEstimatedValuesPerAsset([])
-                    setImpermanentLossPercentage(null)
-                    // Don't show error to user, just log it
-                  }
-
-                  setIsCheckingAllowance(false)
-                  setIsEstimatingShares(false)
-                }
-              }
-            }}
-          />
-          <div className={s.slippageContainer}>
-            <label className={s.slippageLabel}>Slippage Tolerance</label>
-            <div className={s.slippageButtons}>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageBuy === 0.25 && s.active
-                )}
-                onClick={() => setSlippageBuy(0.25)}
-              >
-                0.25%
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageBuy === 0.5 && s.active
-                )}
-                onClick={() => setSlippageBuy(0.5)}
-              >
-                0.5%
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageBuy === 1 && s.active
-                )}
-                onClick={() => setSlippageBuy(1)}
-              >
-                1%
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageBuy === 5 && s.active
-                )}
-                onClick={() => setSlippageBuy(5)}
-              >
-                5%
-              </button>
-            </div>
-          </div>
-          <Input
-            label="Minimum Shares Out"
-            type="text"
-            inputMode="decimal"
-            placeholder={isEstimatingShares ? "Estimating..." : "0.0"}
-            value={minSharesOut}
-            onChange={(e) => {
-              const validatedValue = validateDecimalInput(e.target.value, 18)
-              setMinSharesOut(validatedValue)
-            }}
-            icon="hugeicons:chart-01"
-            helperText={
-              isEstimatingShares
-                ? "Estimating shares..."
-                : "Minimum shares you're willing to accept"
-            }
-            disabled={isEstimatingShares}
-          />
-          
-          {/* Display total estimated value */}
-          {totalEstimatedValue !== null && (
-            <div style={{
-              padding: '0.75rem 1rem',
-              background: 'var(--background-low)',
-              borderRadius: 'var(--radius-s)',
-              border: '1px solid var(--border-light)',
-              fontSize: '0.9rem',
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <span>Estimated Value:</span>
-              <span style={{
-                fontWeight: '600',
-                fontSize: '1rem',
-                color: 'var(--text-primary)'
-              }}>
-                ~${totalEstimatedValue.toFixed(2)}
-              </span>
-            </div>
-          )}
-          
-          {/* Display impermanent loss warning */}
-          {impermanentLossPercentage !== null && impermanentLossPercentage > 1 && (
-            <div style={{
-              padding: '1rem',
-              background: impermanentLossPercentage > 5 
-                ? 'var(--danger-lowest)' 
-                : 'var(--warning-lowest)',
-              border: `1px solid ${impermanentLossPercentage > 5 
-                ? 'var(--danger-low)' 
-                : 'var(--warning-low)'}`,
-              borderRadius: 'var(--radius-s)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '0.75rem'
-            }}>
-              <Icon 
-                icon={impermanentLossPercentage > 5 
-                  ? "hugeicons:alert-circle" 
-                  : "hugeicons:alert-02"}
-                style={{
-                  fontSize: '1.5rem',
-                  color: impermanentLossPercentage > 5 
-                    ? 'var(--danger-high)' 
-                    : 'var(--warning-high)',
-                  flexShrink: 0
-                }}
-              />
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.25rem'
-              }}>
-                <strong style={{
-                  color: impermanentLossPercentage > 5 
-                    ? 'var(--danger-high)' 
-                    : 'var(--warning-high)',
-                  fontSize: '0.9rem'
-                }}>
-                  {impermanentLossPercentage > 5 
-                    ? 'High Impermanent Loss Detected!' 
-                    : 'Impermanent Loss Warning'}
-                </strong>
-                <span style={{
-                  color: impermanentLossPercentage > 5 
-                    ? 'var(--danger-medium)' 
-                    : 'var(--warning-medium)',
-                  fontSize: '0.85rem',
-                  lineHeight: '1.4'
-                }}>
-                  {impermanentLossPercentage > 5 
-                    ? `You may lose approximately ${impermanentLossPercentage.toFixed(2)}% due to swap fees and slippage. Consider depositing a smaller amount or waiting for better market conditions.`
-                    : `You may lose approximately ${impermanentLossPercentage.toFixed(2)}% due to swap fees and slippage.`}
-                </span>
-              </div>
-            </div>
-          )}
-          
-          {/* Display estimated token distribution */}
-          {estimatedAmountsOut.length > 0 && selectedETF?.assets && (
-            <div className={s.tokenDistribution}>
-              <div className={s.tokenDistributionHeader}>
-                <Icon icon="hugeicons:pie-chart" />
-                <span>Estimated Token Added in ETF</span>
-              </div>
-              <div className={s.tokenDistributionList}>
-                {selectedETF.assets.map((asset, index) => {
-                  if (index >= estimatedAmountsOut.length) return null
-                  
-                  const amountOut = estimatedAmountsOut[index]
-                  const valuePerAsset = estimatedValuesPerAsset[index]
-                  
-                  if (!amountOut || amountOut === "0") return null
-                  
-                  const decimals = asset.decimals || 18
-                  const multiplier = BigInt(10) ** BigInt(decimals)
-                  const amountNumber = Number(BigInt(amountOut)) / Number(multiplier)
-                  
-                  const depositMultiplier = BigInt(10) ** BigInt(18)
-                  const valueNumber = Number(BigInt(valuePerAsset || "0")) / Number(depositMultiplier)
-                  
-                    const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
-                    
-                    return (
-                      <div key={asset.token} className={s.tokenDistributionItem}>
-                        <div className={s.tokenInfo}>
-                          {logo ? (
-                            <Image
-                              src={logo}
-                              alt={asset.symbol}
-                              width={20}
-                              height={20}
-                              className={s.tokenLogo}
-                            />
-                          ) : (
-                            <div className={s.tokenLogo} style={{
-                              backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.7rem',
-                              fontWeight: '600'
-                            }}>
-                              {asset.symbol.charAt(0)}
-                            </div>
-                          )}
-                          <span className={s.tokenSymbol}>{asset.symbol}</span>
-                          <span className={s.tokenWeight}>
-                            {(asset.targetWeightBps / 100).toFixed(2)}%
-                          </span>
-                        </div>
-                        <div className={s.tokenAmounts}>
-                          <span className={s.tokenAmount}>
-                            {amountNumber.toFixed(6)} {asset.symbol}
-                          </span>
-                          <span className={s.tokenValue}>
-                            ≈ ${valueNumber.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )
-                })}
-              </div>
-            </div>
-          )}
-          
-          <div className={s.modalActions}>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setBuyModalOpen(false)
-                setSelectedETF(null)
-                setBuyAmount("")
-                setMinSharesOut("")
-                setEstimatedAmountsOut([])
-                setEstimatedValuesPerAsset([])
-                setImpermanentLossPercentage(null)
-              }}
-            >
-              Cancel
-            </Button>
-            {depositTokenAllowance ? (
-              <Button
-                variant="primary"
-                onClick={handleConfirmBuy}
-                disabled={isContractLoading || !buyAmount || !minSharesOut}
-                iconLeft={
-                  isContractLoading
-                    ? "hugeicons:loading-01"
-                    : "hugeicons:checkmark-circle-02"
-                }
-              >
-                {isContractLoading ? "Processing..." : "Confirm Buy"}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={handleApproveBuy}
-                disabled={
-                  isContractLoading || isCheckingAllowance || !buyAmount
-                }
-                iconLeft={
-                  isContractLoading
-                    ? "hugeicons:loading-01"
-                    : "hugeicons:lock-01"
-                }
-              >
-                {isContractLoading ? "Processing..." : "Approve"}
-              </Button>
-            )}
-          </div>
-        </div>
-      </Modal>
+        etf={selectedETF}
+      />
 
       {/* Sell Modal */}
-      <Modal
+      <SellETFModal
         open={sellModalOpen}
         onClose={() => {
           setSellModalOpen(false)
           setSelectedETF(null)
-          setSellShares("")
-          setMinOut("")
-          setShareTokenAllowance(false)
-          setEstimatedSoldAmounts([])
         }}
-        title={`Sell ${selectedETF?.symbol || ""}`}
-      >
-        <div className={s.modalContent}>
-          <p className={s.modalDescription}>
-            Redeem ETF shares to receive{" "}
-            {selectedETF?.depositSymbol || "tokens"}
-          </p>
-          <Input
-            label="Shares to Redeem"
-            type="text"
-            inputMode="decimal"
-            placeholder="0.0"
-            value={sellShares}
-            onChange={async (e) => {
-              const validatedValue = validateDecimalInput(e.target.value, 18)
-              setSellShares(validatedValue)
-              // Check allowance and estimate deposit tokens when shares change
-              if (
-                selectedETF &&
-                validatedValue &&
-                parseFloat(validatedValue) > 0
-              ) {
-                const sharesDecimals = 18
-                const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-                const [sharesInteger = "0", sharesFractional = ""] =
-                  validatedValue.split(".")
-                const paddedSharesFractional = sharesFractional
-                  .padEnd(sharesDecimals, "0")
-                  .slice(0, sharesDecimals)
-                const sharesWei = (
-                  BigInt(sharesInteger) * sharesMultiplier +
-                  BigInt(paddedSharesFractional)
-                ).toString()
-
-                setIsCheckingAllowance(true)
-                setIsEstimatingDeposit(true)
-
-                // Check allowance
-                const hasAllowance = await checkAllowance(
-                  selectedETF.shareToken,
-                  selectedETF.vault,
-                  sharesWei
-                )
-                setShareTokenAllowance(hasAllowance)
-
-                // Estimate deposit tokens by calling redeem with minOut = 0
-                try {
-                  const estimateResult = await estimateRedeemDeposit({
-                    factory: selectedETF.factory,
-                    vault: selectedETF.vault,
-                    shares: sharesWei,
-                    allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
-                    slippageBps: percentageToBps(slippageSell)
-                  })
-
-                  // Store estimated sold amounts for display
-                  setEstimatedSoldAmounts(estimateResult.soldAmounts)
-
-                  // Convert deposit tokens from wei to human-readable format and apply slippage
-                  if (estimateResult.depositOut && estimateResult.depositOut !== "0") {
-                    const depositDecimals = selectedETF.depositDecimals || 18
-                    const depositMultiplier =
-                      BigInt(10) ** BigInt(depositDecimals)
-                    const depositBigInt = BigInt(estimateResult.depositOut)
-
-                    // Apply slippage to the BigInt value
-                    const slippageMultiplier = BigInt(
-                      Math.floor((100 - slippageSell) * 100)
-                    )
-                    const depositWithSlippage =
-                      (depositBigInt * slippageMultiplier) / 10000n
-
-                    const depositNumber =
-                      Number(depositWithSlippage) / Number(depositMultiplier)
-                    const estimatedDeposit = formatNumberToString(
-                      depositNumber,
-                      depositDecimals
-                    )
-                    setMinOut(estimatedDeposit)
-                  }
-                } catch (error) {
-                  console.error("Error estimating deposit tokens:", error)
-                  setEstimatedSoldAmounts([])
-                  // Don't show error to user, just log it
-                }
-
-                setIsCheckingAllowance(false)
-                setIsEstimatingDeposit(false)
-              } else {
-                setShareTokenAllowance(false)
-                setMinOut("")
-              }
-            }}
-            icon="hugeicons:chart-01"
-            balance={shareTokenBalance ?? undefined}
-            showMaxButton={
-              !!shareTokenBalance && parseFloat(shareTokenBalance) > 0
-            }
-            onMaxClick={async () => {
-              if (shareTokenBalance !== null) {
-                setSellShares(shareTokenBalance)
-                // Check allowance and estimate deposit tokens after setting max
-                if (selectedETF) {
-                  const sharesDecimals = 18
-                  const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-                  const [sharesInteger = "0", sharesFractional = ""] =
-                    shareTokenBalance.split(".")
-                  const paddedSharesFractional = sharesFractional
-                    .padEnd(sharesDecimals, "0")
-                    .slice(0, sharesDecimals)
-                  const sharesWei = (
-                    BigInt(sharesInteger) * sharesMultiplier +
-                    BigInt(paddedSharesFractional)
-                  ).toString()
-
-                  setIsCheckingAllowance(true)
-                  setIsEstimatingDeposit(true)
-
-                  // Check allowance
-                  const hasAllowance = await checkAllowance(
-                    selectedETF.shareToken,
-                    selectedETF.vault,
-                    sharesWei
-                  )
-                  setShareTokenAllowance(hasAllowance)
-
-                  // Estimate deposit tokens
-                  try {
-                    const estimateResult = await estimateRedeemDeposit({
-                      factory: selectedETF.factory,
-                      vault: selectedETF.vault,
-                      shares: sharesWei,
-                      allowance: hasAllowance ? BigInt(sharesWei) : BigInt(0),
-                      slippageBps: percentageToBps(slippageSell)
-                    })
-
-                    // Store estimated sold amounts for display
-                    setEstimatedSoldAmounts(estimateResult.soldAmounts)
-
-                    if (estimateResult.depositOut && estimateResult.depositOut !== "0") {
-                      const depositDecimals = selectedETF.depositDecimals || 18
-                      const depositMultiplier =
-                        BigInt(10) ** BigInt(depositDecimals)
-                      const depositBigInt = BigInt(estimateResult.depositOut)
-
-                      // Apply slippage to the BigInt value
-                      const slippageMultiplier = BigInt(
-                        Math.floor((100 - slippageSell) * 100)
-                      )
-                      const depositWithSlippage =
-                        (depositBigInt * slippageMultiplier) / 10000n
-
-                      const depositNumber =
-                        Number(depositWithSlippage) / Number(depositMultiplier)
-                      const estimatedDeposit = formatNumberToString(
-                        depositNumber,
-                        depositDecimals
-                      )
-                      setMinOut(estimatedDeposit)
-                    }
-                  } catch (error) {
-                    console.error("Error estimating deposit tokens:", error)
-                    setEstimatedSoldAmounts([])
-                  }
-
-                  setIsCheckingAllowance(false)
-                  setIsEstimatingDeposit(false)
-                }
-              }
-            }}
-          />
-          <div className={s.slippageContainer}>
-            <label className={s.slippageLabel}>Slippage Tolerance</label>
-            <div className={s.slippageButtons}>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageSell === 0.25 && s.active
-                )}
-                onClick={() => setSlippageSell(0.25)}
-              >
-                0.25%
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageSell === 0.5 && s.active
-                )}
-                onClick={() => setSlippageSell(0.5)}
-              >
-                0.5%
-              </button>
-              <button
-                type="button"
-                className={clsx(
-                  s.slippageButton,
-                  slippageSell === 1 && s.active
-                )}
-                onClick={() => setSlippageSell(1)}
-              >
-                1%
-              </button>
-            </div>
-          </div>
-          <Input
-            label={`Minimum Output (${selectedETF?.depositSymbol || "TOKEN"})`}
-            type="text"
-            inputMode="decimal"
-            placeholder={isEstimatingDeposit ? "Estimating..." : "0.0"}
-            value={minOut}
-            onChange={(e) => {
-              const validatedValue = validateDecimalInput(
-                e.target.value,
-                selectedETF?.depositDecimals || 18
-              )
-              setMinOut(validatedValue)
-            }}
-            icon="hugeicons:wallet-01"
-            helperText={
-              isEstimatingDeposit
-                ? "Estimating deposit tokens..."
-                : `Minimum ${
-                    selectedETF?.depositSymbol || "tokens"
-                  } you're willing to accept`
-            }
-            disabled={isEstimatingDeposit}
-          />
-          
-          {/* Display estimated tokens to be sold */}
-          {estimatedSoldAmounts.length > 0 && selectedETF?.assets && (
-            <div className={s.tokenDistribution}>
-              <div className={s.tokenDistributionHeader}>
-                <Icon icon="hugeicons:pie-chart" />
-                <span>Tokens to be Sold</span>
-              </div>
-              <div className={s.tokenDistributionList}>
-                {selectedETF.assets.map((asset, index) => {
-                  if (index >= estimatedSoldAmounts.length) return null
-                  
-                  const soldAmount = estimatedSoldAmounts[index]
-                  
-                  if (!soldAmount || soldAmount === "0") return null
-                  
-                  const decimals = asset.decimals || 18
-                  const multiplier = BigInt(10) ** BigInt(decimals)
-                  const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
-                  
-                  const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
-                  
-                  return (
-                    <div key={asset.token} className={s.tokenDistributionItem}>
-                      <div className={s.tokenInfo}>
-                        {logo ? (
-                          <Image
-                            src={logo}
-                            alt={asset.symbol}
-                            width={20}
-                            height={20}
-                            className={s.tokenLogo}
-                          />
-                        ) : (
-                          <div className={s.tokenLogo} style={{
-                            backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.7rem',
-                            fontWeight: '600'
-                          }}>
-                            {asset.symbol.charAt(0)}
-                          </div>
-                        )}
-                        <span className={s.tokenSymbol}>{asset.symbol}</span>
-                        <span className={s.tokenWeight}>
-                          {(asset.targetWeightBps / 100).toFixed(2)}%
-                        </span>
-                      </div>
-                      <div className={s.tokenAmounts}>
-                        <span className={s.tokenAmount}>
-                          {amountNumber.toFixed(6)} {asset.symbol}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-          
-          <div className={s.modalActions}>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setSellModalOpen(false)
-                setSelectedETF(null)
-                setSellShares("")
-                setMinOut("")
-                setEstimatedSoldAmounts([])
-              }}
-            >
-              Cancel
-            </Button>
-            {shareTokenAllowance ? (
-              <Button
-                variant="primary"
-                onClick={handleConfirmSell}
-                disabled={isContractLoading || !sellShares || !minOut}
-                iconLeft={
-                  isContractLoading
-                    ? "hugeicons:loading-01"
-                    : "hugeicons:checkmark-circle-02"
-                }
-              >
-                {isContractLoading ? "Processing..." : "Confirm Sell"}
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                onClick={handleApproveSell}
-                disabled={
-                  isContractLoading || isCheckingAllowance || !sellShares
-                }
-                iconLeft={
-                  isContractLoading
-                    ? "hugeicons:loading-01"
-                    : "hugeicons:lock-01"
-                }
-              >
-                {isContractLoading ? "Processing..." : "Approve"}
-              </Button>
-            )}
-          </div>
-        </div>
-      </Modal>
+        etf={selectedETF}
+      />
 
       {/* Update Params Modal */}
       <Modal
@@ -2536,15 +1305,23 @@ export default function ETFList() {
           ) : rebalanceError ? (
             <div style={{
               padding: "1rem",
-              background: "var(--danger-lowest)",
-              border: "1px solid var(--danger-low)",
+              background: rebalanceError === "Rebalance is not necessary at the moment." 
+                ? "var(--primary-lowest)" 
+                : "var(--danger-lowest)",
+              border: `1px solid ${rebalanceError === "Rebalance is not necessary at the moment." 
+                ? "var(--primary-low)" 
+                : "var(--danger-low)"}`,
               borderRadius: "var(--radius-s)",
-              color: "var(--danger-high)",
+              color: rebalanceError === "Rebalance is not necessary at the moment." 
+                ? "var(--primary-high)" 
+                : "var(--danger-high)",
               marginBottom: "1rem"
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                <Icon icon="hugeicons:alert-circle" />
-                <strong>Error</strong>
+                <Icon icon={rebalanceError === "Rebalance is not necessary at the moment." 
+                  ? "hugeicons:information-circle" 
+                  : "hugeicons:alert-circle"} />
+                <strong>{rebalanceError === "Rebalance is not necessary at the moment." ? "Information" : "Error"}</strong>
               </div>
               <p style={{ fontSize: "0.9rem", margin: 0 }}>{rebalanceError}</p>
             </div>
@@ -2731,7 +1508,7 @@ export default function ETFList() {
                 <Button
                   variant="primary"
                   onClick={handleConfirmRebalance}
-                  disabled={isContractLoading || !!rebalanceError}
+                  disabled={isContractLoading || (!!rebalanceError && rebalanceError !== "Rebalance is not necessary at the moment.")}
                   iconLeft={
                     isContractLoading
                       ? "hugeicons:loading-01"

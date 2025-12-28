@@ -780,9 +780,12 @@ export const useETFContract = () => {
         boughtValuesUSD: (rebalanceResult.boughtValuesUSD || []).map((val: any) => String(val))
       }
     } catch (error: unknown) {
+      console.error("Error estimating rebalance", error)
       if (error instanceof ResponseError) {
+        console.error("Error estimating rebalance", error.data)
         throw new Error(error.data.message)
       }
+      console.error("Error estimating rebalance 2", (error as Error).message)
       throw new Error((error as Error).message || "Error estimating rebalance")
     }
   }
