@@ -40,7 +40,7 @@ export const PointsModal = () => {
       status: "Active",
       points: points,
       description:
-        "Season 1 is now complete. View the leaderboard to see final rankings."
+        "Season 1 is in progress. View the leaderboard to see your progress."
     },
     season2: {
       label: "Season 2",
