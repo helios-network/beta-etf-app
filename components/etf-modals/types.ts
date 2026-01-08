@@ -9,6 +9,7 @@ export interface ETF {
   dailyVolumeUSD: number
   totalSupply: string
   sharePrice: string
+  shareDecimals: number
   apy: string
   change24h: number
   riskLevel: "low" | "medium" | "high"
@@ -37,4 +38,3 @@ export interface ETF {
   owner: string
   createdAt: string
 }
-

@@ -1,9 +1,17 @@
 import { RPC_URL_DEFAULT } from "@/config/app"
 import { getRpcUrl } from "@/config/rpc"
 import { env } from "@/env"
-import { LeaderboardEntry, TransactionCounts, PointsByType } from "@/types/points"
+import {
+  LeaderboardEntry,
+  TransactionCounts,
+  PointsByType
+} from "@/types/points"
 
-async function requestWithRpcUrl<T>(rpcUrl: string, method: string, params: any[]): Promise<T | null> { 
+async function requestWithRpcUrl<T>(
+  rpcUrl: string,
+  method: string,
+  params: any[]
+): Promise<T | null> {
   const response = await fetch(rpcUrl, {
     method: "POST",
     headers: {
@@ -80,6 +88,7 @@ interface ETFResponse {
   owner?: string
   createdAt: string
   updatedAt: string
+  shareDecimals: number
   __v: number
 }
 
@@ -109,7 +118,9 @@ async function fetchETFStats(): Promise<ETFsStatsResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   const baseUrl = apiUrl.replace(/\/+$/, "")
@@ -135,11 +146,18 @@ async function fetchETFStats(): Promise<ETFsStatsResponse> {
   return data
 }
 
-async function fetchETFs(page: number = 1, size: number = 10, depositToken?: string, search?: string): Promise<ETFsApiResponse> {
+async function fetchETFs(
+  page: number = 1,
+  size: number = 10,
+  depositToken?: string,
+  search?: string
+): Promise<ETFsApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   // Remove trailing slash if present to avoid double slashes
@@ -185,11 +203,15 @@ interface ETFByAddressApiResponse {
   message?: string
 }
 
-async function fetchETFByVaultAddress(vaultAddress: string): Promise<ETFByAddressApiResponse> {
+async function fetchETFByVaultAddress(
+  vaultAddress: string
+): Promise<ETFByAddressApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   // Remove trailing slash if present to avoid double slashes
@@ -231,11 +253,16 @@ interface DepositTokensApiResponse {
   data: DepositToken[]
 }
 
-async function fetchDepositTokens(chainId: number, search?: string): Promise<DepositTokensApiResponse> {
+async function fetchDepositTokens(
+  chainId: number,
+  search?: string
+): Promise<DepositTokensApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   // Remove trailing slash if present to avoid double slashes
@@ -283,11 +310,16 @@ interface LeaderboardApiResponse {
   }
 }
 
-async function fetchLeaderboard(page: number = 1, size: number = 25): Promise<LeaderboardApiResponse> {
+async function fetchLeaderboard(
+  page: number = 1,
+  size: number = 25
+): Promise<LeaderboardApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   // Remove trailing slash if present to avoid double slashes
@@ -358,11 +390,15 @@ interface VerifyETFResponse {
   components?: VerifyETFComponent[]
 }
 
-async function verifyETF(request: VerifyETFRequest): Promise<VerifyETFResponse> {
+async function verifyETF(
+  request: VerifyETFRequest
+): Promise<VerifyETFResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   // Remove trailing slash if present to avoid double slashes
@@ -416,11 +452,16 @@ interface ChartApiResponse {
   data: ChartDataPoint[]
 }
 
-async function fetchETFChart(vaultAddress: string, period: string): Promise<ChartApiResponse> {
+async function fetchETFChart(
+  vaultAddress: string,
+  period: string
+): Promise<ChartApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
   if (!apiUrl) {
-    throw new Error("NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file.")
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
   }
 
   const baseUrl = apiUrl.replace(/\/+$/, "")

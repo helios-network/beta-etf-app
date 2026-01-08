@@ -26,6 +26,10 @@
 
 .header {
   margin-bottom: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
 }
 
 .titleSection {
@@ -60,6 +64,25 @@
 .priceChange {
   font-size: 1rem;
   color: var(--danger-medium);
+}
+
+.totalMarketCapSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.totalMarketCapSectionLabel {
+  font-size: 0.8rem;
+  font-weight: 200;
+  color: var(--text-primary);
+}
+
+.totalMarketCapSectionText {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--blue);
 }
 
 .sidebar {

@@ -10,7 +10,7 @@ import { CHAIN_CONFIG } from "@/config/chain-config"
 import { useParams } from "next/navigation"
 import { fetchETFByVaultAddress, type ETFResponse } from "@/helpers/request"
 import { DataState } from "@/components/data-state"
-import { formatTokenAmount } from "@/lib/utils/number"
+import { formatTokenAmount, formatTotalMarketCap } from "@/lib/utils/number"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { type ETF } from "@/components/etf-modals"
@@ -60,7 +60,8 @@ function formatETFResponse(etf: ETFResponse): ETF {
     depositCount: etf.depositCount,
     redeemCount: etf.redeemCount,
     owner: etf.owner || "",
-    assets
+    assets,
+    shareDecimals: etf.shareDecimals || 18
   }
 }
 
@@ -68,7 +69,11 @@ export default function ETFDetailsPage() {
   const params = useParams()
   const vaultAddress = params?.address as string
 
-  const { data: etfData, isLoading, error } = useQuery({
+  const {
+    data: etfData,
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ["etf", vaultAddress],
     queryFn: () => fetchETFByVaultAddress(vaultAddress),
     staleTime: 30 * 1000,
@@ -78,7 +83,6 @@ export default function ETFDetailsPage() {
   const etf = useMemo(() => {
     if (!etfData?.data || !vaultAddress) return null
 
-
     return formatETFResponse(etfData.data)
   }, [etfData, vaultAddress])
 
@@ -87,7 +91,18 @@ export default function ETFDetailsPage() {
   }
 
   if (error || !etf) {
-    return <DataState type="error" message={error ? (error instanceof Error ? error.message : "Failed to load ETF") : "ETF not found"} />
+    return (
+      <DataState
+        type="error"
+        message={
+          error
+            ? error instanceof Error
+              ? error.message
+              : "Failed to load ETF"
+            : "ETF not found"
+        }
+      />
+    )
   }
 
   const chainConfig = CHAIN_CONFIG[etf.chain]
@@ -101,8 +116,23 @@ export default function ETFDetailsPage() {
             <div className={s.titleSection}>
               <h1 className={s.title}>{etf.name}</h1>
               <div className={s.priceInfo}>
-                <span className={s.price}>${formatTokenAmount(etf.sharePrice)}</span>
+                <span className={s.price}>
+                  ${formatTokenAmount(etf.sharePrice)}
+                </span>
                 <span className={s.priceChange}>-9.38% (7d)</span>
+              </div>
+            </div>
+            <div className={s.totalMarketCapSection}>
+              <div className={s.totalMarketCapSectionLabel}>
+                Total Market Cap
+              </div>
+              <div className={s.totalMarketCapSectionText}>
+                ${" "}
+                {formatTotalMarketCap(
+                  etf.totalSupply,
+                  etf.sharePrice,
+                  etf.shareDecimals
+                )}
               </div>
             </div>
           </div>
@@ -117,10 +147,7 @@ export default function ETFDetailsPage() {
             chainConfig={chainConfig}
           />
 
-          <BasketGovernance
-            etf={etf}
-            chainConfig={chainConfig}
-          />
+          <BasketGovernance etf={etf} chainConfig={chainConfig} />
 
           <Disclosures />
         </div>
