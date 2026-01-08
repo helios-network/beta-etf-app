@@ -8,7 +8,11 @@ import Image from "next/image"
 import { fetchCGTokenData } from "@/utils/price"
 import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
+import { createPortal } from "react-dom"
+import { useEventListener } from "usehooks-ts"
+
 import s from "./token-composition.module.scss"
+import { formatTokenAmount } from "@/lib/utils/number"
 
 interface Token {
   symbol: string
@@ -29,24 +33,31 @@ export function TokenComposition({ etf }: TokenCompositionProps) {
   const [showAll, setShowAll] = useState(false)
   const tokens = etf.tokens || []
   const displayedTokens = showAll ? tokens : tokens.slice(0, 10)
+  const [hoveredToken, setHoveredToken] = useState<{
+    targetPercentage: number
+    currentPercentage: number
+    tvl: string
+  } | null>(null)
+  const allTokenSymbols = tokens.map((t) => t.symbol.toLowerCase())
 
-  const allTokenSymbols = tokens.map(t => t.symbol.toLowerCase())
-  
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEventListener("mousemove", (e: MouseEvent) => {
+    setMousePosition({ x: e.clientX, y: e.clientY })
+  })
+
   const { data: tokenData = {} } = useQuery({
     queryKey: ["tokenData", "composition", allTokenSymbols],
     queryFn: () => fetchCGTokenData(allTokenSymbols),
     enabled: allTokenSymbols.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000
   })
 
   if (tokens.length === 0) {
     return null
   }
 
-  const totalTVL = tokens.reduce(
-    (sum, t) => sum + parseFloat(t.tvl || "0"),
-    0
-  )
+  const totalTVL = tokens.reduce((sum, t) => sum + parseFloat(t.tvl || "0"), 0)
 
   return (
     <Card className={clsx(s.composition, "auto")}>
@@ -70,6 +81,16 @@ export function TokenComposition({ etf }: TokenCompositionProps) {
             <div
               key={token.symbol}
               className={s.token}
+              onMouseEnter={() => {
+                setHoveredToken({
+                  targetPercentage,
+                  currentPercentage,
+                  tvl: token.tvl || "0"
+                })
+              }}
+              onMouseLeave={() => {
+                setHoveredToken(null)
+              }}
             >
               <div className={s.tokenInfo}>
                 {logo ? (
@@ -85,9 +106,7 @@ export function TokenComposition({ etf }: TokenCompositionProps) {
                     {token.symbol.charAt(0)}
                   </div>
                 )}
-                <span className={s.tokenSymbol}>
-                  {token.symbol}
-                </span>
+                <span className={s.tokenSymbol}>{token.symbol}</span>
               </div>
               <div className={s.percentageBar}>
                 <div
@@ -101,9 +120,7 @@ export function TokenComposition({ etf }: TokenCompositionProps) {
                   title={`Current: ${currentPercentage.toFixed(2)}%`}
                 />
               </div>
-              <span className={s.percentage}>
-                {targetPercentage}%
-              </span>
+              <span className={s.percentage}>{targetPercentage}%</span>
             </div>
           )
         })}
@@ -120,9 +137,32 @@ export function TokenComposition({ etf }: TokenCompositionProps) {
           </Button>
         </div>
       )}
+      {hoveredToken &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            className={s.tokenTooltipFixed}
+            style={{
+              left: `${mousePosition.x + 10}px`,
+              top: `${mousePosition.y + 10}px`
+            }}
+          >
+            <div className={s.tooltipContent}>
+              <div>
+                Target:{" "}
+                <strong>{hoveredToken.targetPercentage.toFixed(2)}%</strong>
+              </div>
+              <div>
+                Current:{" "}
+                <strong>{hoveredToken.currentPercentage.toFixed(2)}%</strong>
+              </div>
+              <div>
+                TVL: <strong>${formatTokenAmount(hoveredToken.tvl)}</strong>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </Card>
   )
 }
-
-
-

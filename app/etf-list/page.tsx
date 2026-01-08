@@ -78,7 +78,8 @@ function formatETFResponse(etf: ETFResponse): ETF {
     redeemCount: etf.redeemCount,
     owner: etf.owner || "",
     assets,
-    createdAt: etf.createdAt || new Date().toISOString()
+    createdAt: etf.createdAt || new Date().toISOString(),
+    shareDecimals: etf.shareDecimals || 18
   }
 }
 

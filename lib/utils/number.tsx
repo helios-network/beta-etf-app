@@ -1,3 +1,5 @@
+import { formatUnits } from "viem"
+
 interface FormatCurrencyOptions {
   currency?: string
   small?: boolean
@@ -63,100 +65,112 @@ export const formatBigNumber = (number: number, toFixed = 2): string => {
   }
 }
 
+export const formatTotalMarketCap = (
+  totalSupply: string,
+  sharePrice: string,
+  shareDecimals: number
+): string => {
+  const supply = formatUnits(BigInt(totalSupply), shareDecimals)
+  const price = parseFloat(sharePrice)
+
+  const marketCap = parseFloat(supply) * price
+
+  return formatTokenAmount(marketCap)
+}
 
 export const formatTokenAmount = (amount: number | string): string => {
-  const amountNumber = typeof amount === "string" ? parseFloat(amount) : amount;
-  
-  if (isNaN(amountNumber) || amountNumber === 0) return "0";
-  
+  const amountNumber = typeof amount === "string" ? parseFloat(amount) : amount
+
+  if (isNaN(amountNumber) || amountNumber === 0) return "0"
+
   // Handle very large numbers with abbreviations (K, M, B, T)
   if (amountNumber >= 1_000_000_000_000) {
-    const trillions = amountNumber / 1_000_000_000_000;
-    const formatted = trillions.toFixed(2).replace(/\.?0+$/, "");
-    return `${formatted}T`;
+    const trillions = amountNumber / 1_000_000_000_000
+    const formatted = trillions.toFixed(2).replace(/\.?0+$/, "")
+    return `${formatted}T`
   }
   if (amountNumber >= 1_000_000_000) {
-    const billions = amountNumber / 1_000_000_000;
-    const formatted = billions.toFixed(2).replace(/\.?0+$/, "");
-    return `${formatted}B`;
+    const billions = amountNumber / 1_000_000_000
+    const formatted = billions.toFixed(2).replace(/\.?0+$/, "")
+    return `${formatted}B`
   }
   if (amountNumber >= 1_000_000) {
-    const millions = amountNumber / 1_000_000;
-    const formatted = millions.toFixed(2).replace(/\.?0+$/, "");
-    return `${formatted}M`;
+    const millions = amountNumber / 1_000_000
+    const formatted = millions.toFixed(2).replace(/\.?0+$/, "")
+    return `${formatted}M`
   }
   if (amountNumber >= 1_000) {
-    const thousands = amountNumber / 1_000;
-    const formatted = thousands.toFixed(2).replace(/\.?0+$/, "");
-    return `${formatted}K`;
+    const thousands = amountNumber / 1_000
+    const formatted = thousands.toFixed(2).replace(/\.?0+$/, "")
+    return `${formatted}K`
   }
-  
+
   // For numbers less than 1000, format with appropriate decimal places
   // Use point (.) as decimal separator and commas for thousands
-  let formatted: string;
+  let formatted: string
   if (amountNumber >= 1) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 3,
       minimumFractionDigits: 0,
       useGrouping: true
-    });
+    })
   } else if (amountNumber >= 0.001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 4,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.0001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 5,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.00001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 6,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.000001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 7,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.0000001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 8,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.00000001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 9,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.000000001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 10,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else if (amountNumber >= 0.0000000001) {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 11,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   } else {
-    formatted = amountNumber.toLocaleString("en-US", { 
+    formatted = amountNumber.toLocaleString("en-US", {
       maximumFractionDigits: 6,
       minimumFractionDigits: 0,
       useGrouping: false
-    });
+    })
   }
-  
+
   // toLocaleString("en-US") already uses point (.) for decimals and commas for thousands
   // This is exactly what we want, so we return it as is
-  return formatted;
-};
+  return formatted
+}
