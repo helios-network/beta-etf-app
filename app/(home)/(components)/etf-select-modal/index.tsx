@@ -16,6 +16,12 @@ import clsx from "clsx"
 import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import s from "./etf-select-modal.module.scss"
+import { useAccount } from "wagmi"
+import { readContracts } from "@wagmi/core"
+import { config } from "@/config/wagmi"
+import { erc20Abi } from "@/constant/abis"
+import { formatTokenAmount } from "@/lib/utils/number"
+import { formatUnits } from "ethers"
 
 interface ETF {
   id: string
@@ -26,6 +32,10 @@ interface ETF {
     symbol: string
     percentage: number
   }>
+  held?: boolean
+  sharePrice: number
+  shareToken: string
+  shareDecimals: number
 }
 
 interface ETFSelectModalProps {
@@ -41,8 +51,10 @@ export function ETFSelectModal({
   onSelect,
   depositToken
 }: ETFSelectModalProps) {
+  const { address } = useAccount()
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm] = useDebounceValue(searchTerm, 400)
+  const [etfValues, setEtfValues] = useState<{ [key: string]: string }>({}) // [etf.id] = holding $$$
 
   // Reset search term when modal opens
   useEffect(() => {
@@ -52,14 +64,24 @@ export function ETFSelectModal({
   }, [open])
 
   // Fetch ETFs with search
-  const { data: etfsData, isLoading: isLoadingETFs, error: etfsError } = useQuery({
-    queryKey: ["etfs", "modal", depositToken, debouncedSearchTerm || ""],
+  const {
+    data: etfsData,
+    isLoading: isLoadingETFs,
+    error: etfsError
+  } = useQuery({
+    queryKey: [
+      "etfs",
+      "modal",
+      depositToken,
+      debouncedSearchTerm || "",
+      address
+    ],
     queryFn: () => {
       const searchParam = debouncedSearchTerm?.trim() || undefined
-      return fetchETFs(1, 50, depositToken, searchParam)
+      return fetchETFs(1, 50, depositToken, searchParam, address)
     },
     enabled: open,
-    staleTime: 30 * 1000,
+    staleTime: 30 * 1000
   })
 
   // Store full ETFResponse data
@@ -74,12 +96,56 @@ export function ETFSelectModal({
       name: etf.name,
       symbol: etf.symbol,
       chain: etf.chain,
-      tokens: etf.assets?.map((asset) => ({
-        symbol: asset.symbol,
-        percentage: asset.targetWeightBps / 100
-      })) || []
+      held: etf.held,
+      sharePrice: parseFloat(etf.sharePrice || "0"),
+      shareToken: etf.shareToken,
+      shareDecimals: etf.shareDecimals || 18,
+      tokens:
+        etf.assets?.map((asset) => ({
+          symbol: asset.symbol,
+          percentage: asset.targetWeightBps / 100
+        })) || []
     }))
   }, [etfsResponse])
+
+  useEffect(() => {
+    let mounted = true
+    const loadPrices = async () => {
+      setEtfValues({})
+      if (etfs.length === 0 || !address) return
+      const heldEtfs = etfs.filter((etf) => etf.held)
+      if (heldEtfs.length === 0) return
+
+      try {
+        const balances = await readContracts(config, {
+          contracts: heldEtfs.map((etf) => ({
+            address: etf.shareToken as `0x${string}`,
+            abi: erc20Abi as any,
+            functionName: "balanceOf",
+            args: [address]
+          }))
+        })
+        const etfValues: { [key: string]: string } = {}
+        heldEtfs.map((etf, index) => {
+          const balance = (balances[index].result || 0) as number
+          etfValues[etf.id] = formatTokenAmount(
+            parseFloat(formatUnits(BigInt(balance), etf.shareDecimals)) *
+              etf.sharePrice
+          )
+        })
+
+        if (mounted) setEtfValues(etfValues)
+      } catch (error) {
+        console.error({ error })
+      }
+    }
+
+    loadPrices()
+
+    return () => {
+      mounted = false
+    }
+  }, [etfs, address])
 
   // Get all token symbols from ETFs
   const allTokenSymbols = useMemo(() => {
@@ -97,7 +163,7 @@ export function ETFSelectModal({
     queryKey: ["tokenData", "modal", allTokenSymbols],
     queryFn: () => fetchCGTokenData(allTokenSymbols),
     enabled: open && allTokenSymbols.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000
   })
 
   const handleSelect = (etf: ETF) => {
@@ -115,18 +181,18 @@ export function ETFSelectModal({
     if (etf.tokens.length > 0) {
       const firstToken = etf.tokens[0]
       const logo = tokenData[firstToken.symbol.toLowerCase()]?.logo
-      
+
       if (logo) {
         return { type: "image" as const, src: logo }
       }
-      
+
       return {
         type: "symbol" as const,
         icon: getAssetIcon(firstToken.symbol),
         color: getAssetColor(firstToken.symbol)
       }
     }
-    
+
     // Default ETF icon
     return {
       type: "symbol" as const,
@@ -159,18 +225,23 @@ export function ETFSelectModal({
             <div className={s.empty}>Loading...</div>
           ) : etfsError ? (
             <div className={s.empty}>
-              Error loading ETFs: {etfsError instanceof Error ? etfsError.message : "Unknown error"}
+              Error loading ETFs:{" "}
+              {etfsError instanceof Error ? etfsError.message : "Unknown error"}
             </div>
           ) : etfs.length === 0 ? (
             <div className={s.empty}>
-              {debouncedSearchTerm ? `No ETFs found for "${debouncedSearchTerm}"` : "No ETFs found"}
+              {debouncedSearchTerm
+                ? `No ETFs found for "${debouncedSearchTerm}"`
+                : "No ETFs found"}
             </div>
           ) : (
             etfs.map((etf) => {
               const etfIcon = getETFIcon(etf)
-              const hasTokenLogos = etf.tokens.length > 0 && etf.tokens.some(
-                (token) => tokenData[token.symbol.toLowerCase()]?.logo
-              )
+              const hasTokenLogos =
+                etf.tokens.length > 0 &&
+                etf.tokens.some(
+                  (token) => tokenData[token.symbol.toLowerCase()]?.logo
+                )
 
               return (
                 <button
@@ -219,10 +290,7 @@ export function ETFSelectModal({
                             className={s.tokenLogo}
                           />
                         ) : (
-                          <Symbol
-                            icon={etfIcon.icon}
-                            color={etfIcon.color}
-                          />
+                          <Symbol icon={etfIcon.icon} color={etfIcon.color} />
                         )}
                       </div>
                     )}
@@ -235,9 +303,14 @@ export function ETFSelectModal({
                         </div>
                       )}
                     </div>
+                    {etf.held && etfValues[etf.id] ? (
+                      <div>$ {etfValues[etf.id]}</div>
+                    ) : null}
                     {etf.chain && CHAIN_CONFIG[etf.chain]?.abbreviatedName && (
                       <Image
-                        src={`/img/chains/${CHAIN_CONFIG[etf.chain].abbreviatedName}.png`}
+                        src={`/img/chains/${
+                          CHAIN_CONFIG[etf.chain].abbreviatedName
+                        }.png`}
                         alt={CHAIN_CONFIG[etf.chain].name}
                         width={24}
                         height={24}

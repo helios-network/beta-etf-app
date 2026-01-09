@@ -89,6 +89,7 @@ interface ETFResponse {
   createdAt: string
   updatedAt: string
   shareDecimals: number
+  held?: boolean
   __v: number
 }
 
@@ -150,7 +151,8 @@ async function fetchETFs(
   page: number = 1,
   size: number = 10,
   depositToken?: string,
-  search?: string
+  search?: string,
+  wallet?: string
 ): Promise<ETFsApiResponse> {
   const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
 
@@ -173,6 +175,10 @@ async function fetchETFs(
 
   if (search && search.trim()) {
     params.append("search", search.trim())
+  }
+
+  if (wallet) {
+    params.append("wallet", wallet)
   }
 
   const url = `${baseUrl}/api/etfs?${params.toString()}`
