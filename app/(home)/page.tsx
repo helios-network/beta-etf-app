@@ -759,8 +759,8 @@ export default function Home() {
             </Button>
           </div>
               <div className={s.bottom}>
-                {sellAmount && selectedETF?.sharePrice 
-                  ? `~$${(parseFloat(sellAmount) * parseFloat(selectedETF.sharePrice)).toFixed(2)}`
+                {sellAmount
+                  ? `~$${parseFloat(sellAmount).toFixed(2)}`
                   : depositTokenBalance !== null 
                     ? (
                       <span 
