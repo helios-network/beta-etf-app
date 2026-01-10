@@ -445,7 +445,7 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           </div>
         )}
 
-        {impermanentLossPercentage !== null && impermanentLossPercentage > 1 && (
+        {impermanentLossPercentage !== null && impermanentLossPercentage > 2 && (
           <div
             style={{
               padding: "1rem",

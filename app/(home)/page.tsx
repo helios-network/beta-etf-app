@@ -800,7 +800,7 @@ export default function Home() {
             </div>
             
             {/* Display impermanent loss warning */}
-            {impermanentLossPercentage !== null && impermanentLossPercentage > 1 && (
+            {impermanentLossPercentage !== null && impermanentLossPercentage > 2 && (
               <div style={{
                 padding: '1rem',
                 background: impermanentLossPercentage > 5 
