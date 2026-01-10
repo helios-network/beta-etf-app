@@ -12,8 +12,9 @@ import { fetchETFByVaultAddress, type ETFResponse } from "@/helpers/request"
 import { DataState } from "@/components/data-state"
 import { formatTokenAmount, formatTotalMarketCap } from "@/lib/utils/number"
 import { useQuery } from "@tanstack/react-query"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { type ETF } from "@/components/etf-modals"
+import clsx from "clsx"
 import s from "./page.module.scss"
 
 function formatETFResponse(etf: ETFResponse): ETF {
@@ -45,7 +46,10 @@ function formatETFResponse(etf: ETFResponse): ETF {
     volumeTradedUSD: etf.volumeTradedUSD || 0,
     dailyVolumeUSD: etf.dailyVolumeUSD || 0,
     apy: "0.00",
-    change24h: 0,
+    change24h: etf.priceChange24h || 0,
+    priceChange24h: etf.priceChange24h,
+    priceChange30d: etf.priceChange30d,
+    priceChange7d: etf.priceChange7d,
     riskLevel: "medium" as const,
     category: "DeFi",
     createdAt: etf.createdAt || new Date().toISOString(),
@@ -68,6 +72,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
 export default function ETFDetailsPage() {
   const params = useParams()
   const vaultAddress = params?.address as string
+  const [selectedPeriod, setSelectedPeriod] = useState("7d")
 
   const {
     data: etfData,
@@ -85,6 +90,36 @@ export default function ETFDetailsPage() {
 
     return formatETFResponse(etfData.data)
   }, [etfData, vaultAddress])
+
+  const getPriceChange = (period: string): number | undefined => {
+    switch (period) {
+      case "24h":
+        return etf?.priceChange24h
+      case "7d":
+        return etf?.priceChange7d
+      case "1m":
+        return etf?.priceChange30d
+      case "all":
+        return etf?.priceChange24h
+      default:
+        return etf?.priceChange24h
+    }
+  }
+
+  const getPeriodLabel = (period: string): string => {
+    switch (period) {
+      case "24h":
+        return "24h"
+      case "7d":
+        return "7d"
+      case "1m":
+        return "1m"
+      case "all":
+        return "24h"
+      default:
+        return "24h"
+    }
+  }
 
   if (isLoading) {
     return <DataState type="loading" message="Loading ETF details..." />
@@ -107,6 +142,8 @@ export default function ETFDetailsPage() {
 
   const chainConfig = CHAIN_CONFIG[etf.chain]
   const isCreator = true
+  const priceChange = getPriceChange(selectedPeriod) ?? 0
+  const periodLabel = getPeriodLabel(selectedPeriod)
 
   return (
     <div className={s.page}>
@@ -119,7 +156,15 @@ export default function ETFDetailsPage() {
                 <span className={s.price}>
                   ${formatTokenAmount(etf.sharePrice)}
                 </span>
-                <span className={s.priceChange}>-9.38% (7d)</span>
+                <span
+                  className={clsx(
+                    s.priceChange,
+                    priceChange >= 0 ? s.positive : s.negative
+                  )}
+                >
+                  {priceChange >= 0 ? "+" : ""}
+                  {priceChange.toFixed(2)}% ({periodLabel})
+                </span>
               </div>
             </div>
             <div className={s.totalMarketCapSection}>
@@ -137,7 +182,11 @@ export default function ETFDetailsPage() {
             </div>
           </div>
 
-          <PriceChart etf={etf} />
+          <PriceChart
+            etf={etf}
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+          />
 
           <TokenComposition etf={etf} />
 

@@ -27,6 +27,8 @@ interface ETF {
 
 interface PriceChartProps {
   etf: ETF
+  selectedPeriod?: string
+  onPeriodChange?: (period: string) => void
 }
 
 const periods = [
@@ -68,8 +70,21 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-export function PriceChart({ etf }: PriceChartProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState("7d")
+export function PriceChart({
+  etf,
+  selectedPeriod: externalSelectedPeriod,
+  onPeriodChange
+}: PriceChartProps) {
+  const [internalSelectedPeriod, setInternalSelectedPeriod] = useState("7d")
+  const selectedPeriod = externalSelectedPeriod ?? internalSelectedPeriod
+
+  const handlePeriodChange = (period: string) => {
+    if (onPeriodChange) {
+      onPeriodChange(period)
+    } else {
+      setInternalSelectedPeriod(period)
+    }
+  }
 
   const { data: chartResponse, isLoading } = useQuery({
     queryKey: ["etfChart", etf.vault, selectedPeriod],
@@ -121,7 +136,7 @@ export function PriceChart({ etf }: PriceChartProps) {
               key={period.id}
               variant={selectedPeriod === period.id ? "primary" : "secondary"}
               size="small"
-              onClick={() => setSelectedPeriod(period.id)}
+              onClick={() => handlePeriodChange(period.id)}
               isActive={selectedPeriod === period.id}
             >
               {period.label}

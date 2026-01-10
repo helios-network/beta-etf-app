@@ -91,6 +91,9 @@ interface ETFResponse {
   shareDecimals: number
   held?: boolean
   __v: number
+  priceChange24h?: number
+  priceChange30d?: number
+  priceChange7d?: number
 }
 
 interface ETFsStatsResponse {

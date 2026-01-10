@@ -62,7 +62,10 @@ function formatETFResponse(etf: ETFResponse): ETF {
     volumeTradedUSD: etf.volumeTradedUSD || 0,
     dailyVolumeUSD: etf.dailyVolumeUSD || 0,
     apy: "0%", // Not available in API response
-    change24h: 0, // Not available in API response
+    change24h: etf.priceChange24h || 0, // Use priceChange24h from API
+    priceChange24h: etf.priceChange24h,
+    priceChange30d: etf.priceChange30d,
+    priceChange7d: etf.priceChange7d,
     riskLevel: "medium" as const, // Default value
     category: "ETF", // Default category
     tokens,
@@ -818,11 +821,11 @@ export default function ETFList() {
                     <span className={s.metricLabel}>24h Change</span>
                     <span
                       className={`${s.metricValue} ${
-                        etf.change24h >= 0 ? s.positive : s.negative
+                        (etf.priceChange24h ?? etf.change24h) >= 0 ? s.positive : s.negative
                       }`}
                     >
-                      {etf.change24h >= 0 ? "+" : ""}
-                      {etf.change24h.toFixed(2)}%
+                      {(etf.priceChange24h ?? etf.change24h) >= 0 ? "+" : ""}
+                      {(etf.priceChange24h ?? etf.change24h).toFixed(2)}%
                     </span>
                   </Card>
                   <Card className={s.metric}>

@@ -12,6 +12,9 @@ export interface ETF {
   shareDecimals: number
   apy: string
   change24h: number
+  priceChange24h?: number
+  priceChange30d?: number
+  priceChange7d?: number
   riskLevel: "low" | "medium" | "high"
   category: string
   tokens: Array<{

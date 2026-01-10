@@ -64,6 +64,14 @@
 .priceChange {
   font-size: 1rem;
   color: var(--danger-medium);
+
+  &.positive {
+    color: var(--success-medium);
+  }
+
+  &.negative {
+    color: var(--danger-medium);
+  }
 }
 
 .totalMarketCapSection {
