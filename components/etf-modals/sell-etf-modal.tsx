@@ -245,6 +245,11 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
           sharesWei
         )
         setShareTokenAllowance(hasAllowance)
+        
+        // Automatically trigger redeem after approval
+        if (hasAllowance && minOut && parseFloat(minOut) > 0) {
+          await handleConfirm()
+        }
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Approval failed"

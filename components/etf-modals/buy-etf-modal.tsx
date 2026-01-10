@@ -296,6 +296,11 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           amountWei
         )
         setDepositTokenAllowance(hasAllowance)
+        
+        // Automatically trigger deposit after approval
+        if (hasAllowance && minSharesOut && parseFloat(minSharesOut) > 0) {
+          await handleConfirm()
+        }
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Approval failed"

@@ -441,6 +441,11 @@ export default function Home() {
           amountWei
         )
         setDepositTokenAllowance(hasAllowance)
+        
+        // Automatically trigger deposit after approval
+        if (hasAllowance && buyAmount && parseFloat(buyAmount) > 0) {
+          await handleConfirm()
+        }
       } else {
         // Approve share token
         const sharesDecimals = 18
@@ -467,6 +472,11 @@ export default function Home() {
           sharesWei
         )
         setShareTokenAllowance(hasAllowance)
+        
+        // Automatically trigger redeem after approval
+        if (hasAllowance && buyAmount && parseFloat(buyAmount) > 0) {
+          await handleConfirm()
+        }
       }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Approval failed"
