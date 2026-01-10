@@ -340,7 +340,30 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
       })
 
       const sharesReceived = Number(result.sharesOut) / Number(sharesMultiplier)
-      toast.success(`Successfully deposited! Received ${sharesReceived.toFixed(6)} shares`)
+      
+      // Format the assets purchased
+      let assetsMessage = ""
+      if (result.amountsOut && result.amountsOut.length > 0 && etf.assets) {
+        const assetsList = etf.assets
+          .map((asset, index) => {
+            if (index >= result.amountsOut.length) return null
+            const amountOut = result.amountsOut[index]
+            if (!amountOut || amountOut === "0") return null
+            
+            const decimals = asset.decimals || 18
+            const multiplier = BigInt(10) ** BigInt(decimals)
+            const amountNumber = Number(BigInt(amountOut)) / Number(multiplier)
+            
+            return `${amountNumber.toFixed(6)} ${asset.symbol}`
+          })
+          .filter((item): item is string => item !== null)
+        
+        if (assetsList.length > 0) {
+          assetsMessage = ` Assets purchased: ${assetsList.join(", ")}.`
+        }
+      }
+      
+      toast.success(`Successfully deposited! Received ${sharesReceived.toFixed(6)} shares.${assetsMessage}`)
       onClose()
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Deposit failed"
