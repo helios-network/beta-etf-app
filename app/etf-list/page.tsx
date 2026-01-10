@@ -1331,171 +1331,194 @@ export default function ETFList() {
             </div>
           ) : rebalancePreview ? (
             <>
-              {/* Summary */}
-              <div style={{
-                padding: "0.75rem 1rem",
-                background: "var(--background-low)",
-                borderRadius: "var(--radius-s)",
-                border: "1px solid var(--border-light)",
-                marginBottom: "1rem"
-              }}>
-                <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
-                  Rebalance Summary:
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                  <div style={{ fontSize: "0.85rem", display: "flex", justifyContent: "space-between" }}>
-                    <span>Total Sold Value:</span>
-                    <strong>
-                      ${(Number(rebalancePreview.totalSoldValueUSD) / 1e18).toFixed(2)}
-                    </strong>
-                  </div>
-                  <div style={{ fontSize: "0.85rem", display: "flex", justifyContent: "space-between" }}>
-                    <span>Total Bought Value:</span>
-                    <strong>
-                      ${(Number(rebalancePreview.totalBoughtValueUSD) / 1e18).toFixed(2)}
-                    </strong>
-                  </div>
-                </div>
-              </div>
+              {/* Check if rebalance is needed */}
+              {(() => {
+                const hasSoldAmounts = rebalancePreview.soldAmounts.some(
+                  (amount) => amount && amount !== "0"
+                )
+                const hasBoughtAmounts = rebalancePreview.boughtAmounts.some(
+                  (amount) => amount && amount !== "0"
+                )
+                const needsRebalance = hasSoldAmounts || hasBoughtAmounts
 
-              {/* Tokens to be sold */}
-              {rebalancePreview.soldAmounts.length > 0 && selectedETF?.assets && (
-                <div className={s.tokenDistribution} style={{ marginBottom: "1rem" }}>
-                  <div className={s.tokenDistributionHeader}>
-                    <Icon icon="hugeicons:arrow-down-01" />
-                    <span>Tokens to be Sold</span>
-                  </div>
-                  <div className={s.tokenDistributionList}>
-                    {selectedETF.assets.map((asset, index) => {
-                      if (index >= rebalancePreview.soldAmounts.length) return null
-                      
-                      const soldAmount = rebalancePreview.soldAmounts[index]
-                      const soldValueUSD = rebalancePreview.soldValuesUSD[index]
-                      
-                      if (!soldAmount || soldAmount === "0") return null
-                      
-                      const decimals = asset.decimals || 18
-                      const multiplier = BigInt(10) ** BigInt(decimals)
-                      const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
-                      const valueNumber = Number(BigInt(soldValueUSD || "0")) / 1e18
-                      
-                      const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
-                      
-                      return (
-                        <div key={`sold-${asset.token}`} className={s.tokenDistributionItem}>
-                          <div className={s.tokenInfo}>
-                            {logo ? (
-                              <Image
-                                src={logo}
-                                alt={asset.symbol}
-                                width={20}
-                                height={20}
-                                className={s.tokenLogo}
-                              />
-                            ) : (
-                              <div className={s.tokenLogo} style={{
-                                backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.7rem',
-                                fontWeight: '600'
-                              }}>
-                                {asset.symbol.charAt(0)}
-                              </div>
-                            )}
-                            <span className={s.tokenSymbol}>{asset.symbol}</span>
-                          </div>
-                          <div className={s.tokenAmounts}>
-                            <span className={s.tokenAmount} style={{ color: "var(--danger-high)" }}>
-                              -{amountNumber.toFixed(6)} {asset.symbol}
-                            </span>
-                            <span className={s.tokenValue}>
-                              ≈ ${valueNumber.toFixed(2)}
-                            </span>
-                          </div>
+                if (!needsRebalance) {
+                  return (
+                    <div style={{
+                      padding: "1rem",
+                      background: "var(--primary-lowest)",
+                      border: "1px solid var(--primary-low)",
+                      borderRadius: "var(--radius-s)",
+                      color: "var(--primary-high)",
+                      marginBottom: "1rem"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                        <Icon icon="hugeicons:information-circle" />
+                        <strong>Information</strong>
+                      </div>
+                      <p style={{ fontSize: "0.9rem", margin: 0 }}>
+                        No rebalance is necessary at the moment. All assets are aligned with their target allocations.
+                      </p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <>
+                    {/* Summary */}
+                    <div style={{
+                      padding: "0.75rem 1rem",
+                      background: "var(--background-low)",
+                      borderRadius: "var(--radius-s)",
+                      border: "1px solid var(--border-light)",
+                      marginBottom: "1rem"
+                    }}>
+                      <div style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "0.5rem" }}>
+                        Rebalance Summary:
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                        <div style={{ fontSize: "0.85rem", display: "flex", justifyContent: "space-between" }}>
+                          <span>Total Sold Value:</span>
+                          <strong>
+                            ${(Number(rebalancePreview.totalSoldValueUSD) / 1e18).toFixed(2)}
+                          </strong>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Tokens to be bought */}
-              {rebalancePreview.boughtAmounts.length > 0 && selectedETF?.assets && (
-                <div className={s.tokenDistribution} style={{ marginBottom: "1rem" }}>
-                  <div className={s.tokenDistributionHeader}>
-                    <Icon icon="hugeicons:arrow-up-01" />
-                    <span>Tokens to be Bought</span>
-                  </div>
-                  <div className={s.tokenDistributionList}>
-                    {selectedETF.assets.map((asset, index) => {
-                      if (index >= rebalancePreview.boughtAmounts.length) return null
-                      
-                      const boughtAmount = rebalancePreview.boughtAmounts[index]
-                      const boughtValueUSD = rebalancePreview.boughtValuesUSD[index]
-                      
-                      if (!boughtAmount || boughtAmount === "0") return null
-                      
-                      const decimals = asset.decimals || 18
-                      const multiplier = BigInt(10) ** BigInt(decimals)
-                      const amountNumber = Number(BigInt(boughtAmount)) / Number(multiplier)
-                      const valueNumber = Number(BigInt(boughtValueUSD || "0")) / 1e18
-                      
-                      const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
-                      
-                      return (
-                        <div key={`bought-${asset.token}`} className={s.tokenDistributionItem}>
-                          <div className={s.tokenInfo}>
-                            {logo ? (
-                              <Image
-                                src={logo}
-                                alt={asset.symbol}
-                                width={20}
-                                height={20}
-                                className={s.tokenLogo}
-                              />
-                            ) : (
-                              <div className={s.tokenLogo} style={{
-                                backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.7rem',
-                                fontWeight: '600'
-                              }}>
-                                {asset.symbol.charAt(0)}
-                              </div>
-                            )}
-                            <span className={s.tokenSymbol}>{asset.symbol}</span>
-                          </div>
-                          <div className={s.tokenAmounts}>
-                            <span className={s.tokenAmount} style={{ color: "var(--success-high)" }}>
-                              +{amountNumber.toFixed(6)} {asset.symbol}
-                            </span>
-                            <span className={s.tokenValue}>
-                              ≈ ${valueNumber.toFixed(2)}
-                            </span>
-                          </div>
+                        <div style={{ fontSize: "0.85rem", display: "flex", justifyContent: "space-between" }}>
+                          <span>Total Bought Value:</span>
+                          <strong>
+                            ${(Number(rebalancePreview.totalBoughtValueUSD) / 1e18).toFixed(2)}
+                          </strong>
                         </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+                      </div>
+                    </div>
 
-              {rebalancePreview.soldAmounts.length === 0 && rebalancePreview.boughtAmounts.length === 0 && (
-                <div style={{
-                  padding: "1rem",
-                  background: "var(--background-low)",
-                  borderRadius: "var(--radius-s)",
-                  textAlign: "center",
-                  color: "var(--text-secondary)",
-                  marginBottom: "1rem"
-                }}>
-                  No rebalancing needed. All assets are within target weights.
-                </div>
-              )}
+                    {/* Tokens to be sold */}
+                    {hasSoldAmounts && selectedETF?.assets && (
+                      <div className={s.tokenDistribution} style={{ marginBottom: "1rem" }}>
+                        <div className={s.tokenDistributionHeader}>
+                          <Icon icon="hugeicons:arrow-down-01" />
+                          <span>Tokens to be Sold</span>
+                        </div>
+                        <div className={s.tokenDistributionList}>
+                          {selectedETF.assets.map((asset, index) => {
+                            if (index >= rebalancePreview.soldAmounts.length) return null
+                            
+                            const soldAmount = rebalancePreview.soldAmounts[index]
+                            const soldValueUSD = rebalancePreview.soldValuesUSD[index]
+                            
+                            if (!soldAmount || soldAmount === "0") return null
+                            
+                            const decimals = asset.decimals || 18
+                            const multiplier = BigInt(10) ** BigInt(decimals)
+                            const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
+                            const valueNumber = Number(BigInt(soldValueUSD || "0")) / 1e18
+                            
+                            const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                            
+                            return (
+                              <div key={`sold-${asset.token}`} className={s.tokenDistributionItem}>
+                                <div className={s.tokenInfo}>
+                                  {logo ? (
+                                    <Image
+                                      src={logo}
+                                      alt={asset.symbol}
+                                      width={20}
+                                      height={20}
+                                      className={s.tokenLogo}
+                                    />
+                                  ) : (
+                                    <div className={s.tokenLogo} style={{
+                                      backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '0.7rem',
+                                      fontWeight: '600'
+                                    }}>
+                                      {asset.symbol.charAt(0)}
+                                    </div>
+                                  )}
+                                  <span className={s.tokenSymbol}>{asset.symbol}</span>
+                                </div>
+                                <div className={s.tokenAmounts}>
+                                  <span className={s.tokenAmount} style={{ color: "var(--danger-high)" }}>
+                                    -{amountNumber.toFixed(6)} {asset.symbol}
+                                  </span>
+                                  <span className={s.tokenValue}>
+                                    ≈ ${valueNumber.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tokens to be bought */}
+                    {hasBoughtAmounts && selectedETF?.assets && (
+                      <div className={s.tokenDistribution} style={{ marginBottom: "1rem" }}>
+                        <div className={s.tokenDistributionHeader}>
+                          <Icon icon="hugeicons:arrow-up-01" />
+                          <span>Tokens to be Bought</span>
+                        </div>
+                        <div className={s.tokenDistributionList}>
+                          {selectedETF.assets.map((asset, index) => {
+                            if (index >= rebalancePreview.boughtAmounts.length) return null
+                            
+                            const boughtAmount = rebalancePreview.boughtAmounts[index]
+                            const boughtValueUSD = rebalancePreview.boughtValuesUSD[index]
+                            
+                            if (!boughtAmount || boughtAmount === "0") return null
+                            
+                            const decimals = asset.decimals || 18
+                            const multiplier = BigInt(10) ** BigInt(decimals)
+                            const amountNumber = Number(BigInt(boughtAmount)) / Number(multiplier)
+                            const valueNumber = Number(BigInt(boughtValueUSD || "0")) / 1e18
+                            
+                            const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
+                            
+                            return (
+                              <div key={`bought-${asset.token}`} className={s.tokenDistributionItem}>
+                                <div className={s.tokenInfo}>
+                                  {logo ? (
+                                    <Image
+                                      src={logo}
+                                      alt={asset.symbol}
+                                      width={20}
+                                      height={20}
+                                      className={s.tokenLogo}
+                                    />
+                                  ) : (
+                                    <div className={s.tokenLogo} style={{
+                                      backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '0.7rem',
+                                      fontWeight: '600'
+                                    }}>
+                                      {asset.symbol.charAt(0)}
+                                    </div>
+                                  )}
+                                  <span className={s.tokenSymbol}>{asset.symbol}</span>
+                                </div>
+                                <div className={s.tokenAmounts}>
+                                  <span className={s.tokenAmount} style={{ color: "var(--success-high)" }}>
+                                    +{amountNumber.toFixed(6)} {asset.symbol}
+                                  </span>
+                                  <span className={s.tokenValue}>
+                                    ≈ ${valueNumber.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
 
               <div className={s.modalActions}>
                 <Button
@@ -1512,7 +1535,13 @@ export default function ETFList() {
                 <Button
                   variant="primary"
                   onClick={handleConfirmRebalance}
-                  disabled={isContractLoading || (!!rebalanceError && rebalanceError !== "Rebalance is not necessary at the moment.")}
+                  disabled={
+                    isContractLoading ||
+                    (!!rebalanceError && rebalanceError !== "Rebalance is not necessary at the moment.") ||
+                    (rebalancePreview &&
+                      !rebalancePreview.soldAmounts.some((amount) => amount && amount !== "0") &&
+                      !rebalancePreview.boughtAmounts.some((amount) => amount && amount !== "0"))
+                  }
                   iconLeft={
                     isContractLoading
                       ? "hugeicons:loading-01"
