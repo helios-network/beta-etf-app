@@ -305,6 +305,7 @@ export const ETFCreatorInterface = () => {
       const assetTokens = backendData.components!.map((c) => c.tokenAddress)
       const priceFeeds = backendData.components!.map((c) => c.feed)
       const targetWeightsBps = form.components.map((c) => Math.round(c.weight * 100))
+      // For deposit token in composition, depositPath.encoded may contain zero addresses (no swap needed)
       const swapPathsData = backendData.components!.map((c) => c.depositPath.encoded)
 
       // Determine pricing mode from first component
@@ -366,7 +367,7 @@ export const ETFCreatorInterface = () => {
         router: router,
         quoter: quoter,
         assetTokens,
-        priceFeeds: priceFeeds.map((feed) => feed == undefined ? "0x0000000000000000000000000000000000000000" : feed),
+        priceFeeds: priceFeeds.map((feed) => (feed == null || feed == undefined) ? "0x0000000000000000000000000000000000000000" : feed),
         targetWeightsBps,
         swapPathsData,
         name: form.name,

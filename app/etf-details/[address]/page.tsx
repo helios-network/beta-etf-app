@@ -40,7 +40,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     symbol: etf.symbol,
     description: etf.name ? `${etf.name} ETF basket` : "ETF basket",
     tvl: etf.tvl,
-    totalSupply: etf.totalSupply || "0.000",
+    totalSupply: etf.totalSupply || "0",
     sharePrice: etf.sharePrice || "0.00",
     price: etf.sharePrice || "0.00",
     volumeTradedUSD: etf.volumeTradedUSD || 0,

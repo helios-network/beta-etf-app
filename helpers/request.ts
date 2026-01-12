@@ -370,7 +370,7 @@ interface VerifyETFComponent {
   symbol: string
   decimals: number
   pricingMode: string
-  feed: string
+  feed: string | null
   depositPath: {
     type: string
     encoded: string

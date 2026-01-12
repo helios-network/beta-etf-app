@@ -70,12 +70,37 @@ export const formatTotalMarketCap = (
   sharePrice: string,
   shareDecimals: number
 ): string => {
-  const supply = formatUnits(BigInt(totalSupply), shareDecimals)
-  const price = parseFloat(sharePrice)
+  // Handle decimal strings and invalid values
+  if (!totalSupply || totalSupply === "0" || totalSupply === "0.000") {
+    return "0"
+  }
 
-  const marketCap = parseFloat(supply) * price
+  // Convert decimal string to integer string for BigInt conversion
+  // Extract integer part (before decimal point)
+  const integerPart = totalSupply.includes(".")
+    ? totalSupply.split(".")[0]
+    : totalSupply
 
-  return formatTokenAmount(marketCap)
+  // If integer part is empty or invalid, return 0
+  if (!integerPart || integerPart === "0") {
+    return "0"
+  }
+
+  try {
+    const supply = formatUnits(BigInt(integerPart), shareDecimals)
+    const price = parseFloat(sharePrice)
+
+    const marketCap = parseFloat(supply) * price
+
+    return formatTokenAmount(marketCap)
+  } catch (error) {
+    console.error("Error formatting total market cap:", error, {
+      totalSupply,
+      sharePrice,
+      shareDecimals
+    })
+    return "0"
+  }
 }
 
 export const formatTokenAmount = (amount: number | string): string => {
