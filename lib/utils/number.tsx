@@ -66,20 +66,22 @@ export const formatBigNumber = (number: number, toFixed = 2): string => {
 }
 
 export const formatTotalMarketCap = (
-  totalSupply: string,
+  totalSupply: string | number | null | undefined,
   sharePrice: string,
   shareDecimals: number
 ): string => {
-  // Handle decimal strings and invalid values
-  if (!totalSupply || totalSupply === "0" || totalSupply === "0.000") {
+  // Convert to string and handle null/undefined/zero values
+  const totalSupplyStr = totalSupply != null ? String(totalSupply) : "0"
+  
+  if (!totalSupplyStr || totalSupplyStr === "0" || totalSupplyStr === "0.000") {
     return "0"
   }
 
   // Convert decimal string to integer string for BigInt conversion
   // Extract integer part (before decimal point)
-  const integerPart = totalSupply.includes(".")
-    ? totalSupply.split(".")[0]
-    : totalSupply
+  const integerPart = totalSupplyStr.includes(".")
+    ? totalSupplyStr.split(".")[0]
+    : totalSupplyStr
 
   // If integer part is empty or invalid, return 0
   if (!integerPart || integerPart === "0") {
