@@ -746,7 +746,19 @@ export default function ETFList() {
                             width={32}
                             height={32}
                           />
-                        ) : null
+                        ) : (
+                          <div
+                            key={token.symbol}
+                            className={s.tokenIconPlaceholder}
+                            style={{
+                              zIndex: 4 - index,
+                              backgroundColor: getAssetColor(token.symbol)
+                            }}
+                            title={token.symbol}
+                          >
+                            {token.symbol.charAt(0)}
+                          </div>
+                        )
                       })}
                       </div>
                     )}
@@ -883,7 +895,7 @@ export default function ETFList() {
                           }}
                         >
                         <div className={s.tokenInfo}>
-                          {logo && (
+                          {logo ? (
                             <Image
                               src={logo}
                               alt={token.symbol}
@@ -891,6 +903,15 @@ export default function ETFList() {
                               width={24}
                               height={24}
                             />
+                          ) : (
+                            <div
+                              className={s.tokenIconPlaceholder}
+                              style={{
+                                backgroundColor: getAssetColor(token.symbol)
+                              }}
+                            >
+                              {token.symbol.charAt(0)}
+                            </div>
                           )}
                           <span className={s.tokenSymbol}>
                             {token.symbol}
@@ -1427,7 +1448,7 @@ export default function ETFList() {
                                     />
                                   ) : (
                                     <div className={s.tokenLogo} style={{
-                                      backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                                      backgroundColor: getAssetColor(asset.symbol),
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
@@ -1490,7 +1511,7 @@ export default function ETFList() {
                                     />
                                   ) : (
                                     <div className={s.tokenLogo} style={{
-                                      backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                                      backgroundColor: getAssetColor(asset.symbol),
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',

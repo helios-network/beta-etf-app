@@ -359,7 +359,8 @@
     &[data-nb-tokens]:not([data-nb-tokens="1"]):not([data-nb-tokens="2"]):not(
         [data-nb-tokens="3"]
       ) {
-      .tokenLogo {
+      .tokenLogo,
+      .tokenIconPlaceholder {
         &:nth-child(1) {
           position: absolute;
           top: 12%;
@@ -384,7 +385,8 @@
     }
 
     &[data-nb-tokens="1"] {
-      .tokenLogo {
+      .tokenLogo,
+      .tokenIconPlaceholder {
         position: absolute;
         top: 50%;
         left: 50%;
@@ -393,7 +395,8 @@
     }
 
     &[data-nb-tokens="2"] {
-      .tokenLogo {
+      .tokenLogo,
+      .tokenIconPlaceholder {
         &:nth-child(1) {
           position: absolute;
           left: 10%;
@@ -410,7 +413,8 @@
     }
 
     &[data-nb-tokens="3"] {
-      .tokenLogo {
+      .tokenLogo,
+      .tokenIconPlaceholder {
         &:nth-child(1) {
           position: absolute;
           top: 12%;
@@ -442,6 +446,28 @@
     &:first-child {
       margin-left: 0;
     }
+
+    &:hover {
+      --div: 2;
+      z-index: 10 !important;
+      filter: drop-shadow(0 0 10px var(--blue));
+    }
+  }
+
+  .tokenIconPlaceholder {
+    width: calc(var(--token-logo-size) / var(--div));
+    height: calc(var(--token-logo-size) / var(--div));
+    border-radius: 50%;
+    background: var(--background-medium);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: width 0.2s ease, height 0.2s ease;
 
     &:hover {
       --div: 2;
@@ -676,6 +702,27 @@
     @include max(480px) {
       width: 18px;
       height: 18px;
+    }
+  }
+
+  .tokenIconPlaceholder {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--background-medium);
+    border: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+
+    @include max(480px) {
+      width: 18px;
+      height: 18px;
+      font-size: 0.65rem;
     }
   }
 
