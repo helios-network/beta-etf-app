@@ -166,7 +166,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -410,6 +411,15 @@
   color: var(--text-primary);
   font-size: 0.95rem;
   margin-bottom: 0.25rem;
+  .titleLink {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--primary);
+    }
+  }
 }
 
 .assetSymbol {
