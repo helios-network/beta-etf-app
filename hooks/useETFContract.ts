@@ -1262,21 +1262,21 @@ export const useETFContract = () => {
         factoryAddress
       )
 
-      const config = await factoryContract.methods
+      const config: any = await factoryContract.methods
         .feeSwapConfigs(depositToken)
         .call()
 
       // Note: pathV2 and pathV3 are not directly accessible from the mapping
       // They would need to be stored separately or retrieved via events
       return {
-        enabled: config.enabled as boolean,
-        isV2: config.isV2 as boolean,
-        router: config.router as string,
-        quoter: config.quoter as string,
+        enabled: Boolean(config.enabled),
+        isV2: Boolean(config.isV2),
+        router: String(config.router || ""),
+        quoter: String(config.quoter || ""),
         pathV2: [], // Not available from mapping
         pathV3: "", // Not available from mapping
-        tokenOut: config.tokenOut as string,
-        slippageBps: String(config.slippageBps)
+        tokenOut: String(config.tokenOut || ""),
+        slippageBps: String(config.slippageBps || "0")
       }
     } catch (error: unknown) {
       if (error instanceof ResponseError) {
