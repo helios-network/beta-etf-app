@@ -974,7 +974,7 @@ export const useETFContract = () => {
       )
 
       const owner = await factoryContract.methods.owner().call()
-      return owner as string
+      return String(owner)
     } catch (error: unknown) {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
