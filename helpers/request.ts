@@ -639,6 +639,98 @@ async function fetchUserTotalPoints(
   return data
 }
 
+interface FactoryAddressApiResponse {
+  success: boolean
+  address: string
+}
+
+async function fetchFactoryAddress(
+  chainId: number
+): Promise<FactoryAddressApiResponse> {
+  const url = `https://forge-api.helioschain.network/api/etfs/factory?chainId=${chainId}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch factory address: ${response.statusText}`)
+  }
+
+  const data: FactoryAddressApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error("API returned unsuccessful response")
+  }
+
+  return data
+}
+
+interface BestSwapConfig {
+  depositToken: string
+  enabled: boolean
+  isV2: boolean
+  router: string
+  quoter: string
+  pathV2: string[]
+  pathV3: string
+  tokenOut: string
+  slippageBps: number
+  liquidityUSD: number
+}
+
+interface BestSwapApiResponse {
+  success: boolean
+  data: BestSwapConfig
+}
+
+async function fetchBestSwapConfig(
+  chainId: number,
+  depositToken: string,
+  targetToken: string,
+  slippageBps: number = 20
+): Promise<BestSwapApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const params = new URLSearchParams({
+    chainId: chainId.toString(),
+    depositToken,
+    targetToken,
+    slippageBps: slippageBps.toString()
+  })
+
+  const url = `${baseUrl}/api/etfs/best-swap?${params.toString()}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch best swap config: ${response.statusText}`)
+  }
+
+  const data: BestSwapApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error("API returned unsuccessful response")
+  }
+
+  return data
+}
+
 export {
   request,
   requestWithRpcUrl,
@@ -650,7 +742,13 @@ export {
   fetchPortfolioAll,
   fetchUserTotalPoints,
   fetchETFChart,
-  fetchETFByVaultAddress
+  fetchETFByVaultAddress,
+  fetchFactoryAddress,
+  fetchBestSwapConfig
+}
+export type {
+  BestSwapConfig,
+  BestSwapApiResponse
 }
 export type {
   ETFResponse,

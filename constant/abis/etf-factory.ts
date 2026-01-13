@@ -548,5 +548,193 @@ export const etfFactoryAbi = [
     ],
     name: "ParamsUpdated",
     type: "event"
+  },
+  {
+    inputs: [],
+    name: "hlsAddress",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_hlsAddress",
+        type: "address"
+      }
+    ],
+    name: "setHLSAddress",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "treasury",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_treasury",
+        type: "address"
+      }
+    ],
+    name: "setTreasury",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "depositFeeBps",
+    outputs: [
+      {
+        internalType: "uint16",
+        name: "",
+        type: "uint16"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint16",
+        name: "_feeBps",
+        type: "uint16"
+      }
+    ],
+    name: "setDepositFee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      }
+    ],
+    name: "feeSwapConfigs",
+    outputs: [
+      {
+        internalType: "bool",
+        name: "enabled",
+        type: "bool"
+      },
+      {
+        internalType: "bool",
+        name: "isV2",
+        type: "bool"
+      },
+      {
+        internalType: "address",
+        name: "router",
+        type: "address"
+      },
+      {
+        internalType: "address",
+        name: "quoter",
+        type: "address"
+      },
+      {
+        internalType: "address",
+        name: "tokenOut",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "slippageBps",
+        type: "uint256"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_depositToken",
+        type: "address"
+      },
+      {
+        internalType: "bool",
+        name: "_enabled",
+        type: "bool"
+      },
+      {
+        internalType: "bool",
+        name: "_isV2",
+        type: "bool"
+      },
+      {
+        internalType: "address",
+        name: "_router",
+        type: "address"
+      },
+      {
+        internalType: "address",
+        name: "_quoter",
+        type: "address"
+      },
+      {
+        internalType: "address[]",
+        name: "_pathV2",
+        type: "address[]"
+      },
+      {
+        internalType: "bytes",
+        name: "_pathV3",
+        type: "bytes"
+      },
+      {
+        internalType: "address",
+        name: "_tokenOut",
+        type: "address"
+      },
+      {
+        internalType: "uint256",
+        name: "_slippageBps",
+        type: "uint256"
+      }
+    ],
+    name: "setFeeSwapConfig",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address"
+      }
+    ],
+    stateMutability: "view",
+    type: "function"
   }
 ]

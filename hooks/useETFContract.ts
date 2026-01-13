@@ -110,6 +110,35 @@ interface UpdateParamsResult {
   blockNumber: number
 }
 
+interface FeeSwapConfig {
+  enabled: boolean
+  isV2: boolean
+  router: string
+  quoter: string
+  pathV2: string[]
+  pathV3: string
+  tokenOut: string
+  slippageBps: string
+}
+
+interface SetFeeSwapConfigParams {
+  factory: string
+  depositToken: string
+  enabled: boolean
+  isV2: boolean
+  router: string
+  quoter: string
+  pathV2: string[]
+  pathV3: string
+  tokenOut: string
+  slippageBps: string
+}
+
+interface SetFeeSwapConfigResult {
+  txHash: string
+  blockNumber: number
+}
+
 /**
  * Convert a percentage value to basis points (BPS)
  * @param percentage - Percentage value (e.g., 0.25 for 0.25%, 5 for 5%)
@@ -932,6 +961,432 @@ export const useETFContract = () => {
     }
   })
 
+  // Admin functions
+  const getOwner = async (factoryAddress: string): Promise<string> => {
+    if (!web3Provider) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        factoryAddress
+      )
+
+      const owner = await factoryContract.methods.owner().call()
+      return owner as string
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error getting owner")
+    }
+  }
+
+  const getHLSAddress = async (factoryAddress: string): Promise<string> => {
+    if (!web3Provider) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        factoryAddress
+      )
+
+      const address = await factoryContract.methods.hlsAddress().call()
+      return address as string
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error getting HLS address")
+    }
+  }
+
+  const setHLSAddress = useMutation({
+    mutationFn: async (params: {
+      factory: string
+      hlsAddress: string
+    }): Promise<UpdateParamsResult> => {
+      if (!web3Provider || !address) {
+        throw new Error("No wallet connected")
+      }
+
+      if (!chainId) {
+        throw new Error("No chain id found")
+      }
+
+      try {
+        const factoryContract = new web3Provider.eth.Contract(
+          factoryAbi as any,
+          params.factory
+        )
+
+        // Simulate the transaction
+        await factoryContract.methods
+          .setHLSAddress(params.hlsAddress)
+          .call({ from: address })
+
+        // Estimate gas
+        const gasEstimate = await factoryContract.methods
+          .setHLSAddress(params.hlsAddress)
+          .estimateGas({ from: address })
+
+        // Add 20% to the gas estimation
+        const gasLimit = (BigInt(gasEstimate.toString()) * 120n) / 100n
+
+        // Get best gas price
+        const bestGasPrice = await getBestGasPrice(web3Provider)
+
+        // Send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth
+            .sendTransaction({
+              from: address,
+              to: params.factory,
+              data: factoryContract.methods.setHLSAddress(params.hlsAddress).encodeABI(),
+              gas: gasLimit.toString(),
+              gasPrice: bestGasPrice.toString()
+            })
+            .then((tx) => {
+              resolve(tx as any)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        })
+
+        return {
+          txHash: receipt.transactionHash,
+          blockNumber: Number(receipt.blockNumber)
+        }
+      } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
+        throw new Error((error as Error).message || "Error setting HLS address")
+      }
+    }
+  })
+
+  const getTreasury = async (factoryAddress: string): Promise<string> => {
+    if (!web3Provider) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        factoryAddress
+      )
+
+      const address = await factoryContract.methods.treasury().call()
+      return address as string
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error getting treasury address")
+    }
+  }
+
+  const setTreasury = useMutation({
+    mutationFn: async (params: {
+      factory: string
+      treasury: string
+    }): Promise<UpdateParamsResult> => {
+      if (!web3Provider || !address) {
+        throw new Error("No wallet connected")
+      }
+
+      if (!chainId) {
+        throw new Error("No chain id found")
+      }
+
+      try {
+        const factoryContract = new web3Provider.eth.Contract(
+          factoryAbi as any,
+          params.factory
+        )
+
+        // Simulate the transaction
+        await factoryContract.methods
+          .setTreasury(params.treasury)
+          .call({ from: address })
+
+        // Estimate gas
+        const gasEstimate = await factoryContract.methods
+          .setTreasury(params.treasury)
+          .estimateGas({ from: address })
+
+        // Add 20% to the gas estimation
+        const gasLimit = (BigInt(gasEstimate.toString()) * 120n) / 100n
+
+        // Get best gas price
+        const bestGasPrice = await getBestGasPrice(web3Provider)
+
+        // Send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth
+            .sendTransaction({
+              from: address,
+              to: params.factory,
+              data: factoryContract.methods.setTreasury(params.treasury).encodeABI(),
+              gas: gasLimit.toString(),
+              gasPrice: bestGasPrice.toString()
+            })
+            .then((tx) => {
+              resolve(tx as any)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        })
+
+        return {
+          txHash: receipt.transactionHash,
+          blockNumber: Number(receipt.blockNumber)
+        }
+      } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
+        throw new Error((error as Error).message || "Error setting treasury address")
+      }
+    }
+  })
+
+  const getDepositFeeBps = async (factoryAddress: string): Promise<number> => {
+    if (!web3Provider) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        factoryAddress
+      )
+
+      const feeBps = await factoryContract.methods.depositFeeBps().call()
+      return Number(feeBps)
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error getting deposit fee")
+    }
+  }
+
+  const setDepositFee = useMutation({
+    mutationFn: async (params: {
+      factory: string
+      feeBps: number
+    }): Promise<UpdateParamsResult> => {
+      if (!web3Provider || !address) {
+        throw new Error("No wallet connected")
+      }
+
+      if (!chainId) {
+        throw new Error("No chain id found")
+      }
+
+      if (params.feeBps > 10000) {
+        throw new Error("Fee too high (max 100%)")
+      }
+
+      try {
+        const factoryContract = new web3Provider.eth.Contract(
+          factoryAbi as any,
+          params.factory
+        )
+
+        // Simulate the transaction
+        await factoryContract.methods
+          .setDepositFee(params.feeBps)
+          .call({ from: address })
+
+        // Estimate gas
+        const gasEstimate = await factoryContract.methods
+          .setDepositFee(params.feeBps)
+          .estimateGas({ from: address })
+
+        // Add 20% to the gas estimation
+        const gasLimit = (BigInt(gasEstimate.toString()) * 120n) / 100n
+
+        // Get best gas price
+        const bestGasPrice = await getBestGasPrice(web3Provider)
+
+        // Send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth
+            .sendTransaction({
+              from: address,
+              to: params.factory,
+              data: factoryContract.methods.setDepositFee(params.feeBps).encodeABI(),
+              gas: gasLimit.toString(),
+              gasPrice: bestGasPrice.toString()
+            })
+            .then((tx) => {
+              resolve(tx as any)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        })
+
+        return {
+          txHash: receipt.transactionHash,
+          blockNumber: Number(receipt.blockNumber)
+        }
+      } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
+        throw new Error((error as Error).message || "Error setting deposit fee")
+      }
+    }
+  })
+
+  const getFeeSwapConfig = async (
+    factoryAddress: string,
+    depositToken: string
+  ): Promise<FeeSwapConfig> => {
+    if (!web3Provider) {
+      throw new Error("No wallet connected")
+    }
+
+    try {
+      const factoryContract = new web3Provider.eth.Contract(
+        factoryAbi as any,
+        factoryAddress
+      )
+
+      const config = await factoryContract.methods
+        .feeSwapConfigs(depositToken)
+        .call()
+
+      // Note: pathV2 and pathV3 are not directly accessible from the mapping
+      // They would need to be stored separately or retrieved via events
+      return {
+        enabled: config.enabled as boolean,
+        isV2: config.isV2 as boolean,
+        router: config.router as string,
+        quoter: config.quoter as string,
+        pathV2: [], // Not available from mapping
+        pathV3: "", // Not available from mapping
+        tokenOut: config.tokenOut as string,
+        slippageBps: String(config.slippageBps)
+      }
+    } catch (error: unknown) {
+      if (error instanceof ResponseError) {
+        throw new Error(error.data.message)
+      }
+      throw new Error((error as Error).message || "Error getting fee swap config")
+    }
+  }
+
+  const setFeeSwapConfig = useMutation({
+    mutationFn: async (
+      params: SetFeeSwapConfigParams
+    ): Promise<SetFeeSwapConfigResult> => {
+      if (!web3Provider || !address) {
+        throw new Error("No wallet connected")
+      }
+
+      if (!chainId) {
+        throw new Error("No chain id found")
+      }
+
+      if (params.slippageBps && Number(params.slippageBps) > 1000) {
+        throw new Error("Slippage too high (max 10%)")
+      }
+
+      try {
+        const factoryContract = new web3Provider.eth.Contract(
+          factoryAbi as any,
+          params.factory
+        )
+
+        // Simulate the transaction
+        await factoryContract.methods
+          .setFeeSwapConfig(
+            params.depositToken,
+            params.enabled,
+            params.isV2,
+            params.router,
+            params.quoter,
+            params.pathV2,
+            params.pathV3,
+            params.tokenOut,
+            params.slippageBps
+          )
+          .call({ from: address })
+
+        // Estimate gas
+        const gasEstimate = await factoryContract.methods
+          .setFeeSwapConfig(
+            params.depositToken,
+            params.enabled,
+            params.isV2,
+            params.router,
+            params.quoter,
+            params.pathV2,
+            params.pathV3,
+            params.tokenOut,
+            params.slippageBps
+          )
+          .estimateGas({ from: address })
+
+        // Add 20% to the gas estimation
+        const gasLimit = (BigInt(gasEstimate.toString()) * 120n) / 100n
+
+        // Get best gas price
+        const bestGasPrice = await getBestGasPrice(web3Provider)
+
+        // Send the transaction
+        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
+          web3Provider.eth
+            .sendTransaction({
+              from: address,
+              to: params.factory,
+              data: factoryContract.methods
+                .setFeeSwapConfig(
+                  params.depositToken,
+                  params.enabled,
+                  params.isV2,
+                  params.router,
+                  params.quoter,
+                  params.pathV2,
+                  params.pathV3,
+                  params.tokenOut,
+                  params.slippageBps
+                )
+                .encodeABI(),
+              gas: gasLimit.toString(),
+              gasPrice: bestGasPrice.toString()
+            })
+            .then((tx) => {
+              resolve(tx as any)
+            })
+            .catch((error) => {
+              reject(error)
+            })
+        })
+
+        return {
+          txHash: receipt.transactionHash,
+          blockNumber: Number(receipt.blockNumber)
+        }
+      } catch (error: unknown) {
+        if (error instanceof ResponseError) {
+          throw new Error(error.data.message)
+        }
+        throw new Error((error as Error).message || "Error setting fee swap config")
+      }
+    }
+  })
+
   return {
     createETF: createETF.mutateAsync,
     deposit: deposit.mutateAsync,
@@ -943,19 +1398,37 @@ export const useETFContract = () => {
     estimateRedeemDeposit,
     estimateRebalance,
     estimateUpdateParams,
+    // Admin functions
+    getOwner,
+    getHLSAddress,
+    setHLSAddress: setHLSAddress.mutateAsync,
+    getTreasury,
+    setTreasury: setTreasury.mutateAsync,
+    getDepositFeeBps,
+    setDepositFee: setDepositFee.mutateAsync,
+    getFeeSwapConfig,
+    setFeeSwapConfig: setFeeSwapConfig.mutateAsync,
     isLoading:
       createETF.isPending ||
       deposit.isPending ||
       redeem.isPending ||
       rebalance.isPending ||
       approveToken.isPending ||
-      updateParams.isPending,
+      updateParams.isPending ||
+      setHLSAddress.isPending ||
+      setTreasury.isPending ||
+      setDepositFee.isPending ||
+      setFeeSwapConfig.isPending,
     error:
       createETF.error ||
       deposit.error ||
       redeem.error ||
       rebalance.error ||
       approveToken.error ||
-      updateParams.error
+      updateParams.error ||
+      setHLSAddress.error ||
+      setTreasury.error ||
+      setDepositFee.error ||
+      setFeeSwapConfig.error
   }
 }
