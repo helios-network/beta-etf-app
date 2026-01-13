@@ -45,7 +45,6 @@ export default function FactoryAdminPage() {
   // Fetch current values
   const {
     data: owner,
-    isLoading: isLoadingOwner
   } = useQuery({
     queryKey: ["owner", factoryAddress],
     queryFn: () => getOwner(factoryAddress!),
@@ -161,7 +160,6 @@ export default function FactoryAdminPage() {
     data: feeSwapConfig,
     isLoading: isLoadingFeeSwapConfig,
     error: feeSwapConfigError,
-    refetch: refetchFeeSwapConfig
   } = useQuery({
     queryKey: ["feeSwapConfig", factoryAddress, depositTokenInput],
     queryFn: () => getFeeSwapConfig(factoryAddress!, depositTokenInput),
