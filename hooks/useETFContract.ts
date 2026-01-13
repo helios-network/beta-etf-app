@@ -1082,7 +1082,7 @@ export const useETFContract = () => {
       )
 
       const address = await factoryContract.methods.treasury().call()
-      return address as string
+      return String(address)
     } catch (error: unknown) {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
