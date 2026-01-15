@@ -1,0 +1,80 @@
+@use "@/styles/mixins" as *;
+
+.predictionChart {
+  overflow: hidden;
+}
+
+.chartContainer {
+  padding: 1rem 0;
+}
+
+.chartFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-light);
+  background: var(--background-lowest);
+
+  @include max(768px) {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+}
+
+.targetInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.targetLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.targetValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  &.up {
+    background: rgba(var(--color-emerald-500), 0.1);
+    color: var(--success-medium);
+
+    .statusDot {
+      background: var(--success-medium);
+    }
+  }
+
+  &.down {
+    background: rgba(var(--color-red-500), 0.1);
+    color: var(--danger-medium);
+
+    .statusDot {
+      background: var(--danger-medium);
+    }
+  }
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.statusText {
+  font-weight: 500;
+}

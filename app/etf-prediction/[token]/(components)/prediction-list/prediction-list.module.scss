@@ -1,0 +1,156 @@
+@use "@/styles/mixins" as *;
+
+.predictionList {
+  padding: 0;
+  overflow: hidden;
+}
+
+.header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-light);
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--background-lowest);
+  }
+
+  &.active {
+    background: var(--background-low);
+    border-left: 3px solid var(--primary-medium);
+    padding-left: calc(1.5rem - 3px);
+  }
+}
+
+.tokenInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.iconWrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--background-low);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+.iconPlaceholder {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary-medium);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.symbol {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.token {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.priceInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.percentage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.percentageValue {
+  font-size: 1rem;
+  font-weight: 700;
+
+  .up & {
+    color: var(--success-medium);
+  }
+
+  .down & {
+    color: var(--danger-medium);
+  }
+}
+
+.direction {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  .up & {
+    color: var(--success-medium);
+  }
+
+  .down & {
+    color: var(--danger-medium);
+  }
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.arrowIcon {
+  width: 18px;
+  height: 18px;
+
+  &.up {
+    color: var(--success-medium);
+  }
+
+  &.down {
+    color: var(--danger-medium);
+  }
+}

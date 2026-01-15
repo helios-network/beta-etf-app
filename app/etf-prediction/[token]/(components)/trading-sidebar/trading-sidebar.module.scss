@@ -1,0 +1,346 @@
+@use "@/styles/mixins" as *;
+
+.tradingSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4);
+  padding: var(--size-5);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: var(--background-lowest);
+  border-radius: 8px;
+}
+
+.tab {
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--background-low);
+    color: var(--text-primary);
+  }
+
+  &.active {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.marketSelector {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+}
+
+.marketLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.marketDropdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--background-medium);
+    border-color: var(--border-medium);
+  }
+}
+
+.directionButtons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.directionBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+
+  &.up {
+    background: rgba(var(--color-emerald-500), 0.08);
+    color: var(--success-medium);
+
+    &:hover {
+      background: rgba(var(--color-emerald-500), 0.12);
+    }
+
+    &.active {
+      background: var(--success-medium);
+      color: white;
+      border-color: var(--success-high);
+    }
+  }
+
+  &.down {
+    background: rgba(var(--color-red-500), 0.08);
+    color: var(--danger-medium);
+
+    &:hover {
+      background: rgba(var(--color-red-500), 0.12);
+    }
+
+    &.active {
+      background: var(--danger-medium);
+      color: white;
+      border-color: var(--danger-high);
+    }
+  }
+}
+
+.directionLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.directionPrice {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.inputSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.inputHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inputLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.toggleButton {
+  font-size: 0.75rem;
+  color: var(--primary-medium);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--background-low);
+  }
+}
+
+.balanceInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.balanceLabel {
+  color: var(--text-secondary);
+}
+
+.balanceValue {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputPrefix {
+  position: absolute;
+  left: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: 1rem 1rem 1rem 2rem;
+  background: var(--background-lowest);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  outline: none;
+  transition: all 0.2s;
+
+  &:focus {
+    border-color: var(--primary-medium);
+    background: var(--background-low);
+  }
+
+  &::placeholder {
+    color: var(--text-tertiary);
+  }
+}
+
+.quickButtons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.quickBtn {
+  padding: 0.625rem;
+  background: var(--background-low);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--background-medium);
+    border-color: var(--border-medium);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.winSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--background-lowest);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+}
+
+.winHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.winLabel {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.winEmoji {
+  font-size: 1.125rem;
+}
+
+.avgPrice {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.winAmount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--success-medium);
+  line-height: 1;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  background: var(--background-lowest);
+  border-radius: 8px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.summaryLabel {
+  color: var(--text-secondary);
+}
+
+.summaryValue {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tradeButton {
+  width: 100%;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &.downBtn {
+    background: var(--danger-medium);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: var(--danger-high);
+    }
+  }
+}
+
+.disclaimer {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.disclaimerLink {
+  color: var(--primary-medium);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
