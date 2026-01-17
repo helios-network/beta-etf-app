@@ -34,6 +34,10 @@ export const Nav = () => {
       href: routes.portfolio
     },
     {
+      label: "Predictions",
+      href: routes.etfPredictions
+    },
+    {
       label: "Leaderboard",
       href: routes.leaderboard
     }
