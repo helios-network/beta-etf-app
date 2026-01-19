@@ -3,12 +3,13 @@
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import { Icon } from "@/components/icon"
-import { BuyETFModal, SellETFModal, type ETF } from "@/components/etf-modals"
+import { BuyETFModal, SellETFModal } from "@/components/etf-modals"
 import { useChainId } from "wagmi"
 import { toast } from "sonner"
 import { useState } from "react"
 import clsx from "clsx"
 import s from "./buy-sell-sidebar.module.scss"
+import { ETF } from "@/types/etf"
 
 interface BuySellSidebarProps {
   etf: ETF

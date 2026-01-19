@@ -15,8 +15,8 @@ import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useAccount } from "wagmi"
-import type { ETF } from "./types"
 import s from "./buy-etf-modal.module.scss"
+import { ETF } from "@/types/etf"
 
 interface BuyETFModalProps {
   open: boolean
@@ -296,7 +296,7 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           amountWei
         )
         setDepositTokenAllowance(hasAllowance)
-        
+
         // Automatically trigger deposit after approval
         if (hasAllowance && minSharesOut && parseFloat(minSharesOut) > 0) {
           await handleConfirm()
@@ -345,7 +345,7 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
       })
 
       const sharesReceived = Number(result.sharesOut) / Number(sharesMultiplier)
-      
+
       // Format the assets purchased
       let assetsMessage = ""
       if (result.amountsOut && result.amountsOut.length > 0 && etf.assets) {
@@ -354,20 +354,20 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
             if (index >= result.amountsOut.length) return null
             const amountOut = result.amountsOut[index]
             if (!amountOut || amountOut === "0") return null
-            
+
             const decimals = asset.decimals || 18
             const multiplier = BigInt(10) ** BigInt(decimals)
             const amountNumber = Number(BigInt(amountOut)) / Number(multiplier)
-            
+
             return `${amountNumber.toFixed(6)} ${asset.symbol}`
           })
           .filter((item): item is string => item !== null)
-        
+
         if (assetsList.length > 0) {
           assetsMessage = ` Assets purchased: ${assetsList.join(", ")}.`
         }
       }
-      
+
       toast.success(`Successfully deposited! Received ${sharesReceived.toFixed(6)} shares.${assetsMessage}`)
       onClose()
     } catch (error: unknown) {
@@ -479,9 +479,8 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
               padding: "1rem",
               background:
                 impermanentLossPercentage > 5 ? "var(--danger-lowest)" : "var(--warning-lowest)",
-              border: `1px solid ${
-                impermanentLossPercentage > 5 ? "var(--danger-low)" : "var(--warning-low)"
-              }`,
+              border: `1px solid ${impermanentLossPercentage > 5 ? "var(--danger-low)" : "var(--warning-low)"
+                }`,
               borderRadius: "var(--radius-s)",
               display: "flex",
               alignItems: "flex-start",
