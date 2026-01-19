@@ -8,11 +8,12 @@ import { Input } from "@/components/input"
 import { Badge } from "@/components/badge"
 import { Icon } from "@/components/icon"
 import { Symbol } from "@/components/symbol"
-import { fetchPortfolioAll, fetchETFs, type ETFResponse } from "@/helpers/request"
-import type {
-  PortfolioAsset,
-  PortfolioSummary
+import {
+  fetchPortfolioAll,
+  fetchETFs,
+  type ETFResponse
 } from "@/helpers/request"
+import type { PortfolioAsset, PortfolioSummary } from "@/helpers/request"
 import { truncateAddress } from "@/lib/utils"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { ethers } from "ethers"
@@ -27,8 +28,13 @@ import { toast } from "sonner"
 import Image from "next/image"
 import clsx from "clsx"
 import s from "./page.module.scss"
+import { Link } from "@/components/link"
+import routes from "@/config/routes"
 
-function useTruncateAddress<T extends HTMLElement = HTMLElement>(address: string, containerRef: React.RefObject<T | null>) {
+function useTruncateAddress<T extends HTMLElement = HTMLElement>(
+  address: string,
+  containerRef: React.RefObject<T | null>
+) {
   const [startChars, setStartChars] = useState(8)
   const [endChars, setEndChars] = useState(6)
 
@@ -44,7 +50,8 @@ function useTruncateAddress<T extends HTMLElement = HTMLElement>(address: string
       const gap = 8
       const iconWidth = 14
       const padding = 16
-      const availableWidth = containerWidth - buttonWidth - gap - iconWidth - padding
+      const availableWidth =
+        containerWidth - buttonWidth - gap - iconWidth - padding
 
       const charWidth = 7.5
       const ellipsisWidth = 8
@@ -76,17 +83,22 @@ function useTruncateAddress<T extends HTMLElement = HTMLElement>(address: string
   return truncateAddress(address, startChars, endChars)
 }
 
-function ContractAddressCell({ 
+function ContractAddressCell({
   asset,
   onAddToWallet
-}: { 
+}: {
   asset: PortfolioAsset
   onAddToWallet: (asset: PortfolioAsset) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chainConfig = CHAIN_CONFIG[asset.chain]
-  const explorerUrl = chainConfig ? `${chainConfig.explorerUrl}/address/${asset.etfTokenAddress}` : null
-  const truncatedAddress = useTruncateAddress(asset.etfTokenAddress, containerRef)
+  const explorerUrl = chainConfig
+    ? `${chainConfig.explorerUrl}/address/${asset.etfTokenAddress}`
+    : null
+  const truncatedAddress = useTruncateAddress(
+    asset.etfTokenAddress,
+    containerRef
+  )
 
   return (
     <div ref={containerRef} className={s.contractActions}>
@@ -98,15 +110,10 @@ function ContractAddressCell({
           className={s.contractLink}
         >
           {truncatedAddress}
-          <Icon
-            icon="hugeicons:external-link-01"
-            className={s.externalIcon}
-          />
+          <Icon icon="hugeicons:external-link-01" className={s.externalIcon} />
         </a>
       ) : (
-        <span className={s.contractAddress}>
-          {truncatedAddress}
-        </span>
+        <span className={s.contractAddress}>{truncatedAddress}</span>
       )}
       <button
         onClick={() => onAddToWallet(asset)}
@@ -175,7 +182,14 @@ export default function PortfolioPage() {
           return
         }
 
-        const { assets: portfolioAssets, allocation, totalAssets, byChain, address, totalValueUSD } = portfolioData.data
+        const {
+          assets: portfolioAssets,
+          allocation,
+          totalAssets,
+          byChain,
+          address,
+          totalValueUSD
+        } = portfolioData.data
 
         setAssets(portfolioAssets || [])
         setSummary({
@@ -255,7 +269,7 @@ export default function PortfolioPage() {
       return etfMap
     },
     enabled: allETFSymbols.length > 0 && !isLoading,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000
   })
 
   const allTokenSymbols = useMemo(() => {
@@ -274,7 +288,7 @@ export default function PortfolioPage() {
     queryKey: ["portfolio-token-data", allTokenSymbols],
     queryFn: () => fetchCGTokenData(allTokenSymbols),
     enabled: allTokenSymbols.length > 0 && !isLoading,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000
   })
 
   const handleAddToWallet = async (asset: PortfolioAsset) => {
@@ -291,9 +305,9 @@ export default function PortfolioPage() {
           options: {
             address: asset.etfTokenAddress,
             symbol: asset.symbol,
-            decimals: asset.decimals,
-          },
-        },
+            decimals: asset.decimals
+          }
+        }
       })
       toast.success(`${asset.symbol} added to wallet!`)
     } catch {
@@ -306,10 +320,9 @@ export default function PortfolioPage() {
     if (!etf?.assets) return []
     return etf.assets.map((a) => ({
       symbol: a.symbol,
-      logo: tokenData[a.symbol.toLowerCase()]?.logo,
+      logo: tokenData[a.symbol.toLowerCase()]?.logo
     }))
   }
-
 
   // If no wallet connected and no search, show empty state
   if (!isConnected && !searchAddress) {
@@ -340,9 +353,7 @@ export default function PortfolioPage() {
             title="Portfolio"
             description={
               displayAddressFormatted ? (
-                <span className={s.address}>
-                  {displayAddressFormatted}
-                </span>
+                <span className={s.address}>{displayAddressFormatted}</span>
               ) : (
                 "Connect your wallet to view your portfolio"
               )
@@ -406,29 +417,33 @@ export default function PortfolioPage() {
           <Card className={s.stat}>
             <span className={s.label}>Total Value</span>
             <span className={s.value}>
-              ${formatTokenAmount(assets.reduce((acc, asset) => acc + asset.amountUSD, 0).toString())}
+              $
+              {formatTokenAmount(
+                assets
+                  .reduce((acc, asset) => acc + asset.amountUSD, 0)
+                  .toString()
+              )}
             </span>
           </Card>
           <Card className={s.stat}>
             <span className={s.label}>Assets</span>
             <span className={s.value}>{summary.totalAssets}</span>
           </Card>
-          {summary.allocation &&
-            summary.allocation.length > 0 && (
-              <Card className={s.stat}>
-                <span className={s.label}>Top Allocation</span>
-                <span className={s.value}>
-                  {summary.allocation
-                    .sort((a, b) => b.percentage - a.percentage)
-                    .slice(0, 1)
-                    .map((item) => (
-                      <span key={item.symbol} className={s.allocation}>
-                        {item.symbol}: {item.percentage.toFixed(1)}%
-                      </span>
-                    ))}
-                </span>
-              </Card>
-            )}
+          {summary.allocation && summary.allocation.length > 0 && (
+            <Card className={s.stat}>
+              <span className={s.label}>Top Allocation</span>
+              <span className={s.value}>
+                {summary.allocation
+                  .sort((a, b) => b.percentage - a.percentage)
+                  .slice(0, 1)
+                  .map((item) => (
+                    <span key={item.symbol} className={s.allocation}>
+                      {item.symbol}: {item.percentage.toFixed(1)}%
+                    </span>
+                  ))}
+              </span>
+            </Card>
+          )}
         </div>
       ) : null}
 
@@ -440,11 +455,7 @@ export default function PortfolioPage() {
           background={false}
         />
       ) : error ? (
-        <DataState
-          type="error"
-          message={error}
-          background={false}
-        />
+        <DataState type="error" message={error} background={false} />
       ) : !assets || assets.length === 0 ? (
         <DataState
           type="empty"
@@ -456,7 +467,8 @@ export default function PortfolioPage() {
         <div className={s.assetsList}>
           {assets.map((asset, index) => {
             const tokens = getAssetTokens(asset)
-            const hasTokenLogos = tokens.length > 0 && tokens.some((t) => t.logo)
+            const hasTokenLogos =
+              tokens.length > 0 && tokens.some((t) => t.logo)
 
             return (
               <Card key={index} className={s.assetCard}>
@@ -498,7 +510,14 @@ export default function PortfolioPage() {
                         </div>
                       )}
                       <div>
-                        <h4 className={s.assetName}>{asset.etfName}</h4>
+                        <h4 className={s.assetName}>
+                          <Link
+                            href={routes.etfDetails(asset.etfVaultAddress)}
+                            className={s.titleLink}
+                          >
+                            {asset.etfName}
+                          </Link>
+                        </h4>
                         <span className={s.assetSymbol}>{asset.symbol}</span>
                       </div>
                     </div>
@@ -530,7 +549,10 @@ export default function PortfolioPage() {
                   </div>
                   <div className={s.cardRow}>
                     <span className={s.cardLabel}>Contract</span>
-                    <ContractAddressCell asset={asset} onAddToWallet={handleAddToWallet} />
+                    <ContractAddressCell
+                      asset={asset}
+                      onAddToWallet={handleAddToWallet}
+                    />
                   </div>
                 </div>
               </Card>
@@ -553,7 +575,8 @@ export default function PortfolioPage() {
             <tbody>
               {assets.map((asset, index) => {
                 const tokens = getAssetTokens(asset)
-                const hasTokenLogos = tokens.length > 0 && tokens.some((t) => t.logo)
+                const hasTokenLogos =
+                  tokens.length > 0 && tokens.some((t) => t.logo)
 
                 return (
                   <tr key={index} className={s.row}>
@@ -594,7 +617,14 @@ export default function PortfolioPage() {
                           </div>
                         )}
                         <div>
-                          <span className={s.assetName}>{asset.etfName}</span>
+                          <span className={s.assetName}>
+                            <Link
+                              href={routes.etfDetails(asset.etfVaultAddress)}
+                              className={s.titleLink}
+                            >
+                              {asset.etfName}
+                            </Link>
+                          </span>
                           <span className={s.assetSymbol}>{asset.symbol}</span>
                         </div>
                       </div>
@@ -612,7 +642,10 @@ export default function PortfolioPage() {
                       ${formatTokenAmount(asset.sharePriceUSD)}
                     </td>
                     <td className={s.contractCol} data-th="Contract">
-                      <ContractAddressCell asset={asset} onAddToWallet={handleAddToWallet} />
+                      <ContractAddressCell
+                        asset={asset}
+                        onAddToWallet={handleAddToWallet}
+                      />
                     </td>
                   </tr>
                 )
