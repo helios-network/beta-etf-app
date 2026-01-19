@@ -11,7 +11,7 @@ import { Input } from "@/components/input"
 import { Select } from "@/components/input/select"
 import { Modal } from "@/components/modal"
 import { Link } from "@/components/link"
-import { BuyETFModal, SellETFModal, type ETF } from "@/components/etf-modals"
+import { BuyETFModal, SellETFModal,  } from "@/components/etf-modals"
 import { routes } from "@/config/routes"
 import { vaultViewAbi,  pricerViewAbi } from "@/constant/abis"
 import { fetchETFs, fetchETFStats, type ETFResponse } from "@/helpers/request"
@@ -24,6 +24,7 @@ import { fetchCGTokenData } from "@/utils/price"
 import { getAssetColor } from "@/utils/assets"
 import { useQuery } from "@tanstack/react-query"
 import clsx from "clsx"
+import { ETF } from "@/types/etf"
 import { useEffect, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "sonner"
@@ -31,59 +32,10 @@ import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
 import Image from "next/image"
 import s from "./page.module.scss"
+import { wrangleEtfResponse } from "@/utils/etf"
 
 function formatETFResponse(etf: ETFResponse): ETF {
-  // Convert assets from API to tokens format
-  // targetWeightBps: 10000 = 100%, so divide by 100 to get percentage
-  const tokens =
-    etf.assets?.map((asset) => ({
-      symbol: asset.symbol,
-      percentage: asset.targetWeightBps / 100,
-      tvl: asset.tvl || "0"
-    })) || []
-
-  const assets =
-    etf.assets?.map((asset) => ({
-      token: asset.token,
-      symbol: asset.symbol,
-      decimals: asset.decimals,
-      targetWeightBps: asset.targetWeightBps
-    })) || []
-
-  return {
-    id: etf._id,
-    factory: etf.factory,
-    name: etf.name,
-    symbol: etf.symbol,
-    description: `${etf.name} ETF basket`,
-    tvl: etf.tvl,
-    totalSupply: etf.totalSupply || "0.000",
-    sharePrice: etf.sharePrice || "0.00",
-    volumeTradedUSD: etf.volumeTradedUSD || 0,
-    dailyVolumeUSD: etf.dailyVolumeUSD || 0,
-    apy: "0%", // Not available in API response
-    change24h: etf.priceChange24h || 0, // Use priceChange24h from API
-    priceChange24h: etf.priceChange24h,
-    priceChange30d: etf.priceChange30d,
-    priceChange7d: etf.priceChange7d,
-    riskLevel: "medium" as const, // Default value
-    category: "ETF", // Default category
-    tokens,
-    price: etf.sharePrice ? `$${etf.sharePrice}` : "$0.00", // Use sharePrice for price display
-    vault: etf.vault,
-    pricer: etf.pricer,
-    shareToken: etf.shareToken,
-    depositToken: etf.depositToken,
-    depositSymbol: etf.depositSymbol || "TOKEN",
-    depositDecimals: etf.depositDecimals || 18,
-    chain: etf.chain,
-    depositCount: etf.depositCount,
-    redeemCount: etf.redeemCount,
-    owner: etf.owner || "",
-    assets,
-    createdAt: etf.createdAt || new Date().toISOString(),
-    shareDecimals: etf.shareDecimals || 18
-  }
+  return wrangleEtfResponse(etf)
 }
 
 export default function ETFList() {

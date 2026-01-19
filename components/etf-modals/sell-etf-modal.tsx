@@ -14,8 +14,8 @@ import Image from "next/image"
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { useAccount } from "wagmi"
-import type { ETF } from "./types"
 import s from "./sell-etf-modal.module.scss"
+import { ETF } from "@/types/etf"
 
 interface SellETFModalProps {
   open: boolean
@@ -245,7 +245,7 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
           sharesWei
         )
         setShareTokenAllowance(hasAllowance)
-        
+
         // Automatically trigger redeem after approval
         if (hasAllowance && minOut && parseFloat(minOut) > 0) {
           await handleConfirm()

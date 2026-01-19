@@ -13,59 +13,19 @@ import { DataState } from "@/components/data-state"
 import { formatTokenAmount, formatTotalMarketCap } from "@/lib/utils/number"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
-import { type ETF } from "@/components/etf-modals"
 import clsx from "clsx"
 import s from "./page.module.scss"
+import { wrangleEtfResponse } from "@/utils/etf"
+import { ETF } from "@/types/etf"
 
 function formatETFResponse(etf: ETFResponse): ETF {
-  const tokens =
-    etf.assets?.map((asset) => ({
-      symbol: asset.symbol,
-      percentage: asset.targetWeightBps / 100,
-      tvl: asset.tvl || "0"
-    })) || []
-
-  const assets =
-    etf.assets?.map((asset) => ({
-      token: asset.token,
-      symbol: asset.symbol,
-      decimals: asset.decimals,
-      targetWeightBps: asset.targetWeightBps
-    })) || []
-
   return {
-    id: etf._id,
-    factory: etf.factory,
-    name: etf.name,
-    symbol: etf.symbol,
+    ...wrangleEtfResponse(etf),
     description: etf.name ? `${etf.name} ETF basket` : "ETF basket",
-    tvl: etf.tvl,
     totalSupply: etf.totalSupply || "0",
-    sharePrice: etf.sharePrice || "0.00",
     price: etf.sharePrice || "0.00",
-    volumeTradedUSD: etf.volumeTradedUSD || 0,
-    dailyVolumeUSD: etf.dailyVolumeUSD || 0,
     apy: "0.00",
-    change24h: etf.priceChange24h || 0,
-    priceChange24h: etf.priceChange24h,
-    priceChange30d: etf.priceChange30d,
-    priceChange7d: etf.priceChange7d,
-    riskLevel: "medium" as const,
     category: "DeFi",
-    createdAt: etf.createdAt || new Date().toISOString(),
-    tokens,
-    vault: etf.vault,
-    pricer: etf.pricer,
-    shareToken: etf.shareToken,
-    depositToken: etf.depositToken,
-    depositSymbol: etf.depositSymbol || "TOKEN",
-    depositDecimals: etf.depositDecimals || 18,
-    chain: etf.chain,
-    depositCount: etf.depositCount,
-    redeemCount: etf.redeemCount,
-    owner: etf.owner || "",
-    assets,
-    shareDecimals: etf.shareDecimals || 18
   }
 }
 
