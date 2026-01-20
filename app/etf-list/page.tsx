@@ -39,8 +39,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
 
 export default function ETFList() {
   const chainId = useChainId()
-  // const { address } = useAccount()
-  const address = "0x688feDf2cc9957eeD5A56905b1A0D74a3bAc0000"
+  const { address } = useAccount()
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEventListener("mousemove", (e: MouseEvent) => {
@@ -356,12 +355,12 @@ export default function ETFList() {
             {statsData?.data?.totalTVL
               ? formatTokenSupply(statsData.data.totalTVL.toFixed(2), 0, 2)
               : formatTokenSupply(
-                  filteredAndSortedETFs
-                    .reduce((sum, etf) => sum + Number(etf.tvl), 0)
-                    .toFixed(2),
-                  0,
-                  2
-                )}
+                filteredAndSortedETFs
+                  .reduce((sum, etf) => sum + Number(etf.tvl), 0)
+                  .toFixed(2),
+                0,
+                2
+              )}
           </span>
         </div>
         <div className={s.stat}>
@@ -370,17 +369,17 @@ export default function ETFList() {
             $
             {statsData?.data?.totalDailyVolume
               ? formatTokenSupply(
-                  statsData.data.totalDailyVolume.toFixed(2),
-                  0,
-                  2
-                )
+                statsData.data.totalDailyVolume.toFixed(2),
+                0,
+                2
+              )
               : formatTokenSupply(
-                  filteredAndSortedETFs
-                    .reduce((sum, etf) => sum + etf.dailyVolumeUSD, 0)
-                    .toFixed(2),
-                  0,
-                  2
-                )}
+                filteredAndSortedETFs
+                  .reduce((sum, etf) => sum + etf.dailyVolumeUSD, 0)
+                  .toFixed(2),
+                0,
+                2
+              )}
           </span>
         </div>
       </div>
@@ -452,9 +451,8 @@ export default function ETFList() {
               <BorderAnimate className={s.hover} />
               {CHAIN_CONFIG[etf.chain]?.abbreviatedName && (
                 <Image
-                  src={`/img/chains/${
-                    CHAIN_CONFIG[etf.chain].abbreviatedName
-                  }.png`}
+                  src={`/img/chains/${CHAIN_CONFIG[etf.chain].abbreviatedName
+                    }.png`}
                   alt={CHAIN_CONFIG[etf.chain].name}
                   width={32}
                   height={32}
@@ -578,11 +576,10 @@ export default function ETFList() {
                   <Card className={s.metric}>
                     <span className={s.metricLabel}>24h Change</span>
                     <span
-                      className={`${s.metricValue} ${
-                        (etf.priceChange24h ?? etf.change24h) >= 0
+                      className={`${s.metricValue} ${(etf.priceChange24h ?? etf.change24h) >= 0
                           ? s.positive
                           : s.negative
-                      }`}
+                        }`}
                     >
                       {(etf.priceChange24h ?? etf.change24h) >= 0 ? "+" : ""}
                       {(etf.priceChange24h ?? etf.change24h).toFixed(2)}%
@@ -923,11 +920,10 @@ export default function ETFList() {
                   rebalanceError === "Rebalance is not necessary at the moment."
                     ? "var(--primary-lowest)"
                     : "var(--danger-lowest)",
-                border: `1px solid ${
-                  rebalanceError === "Rebalance is not necessary at the moment."
+                border: `1px solid ${rebalanceError === "Rebalance is not necessary at the moment."
                     ? "var(--primary-low)"
                     : "var(--danger-low)"
-                }`,
+                  }`,
                 borderRadius: "var(--radius-s)",
                 color:
                   rebalanceError === "Rebalance is not necessary at the moment."
@@ -947,14 +943,14 @@ export default function ETFList() {
                 <Icon
                   icon={
                     rebalanceError ===
-                    "Rebalance is not necessary at the moment."
+                      "Rebalance is not necessary at the moment."
                       ? "hugeicons:information-circle"
                       : "hugeicons:alert-circle"
                   }
                 />
                 <strong>
                   {rebalanceError ===
-                  "Rebalance is not necessary at the moment."
+                    "Rebalance is not necessary at the moment."
                     ? "Information"
                     : "Error"}
                 </strong>
@@ -1259,7 +1255,7 @@ export default function ETFList() {
                     isContractLoading ||
                     (!!rebalanceError &&
                       rebalanceError !==
-                        "Rebalance is not necessary at the moment.") ||
+                      "Rebalance is not necessary at the moment.") ||
                     (rebalancePreview &&
                       !rebalancePreview.soldAmounts.some(
                         (amount) => amount && amount !== "0"
