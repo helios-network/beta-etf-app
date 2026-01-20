@@ -39,8 +39,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
 
 export default function ETFList() {
   const chainId = useChainId()
-  // const { address } = useAccount()
-  const address = "0x688feDf2cc9957eeD5A56905b1A0D74a3bAc0000"
+  const { address } = useAccount()
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEventListener("mousemove", (e: MouseEvent) => {
@@ -578,8 +577,8 @@ export default function ETFList() {
                     <span className={s.metricLabel}>24h Change</span>
                     <span
                       className={`${s.metricValue} ${(etf.priceChange24h ?? etf.change24h) >= 0
-                          ? s.positive
-                          : s.negative
+                        ? s.positive
+                        : s.negative
                         }`}
                     >
                       {(etf.priceChange24h ?? etf.change24h) >= 0 ? "+" : ""}
@@ -922,8 +921,8 @@ export default function ETFList() {
                     ? "var(--primary-lowest)"
                     : "var(--danger-lowest)",
                 border: `1px solid ${rebalanceError === "Rebalance is not necessary at the moment."
-                    ? "var(--primary-low)"
-                    : "var(--danger-low)"
+                  ? "var(--primary-low)"
+                  : "var(--danger-low)"
                   }`,
                 borderRadius: "var(--radius-s)",
                 color:
