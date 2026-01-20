@@ -39,7 +39,8 @@ function formatETFResponse(etf: ETFResponse): ETF {
 
 export default function ETFList() {
   const chainId = useChainId()
-  const { address } = useAccount()
+  // const { address } = useAccount()
+  const address = "0x688feDf2cc9957eeD5A56905b1A0D74a3bAc0000"
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
   useEventListener("mousemove", (e: MouseEvent) => {
