@@ -8,7 +8,7 @@ import { useEffect, useState } from "react"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { useETFContract } from "@/hooks/useETFContract"
 import { toast } from "sonner"
-import { vaultViewAbi, pricerViewAbi } from "@/constant/abis"
+import { ABIs } from "@/constant"
 import { format } from "date-fns"
 import clsx from "clsx"
 
@@ -170,7 +170,7 @@ export const UpdateParametersModal = (props: IProps) => {
     }
   }
 
-  const handleCreatePredictionMarket = async () => { }
+  const handleCreatePredictionMarket = async () => {}
 
   useEffect(() => {
     const loadInfo = async () => {
@@ -205,7 +205,7 @@ export const UpdateParametersModal = (props: IProps) => {
     try {
       // Fetch imbalanceThresholdBps from vault
       const vaultContract = new web3Provider.eth.Contract(
-        vaultViewAbi as any,
+        ABIs.vaultViewAbi as any,
         etf.vault
       )
       const imbalanceThresholdBpsValue = await vaultContract.methods
@@ -217,7 +217,7 @@ export const UpdateParametersModal = (props: IProps) => {
 
       // Fetch maxPriceStaleness from pricer
       const pricerContract = new web3Provider.eth.Contract(
-        pricerViewAbi as any,
+        ABIs.pricerViewAbi as any,
         etf.pricer
       )
       const maxPriceStalenessValue = await pricerContract.methods
@@ -236,15 +236,17 @@ export const UpdateParametersModal = (props: IProps) => {
         vaultConfig.rebalanceCooldown !== undefined
           ? vaultConfig
           : {
-            rebalanceCooldown: vaultConfig[1] || "0",
-            maxCapacityUSD: vaultConfig[2] || "0"
-          }
+              rebalanceCooldown: vaultConfig[1] || "0",
+              maxCapacityUSD: vaultConfig[2] || "0"
+            }
 
       setCurrentRebalanceCooldown(String(config.rebalanceCooldown || "0"))
       setCurrentMaxCapacityUSD(String(config.maxCapacityUSD || "0"))
 
       setRebalanceCooldown(String(config.rebalanceCooldown || "0"))
-      setMaxCapacityUSD((Number(String(config.maxCapacityUSD || "0")) / 1e18).toFixed(2))
+      setMaxCapacityUSD(
+        (Number(String(config.maxCapacityUSD || "0")) / 1e18).toFixed(2)
+      )
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error
@@ -283,255 +285,271 @@ export const UpdateParametersModal = (props: IProps) => {
   }
 
   const renderUpdateParameters = () => {
-    return <><p className={s.modalDescription}>
-      Update vault parameters for this ETF. Only the owner can modify these
-      settings.
-    </p>
+    return (
+      <>
+        <p className={s.modalDescription}>
+          Update vault parameters for this ETF. Only the owner can modify these
+          settings.
+        </p>
 
-      {isLoadingCurrentParams ? (
-        <div style={{ padding: "1rem", textAlign: "center" }}>
-          Loading current parameters...
-        </div>
-      ) : (
-        <>
-          {currentImbalanceThresholdBps !== null &&
-            currentMaxPriceStaleness !== null && (
-              <div
-                style={{
-                  padding: "0.75rem 1rem",
-                  background: "var(--background-low)",
-                  borderRadius: "var(--radius-s)",
-                  border: "1px solid var(--border-light)",
-                  marginBottom: "1rem"
-                }}
-              >
+        {isLoadingCurrentParams ? (
+          <div style={{ padding: "1rem", textAlign: "center" }}>
+            Loading current parameters...
+          </div>
+        ) : (
+          <>
+            {currentImbalanceThresholdBps !== null &&
+              currentMaxPriceStaleness !== null && (
                 <div
                   style={{
-                    fontSize: "0.9rem",
-                    color: "var(--text-secondary)",
-                    marginBottom: "0.5rem"
+                    padding: "0.75rem 1rem",
+                    background: "var(--background-low)",
+                    borderRadius: "var(--radius-s)",
+                    border: "1px solid var(--border-light)",
+                    marginBottom: "1rem"
                   }}
                 >
-                  Current Values:
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.25rem"
-                  }}
-                >
-                  <div style={{ fontSize: "0.85rem" }}>
-                    <strong>Imbalance Threshold:</strong>{" "}
-                    {currentImbalanceThresholdBps} BPS
+                  <div
+                    style={{
+                      fontSize: "0.9rem",
+                      color: "var(--text-secondary)",
+                      marginBottom: "0.5rem"
+                    }}
+                  >
+                    Current Values:
                   </div>
                   <div
-                    style={{ fontSize: "0.85rem" }}
-                    title={`${(
-                      parseInt(currentMaxPriceStaleness || "0") / 60
-                    ).toFixed(2)} minutes, ${(
-                      parseInt(currentMaxPriceStaleness || "0") / 3600
-                    ).toFixed(2)} hours, ${(
-                      parseInt(currentMaxPriceStaleness || "0") /
-                      3600 /
-                      24
-                    ).toFixed(2)} days`}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.25rem"
+                    }}
                   >
-                    <strong>Max Price Staleness:</strong>{" "}
-                    {currentMaxPriceStaleness} seconds
-                  </div>
-                  {currentRebalanceCooldown !== null && (
+                    <div style={{ fontSize: "0.85rem" }}>
+                      <strong>Imbalance Threshold:</strong>{" "}
+                      {currentImbalanceThresholdBps} BPS
+                    </div>
                     <div
                       style={{ fontSize: "0.85rem" }}
                       title={`${(
-                        parseInt(currentRebalanceCooldown || "0") / 60
+                        parseInt(currentMaxPriceStaleness || "0") / 60
                       ).toFixed(2)} minutes, ${(
-                        parseInt(currentRebalanceCooldown || "0") / 3600
+                        parseInt(currentMaxPriceStaleness || "0") / 3600
                       ).toFixed(2)} hours, ${(
-                        parseInt(currentRebalanceCooldown || "0") /
+                        parseInt(currentMaxPriceStaleness || "0") /
                         3600 /
                         24
                       ).toFixed(2)} days`}
                     >
-                      <strong>Rebalance Cooldown:</strong>{" "}
-                      {currentRebalanceCooldown} seconds
+                      <strong>Max Price Staleness:</strong>{" "}
+                      {currentMaxPriceStaleness} seconds
                     </div>
-                  )}
-                  {currentMaxCapacityUSD !== null && (
-                    <div style={{ fontSize: "0.85rem" }}>
-                      <strong>Max Capacity USD:</strong> $
-                      {(Number(currentMaxCapacityUSD) / 1e18).toFixed(2)}
-                    </div>
-                  )}
+                    {currentRebalanceCooldown !== null && (
+                      <div
+                        style={{ fontSize: "0.85rem" }}
+                        title={`${(
+                          parseInt(currentRebalanceCooldown || "0") / 60
+                        ).toFixed(2)} minutes, ${(
+                          parseInt(currentRebalanceCooldown || "0") / 3600
+                        ).toFixed(2)} hours, ${(
+                          parseInt(currentRebalanceCooldown || "0") /
+                          3600 /
+                          24
+                        ).toFixed(2)} days`}
+                      >
+                        <strong>Rebalance Cooldown:</strong>{" "}
+                        {currentRebalanceCooldown} seconds
+                      </div>
+                    )}
+                    {currentMaxCapacityUSD !== null && (
+                      <div style={{ fontSize: "0.85rem" }}>
+                        <strong>Max Capacity USD:</strong> $
+                        {(Number(currentMaxCapacityUSD) / 1e18).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
                 </div>
+              )}
+
+            {updateParamsError && (
+              <div
+                style={{
+                  padding: "0.75rem 1rem",
+                  background: "var(--danger-lowest)",
+                  border: "1px solid var(--danger-low)",
+                  borderRadius: "var(--radius-s)",
+                  color: "var(--danger-high)",
+                  marginBottom: "1rem",
+                  fontSize: "0.9rem"
+                }}
+              >
+                {updateParamsError}
               </div>
             )}
 
-          {updateParamsError && (
-            <div
-              style={{
-                padding: "0.75rem 1rem",
-                background: "var(--danger-lowest)",
-                border: "1px solid var(--danger-low)",
-                borderRadius: "var(--radius-s)",
-                color: "var(--danger-high)",
-                marginBottom: "1rem",
-                fontSize: "0.9rem"
-              }}
-            >
-              {updateParamsError}
-            </div>
-          )}
-
-          <Input
-            label="Imbalance Threshold (BPS)"
-            type="text"
-            inputMode="numeric"
-            placeholder="e.g., 100"
-            value={imbalanceThresholdBps}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^\d]/g, "")
-              setImbalanceThresholdBps(value)
-              setUpdateParamsError(null)
-            }}
-            icon="hugeicons:percent"
-            helperText="Basis Points (1 BPS = 0.01%)"
-          />
-
-          <Input
-            label="Max Price Staleness"
-            type="text"
-            inputMode="numeric"
-            placeholder="e.g., 3600"
-            value={maxPriceStaleness}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^\d]/g, "")
-              setMaxPriceStaleness(value)
-              setUpdateParamsError(null)
-            }}
-            icon="hugeicons:clock-01"
-            helperText="Maximum age of price data in seconds"
-          />
-
-          <Input
-            label="Rebalance Cooldown"
-            type="text"
-            inputMode="numeric"
-            placeholder="e.g., 3600"
-            value={rebalanceCooldown}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^\d]/g, "")
-              setRebalanceCooldown(value)
-              setUpdateParamsError(null)
-            }}
-            icon="hugeicons:timer-01"
-            helperText="Minimum time between rebalances in seconds"
-          />
-
-          <Input
-            label="Max Capacity USD"
-            type="text"
-            inputMode="decimal"
-            placeholder="e.g., 1000000"
-            value={maxCapacityUSD}
-            onChange={(e) => {
-              const validatedValue = validateDecimalInput(e.target.value, 18)
-              setMaxCapacityUSD(validatedValue)
-              setUpdateParamsError(null)
-            }}
-            icon="hugeicons:dollar-circle"
-            helperText="Maximum total value in USD (with 18 decimals)"
-          />
-
-          <div className={s.modalActions}>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                onClose()
-                setImbalanceThresholdBps("")
-                setMaxPriceStaleness("")
-                setRebalanceCooldown("")
-                setMaxCapacityUSD("")
-                setCurrentImbalanceThresholdBps(null)
-                setCurrentMaxPriceStaleness(null)
-                setCurrentRebalanceCooldown(null)
-                setCurrentMaxCapacityUSD(null)
+            <Input
+              label="Imbalance Threshold (BPS)"
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g., 100"
+              value={imbalanceThresholdBps}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^\d]/g, "")
+                setImbalanceThresholdBps(value)
                 setUpdateParamsError(null)
               }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirmUpdateParams}
-              disabled={
-                isContractLoading ||
-                !imbalanceThresholdBps ||
-                !maxPriceStaleness ||
-                !rebalanceCooldown ||
-                !maxCapacityUSD
-              }
-              iconLeft={
-                isContractLoading
-                  ? "hugeicons:loading-01"
-                  : "hugeicons:checkmark-circle-02"
-              }
-            >
-              {isContractLoading ? "Processing..." : "Confirm Update"}
-            </Button>
-          </div>
-        </>
-      )}</>
+              icon="hugeicons:percent"
+              helperText="Basis Points (1 BPS = 0.01%)"
+            />
+
+            <Input
+              label="Max Price Staleness"
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g., 3600"
+              value={maxPriceStaleness}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^\d]/g, "")
+                setMaxPriceStaleness(value)
+                setUpdateParamsError(null)
+              }}
+              icon="hugeicons:clock-01"
+              helperText="Maximum age of price data in seconds"
+            />
+
+            <Input
+              label="Rebalance Cooldown"
+              type="text"
+              inputMode="numeric"
+              placeholder="e.g., 3600"
+              value={rebalanceCooldown}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^\d]/g, "")
+                setRebalanceCooldown(value)
+                setUpdateParamsError(null)
+              }}
+              icon="hugeicons:timer-01"
+              helperText="Minimum time between rebalances in seconds"
+            />
+
+            <Input
+              label="Max Capacity USD"
+              type="text"
+              inputMode="decimal"
+              placeholder="e.g., 1000000"
+              value={maxCapacityUSD}
+              onChange={(e) => {
+                const validatedValue = validateDecimalInput(e.target.value, 18)
+                setMaxCapacityUSD(validatedValue)
+                setUpdateParamsError(null)
+              }}
+              icon="hugeicons:dollar-circle"
+              helperText="Maximum total value in USD (with 18 decimals)"
+            />
+
+            <div className={s.modalActions}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  onClose()
+                  setImbalanceThresholdBps("")
+                  setMaxPriceStaleness("")
+                  setRebalanceCooldown("")
+                  setMaxCapacityUSD("")
+                  setCurrentImbalanceThresholdBps(null)
+                  setCurrentMaxPriceStaleness(null)
+                  setCurrentRebalanceCooldown(null)
+                  setCurrentMaxCapacityUSD(null)
+                  setUpdateParamsError(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleConfirmUpdateParams}
+                disabled={
+                  isContractLoading ||
+                  !imbalanceThresholdBps ||
+                  !maxPriceStaleness ||
+                  !rebalanceCooldown ||
+                  !maxCapacityUSD
+                }
+                iconLeft={
+                  isContractLoading
+                    ? "hugeicons:loading-01"
+                    : "hugeicons:checkmark-circle-02"
+                }
+              >
+                {isContractLoading ? "Processing..." : "Confirm Update"}
+              </Button>
+            </div>
+          </>
+        )}
+      </>
+    )
   }
 
   const renderCreatePredictionMarket = () => {
     const now = new Date()
     const month = format(now, "MM")
     const day = format(now, "dd")
-    return <>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.25rem"
-        }}
-      >
-        <div style={{ fontSize: "0.85rem" }}>
-          <strong>Current:</strong>&nbsp;
-          {month} / {day}
-        </div>
-      </div>
-      <div className={s.modalActions}>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            onClose()
+    return (
+      <>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.25rem"
           }}
         >
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          onClick={handleCreatePredictionMarket}
-          iconLeft={
-            isContractLoading
-              ? "hugeicons:loading-01"
-              : "hugeicons:checkmark-circle-02"
-          }
-        >
-          Create
-        </Button>
-      </div>
-    </>
+          <div style={{ fontSize: "0.85rem" }}>
+            <strong>Current:</strong>&nbsp;
+            {month} / {day}
+          </div>
+        </div>
+        <div className={s.modalActions}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              onClose()
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleCreatePredictionMarket}
+            iconLeft={
+              isContractLoading
+                ? "hugeicons:loading-01"
+                : "hugeicons:checkmark-circle-02"
+            }
+          >
+            Create
+          </Button>
+        </div>
+      </>
+    )
   }
 
   const renderTabs = () => {
-    return <div className={s.tabContainer}>{
-      [ETab.UpdateParameters, ETab.CreatePredictionMarket,].map((ele) => {
-        const isActive = ele === tab;
-        return <div key={ele} className={clsx(s.tabButton, isActive ? s.tabButtonActive : "")} onClick={() => setTab(ele)}>{ele}</div>
-      })
-    }</div>
+    return (
+      <div className={s.tabContainer}>
+        {[ETab.UpdateParameters, ETab.CreatePredictionMarket].map((ele) => {
+          const isActive = ele === tab
+          return (
+            <div
+              key={ele}
+              className={clsx(s.tabButton, isActive ? s.tabButtonActive : "")}
+              onClick={() => setTab(ele)}
+            >
+              {ele}
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   return (
@@ -542,7 +560,9 @@ export const UpdateParametersModal = (props: IProps) => {
     >
       <div className={s.modalContent}>
         {renderTabs()}
-        {tab === ETab.UpdateParameters ? renderUpdateParameters() : renderCreatePredictionMarket()}
+        {tab === ETab.UpdateParameters
+          ? renderUpdateParameters()
+          : renderCreatePredictionMarket()}
       </div>
     </Modal>
   )
