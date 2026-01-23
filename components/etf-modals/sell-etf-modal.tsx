@@ -4,7 +4,7 @@ import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
-import { erc20Abi } from "@/constant/abis"
+import { ABIs } from "@/constant"
 import { useETFContract, percentageToBps } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { fetchCGTokenData } from "@/utils/price"
@@ -54,7 +54,10 @@ async function fetchTokenBalance(
   if (!web3Provider || !address) return null
 
   try {
-    const tokenContract = new web3Provider.eth.Contract(erc20Abi as any, tokenAddress)
+    const tokenContract = new web3Provider.eth.Contract(
+      ABIs.erc20Abi as any,
+      tokenAddress
+    )
     const balance = await tokenContract.methods.balanceOf(address).call()
     const balanceStr = String(balance)
     const balanceBigInt = BigInt(balanceStr)
@@ -87,7 +90,10 @@ async function checkAllowance(
   if (!web3Provider || !address) return false
 
   try {
-    const tokenContract = new web3Provider.eth.Contract(erc20Abi as any, tokenAddress)
+    const tokenContract = new web3Provider.eth.Contract(
+      ABIs.erc20Abi as any,
+      tokenAddress
+    )
     const allowanceStr: string = await tokenContract.methods
       .allowance(address, spenderAddress)
       .call()
@@ -106,7 +112,9 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
   const [sellShares, setSellShares] = useState("")
   const [minOut, setMinOut] = useState("")
   const [slippageSell, setSlippageSell] = useState(0.25)
-  const [shareTokenBalance, setShareTokenBalance] = useState<string | null>(null)
+  const [shareTokenBalance, setShareTokenBalance] = useState<string | null>(
+    null
+  )
   const [shareTokenAllowance, setShareTokenAllowance] = useState<boolean>(false)
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
   const [estimatedSoldAmounts, setEstimatedSoldAmounts] = useState<string[]>([])
@@ -135,7 +143,9 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
   // Fetch share token balance when modal opens
   useEffect(() => {
     if (open && etf && web3Provider && address) {
-      fetchTokenBalance(web3Provider, address, etf.shareToken, 18).then(setShareTokenBalance)
+      fetchTokenBalance(web3Provider, address, etf.shareToken, 18).then(
+        setShareTokenBalance
+      )
     }
   }, [open, etf, web3Provider, address])
 
@@ -159,9 +169,15 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
     if (validatedValue && parseFloat(validatedValue) > 0) {
       const sharesDecimals = 18
       const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-      const [sharesInteger = "0", sharesFractional = ""] = validatedValue.split(".")
-      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
-      const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+      const [sharesInteger = "0", sharesFractional = ""] =
+        validatedValue.split(".")
+      const paddedSharesFractional = sharesFractional
+        .padEnd(sharesDecimals, "0")
+        .slice(0, sharesDecimals)
+      const sharesWei = (
+        BigInt(sharesInteger) * sharesMultiplier +
+        BigInt(paddedSharesFractional)
+      ).toString()
 
       setIsCheckingAllowance(true)
       setIsEstimatingDeposit(true)
@@ -190,10 +206,17 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
           const depositDecimals = etf.depositDecimals || 18
           const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
           const depositBigInt = BigInt(estimateResult.depositOut)
-          const slippageMultiplier = BigInt(Math.floor((100 - slippageSell) * 100))
-          const depositWithSlippage = (depositBigInt * slippageMultiplier) / 10000n
-          const depositNumber = Number(depositWithSlippage) / Number(depositMultiplier)
-          const estimatedDeposit = formatNumberToString(depositNumber, depositDecimals)
+          const slippageMultiplier = BigInt(
+            Math.floor((100 - slippageSell) * 100)
+          )
+          const depositWithSlippage =
+            (depositBigInt * slippageMultiplier) / 10000n
+          const depositNumber =
+            Number(depositWithSlippage) / Number(depositMultiplier)
+          const estimatedDeposit = formatNumberToString(
+            depositNumber,
+            depositDecimals
+          )
           setMinOut(estimatedDeposit)
         }
       } catch (error) {
@@ -226,8 +249,13 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
       const sharesDecimals = 18
       const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
       const [sharesInteger = "0", sharesFractional = ""] = sellShares.split(".")
-      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
-      const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+      const paddedSharesFractional = sharesFractional
+        .padEnd(sharesDecimals, "0")
+        .slice(0, sharesDecimals)
+      const sharesWei = (
+        BigInt(sharesInteger) * sharesMultiplier +
+        BigInt(paddedSharesFractional)
+      ).toString()
 
       await approveToken({
         tokenAddress: etf.shareToken,
@@ -252,7 +280,8 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
         }
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Approval failed"
+      const errorMessage =
+        error instanceof Error ? error.message : "Approval failed"
       toast.error(errorMessage)
     }
   }
@@ -272,14 +301,24 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
       const sharesDecimals = 18
       const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
       const [sharesInteger = "0", sharesFractional = ""] = sellShares.split(".")
-      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
-      const sharesWei = (BigInt(sharesInteger) * sharesMultiplier + BigInt(paddedSharesFractional)).toString()
+      const paddedSharesFractional = sharesFractional
+        .padEnd(sharesDecimals, "0")
+        .slice(0, sharesDecimals)
+      const sharesWei = (
+        BigInt(sharesInteger) * sharesMultiplier +
+        BigInt(paddedSharesFractional)
+      ).toString()
 
       const depositDecimals = etf.depositDecimals || 18
       const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
       const [minOutInteger = "0", minOutFractional = ""] = minOut.split(".")
-      const paddedMinOutFractional = minOutFractional.padEnd(depositDecimals, "0").slice(0, depositDecimals)
-      const minOutWei = (BigInt(minOutInteger) * depositMultiplier + BigInt(paddedMinOutFractional)).toString()
+      const paddedMinOutFractional = minOutFractional
+        .padEnd(depositDecimals, "0")
+        .slice(0, depositDecimals)
+      const minOutWei = (
+        BigInt(minOutInteger) * depositMultiplier +
+        BigInt(paddedMinOutFractional)
+      ).toString()
 
       const result = await redeem({
         factory: etf.factory,
@@ -290,14 +329,18 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
         slippageBps: percentageToBps(slippageSell)
       })
 
-      const receivedAmount = Number(result.depositOut) / Number(depositMultiplier)
+      const receivedAmount =
+        Number(result.depositOut) / Number(depositMultiplier)
       const depositSymbol = etf.depositSymbol || etf.depositToken
       toast.success(
-        `Successfully redeemed! Received ${receivedAmount.toFixed(6)} ${depositSymbol} tokens`
+        `Successfully redeemed! Received ${receivedAmount.toFixed(
+          6
+        )} ${depositSymbol} tokens`
       )
       onClose()
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Redeem failed"
+      const errorMessage =
+        error instanceof Error ? error.message : "Redeem failed"
       toast.error(errorMessage)
     }
   }
@@ -319,7 +362,9 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
           onChange={(e) => handleSharesChange(e.target.value)}
           icon="hugeicons:chart-01"
           balance={shareTokenBalance ?? undefined}
-          showMaxButton={!!shareTokenBalance && parseFloat(shareTokenBalance) > 0}
+          showMaxButton={
+            !!shareTokenBalance && parseFloat(shareTokenBalance) > 0
+          }
           onMaxClick={handleMaxClick}
         />
         <div className={s.slippageContainer}>
@@ -327,21 +372,27 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
           <div className={s.slippageButtons}>
             <button
               type="button"
-              className={s.slippageButton + (slippageSell === 0.25 ? ` ${s.active}` : "")}
+              className={
+                s.slippageButton + (slippageSell === 0.25 ? ` ${s.active}` : "")
+              }
               onClick={() => setSlippageSell(0.25)}
             >
               0.25%
             </button>
             <button
               type="button"
-              className={s.slippageButton + (slippageSell === 0.5 ? ` ${s.active}` : "")}
+              className={
+                s.slippageButton + (slippageSell === 0.5 ? ` ${s.active}` : "")
+              }
               onClick={() => setSlippageSell(0.5)}
             >
               0.5%
             </button>
             <button
               type="button"
-              className={s.slippageButton + (slippageSell === 1 ? ` ${s.active}` : "")}
+              className={
+                s.slippageButton + (slippageSell === 1 ? ` ${s.active}` : "")
+              }
               onClick={() => setSlippageSell(1)}
             >
               1%
@@ -355,14 +406,19 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
           placeholder={isEstimatingDeposit ? "Estimating..." : "0.0"}
           value={minOut}
           onChange={(e) => {
-            const validatedValue = validateDecimalInput(e.target.value, etf.depositDecimals || 18)
+            const validatedValue = validateDecimalInput(
+              e.target.value,
+              etf.depositDecimals || 18
+            )
             setMinOut(validatedValue)
           }}
           icon="hugeicons:wallet-01"
           helperText={
             isEstimatingDeposit
               ? "Estimating deposit tokens..."
-              : `Minimum ${etf.depositSymbol || "tokens"} you're willing to accept`
+              : `Minimum ${
+                  etf.depositSymbol || "tokens"
+                } you're willing to accept`
           }
           disabled={isEstimatingDeposit}
         />
@@ -383,7 +439,8 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
 
                 const decimals = asset.decimals || 18
                 const multiplier = BigInt(10) ** BigInt(decimals)
-                const amountNumber = Number(BigInt(soldAmount)) / Number(multiplier)
+                const amountNumber =
+                  Number(BigInt(soldAmount)) / Number(multiplier)
 
                 const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
 
@@ -402,7 +459,9 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
                         <div
                           className={s.tokenLogo}
                           style={{
-                            backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                            backgroundColor: `var(--${getAssetColor(
+                              asset.symbol
+                            )})`,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -439,7 +498,11 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
               variant="primary"
               onClick={handleConfirm}
               disabled={isContractLoading || !sellShares || !minOut}
-              iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:checkmark-circle-02"}
+              iconLeft={
+                isContractLoading
+                  ? "hugeicons:loading-01"
+                  : "hugeicons:checkmark-circle-02"
+              }
             >
               {isContractLoading ? "Processing..." : "Confirm Sell"}
             </Button>
@@ -448,7 +511,9 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
               variant="primary"
               onClick={handleApprove}
               disabled={isContractLoading || isCheckingAllowance || !sellShares}
-              iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:lock-01"}
+              iconLeft={
+                isContractLoading ? "hugeicons:loading-01" : "hugeicons:lock-01"
+              }
             >
               {isContractLoading ? "Processing..." : "Approve"}
             </Button>
@@ -458,4 +523,3 @@ export function SellETFModal({ open, onClose, etf }: SellETFModalProps) {
     </Modal>
   )
 }
-

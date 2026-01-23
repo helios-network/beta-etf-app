@@ -19,7 +19,7 @@ import s from "./etf-select-modal.module.scss"
 import { useAccount } from "wagmi"
 import { readContracts } from "@wagmi/core"
 import { config } from "@/config/wagmi"
-import { erc20Abi } from "@/constant/abis"
+import { ABIs } from "@/constant"
 import { formatTokenAmount } from "@/lib/utils/number"
 import { formatUnits } from "ethers"
 
@@ -120,7 +120,7 @@ export function ETFSelectModal({
         const balances = await readContracts(config, {
           contracts: heldEtfs.map((etf) => ({
             address: etf.shareToken as `0x${string}`,
-            abi: erc20Abi as any,
+            abi: ABIs.erc20Abi as any,
             functionName: "balanceOf",
             args: [address]
           }))

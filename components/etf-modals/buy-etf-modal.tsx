@@ -4,7 +4,7 @@ import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Modal } from "@/components/modal"
-import { erc20Abi } from "@/constant/abis"
+import { ABIs } from "@/constant"
 import { useETFContract, percentageToBps } from "@/hooks/useETFContract"
 import { useWeb3Provider } from "@/hooks/useWeb3Provider"
 import { fetchCGTokenData } from "@/utils/price"
@@ -55,7 +55,10 @@ async function fetchTokenBalance(
   if (!web3Provider || !address) return null
 
   try {
-    const tokenContract = new web3Provider.eth.Contract(erc20Abi as any, tokenAddress)
+    const tokenContract = new web3Provider.eth.Contract(
+      ABIs.erc20Abi as any,
+      tokenAddress
+    )
     const balance = await tokenContract.methods.balanceOf(address).call()
     const balanceStr = String(balance)
     const balanceBigInt = BigInt(balanceStr)
@@ -88,7 +91,10 @@ async function checkAllowance(
   if (!web3Provider || !address) return false
 
   try {
-    const tokenContract = new web3Provider.eth.Contract(erc20Abi as any, tokenAddress)
+    const tokenContract = new web3Provider.eth.Contract(
+      ABIs.erc20Abi as any,
+      tokenAddress
+    )
     const allowanceStr: string = await tokenContract.methods
       .allowance(address, spenderAddress)
       .call()
@@ -107,12 +113,19 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
   const [buyAmount, setBuyAmount] = useState("")
   const [minSharesOut, setMinSharesOut] = useState("")
   const [slippageBuy, setSlippageBuy] = useState(0.25)
-  const [depositTokenBalance, setDepositTokenBalance] = useState<string | null>(null)
-  const [depositTokenAllowance, setDepositTokenAllowance] = useState<boolean>(false)
+  const [depositTokenBalance, setDepositTokenBalance] = useState<string | null>(
+    null
+  )
+  const [depositTokenAllowance, setDepositTokenAllowance] =
+    useState<boolean>(false)
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false)
   const [estimatedAmountsOut, setEstimatedAmountsOut] = useState<string[]>([])
-  const [estimatedValuesPerAsset, setEstimatedValuesPerAsset] = useState<string[]>([])
-  const [impermanentLossPercentage, setImpermanentLossPercentage] = useState<number | null>(null)
+  const [estimatedValuesPerAsset, setEstimatedValuesPerAsset] = useState<
+    string[]
+  >([])
+  const [impermanentLossPercentage, setImpermanentLossPercentage] = useState<
+    number | null
+  >(null)
   const [isEstimatingShares, setIsEstimatingShares] = useState(false)
 
   const {
@@ -157,9 +170,12 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
   // Fetch deposit token balance when modal opens
   useEffect(() => {
     if (open && etf && web3Provider && address) {
-      fetchTokenBalance(web3Provider, address, etf.depositToken, etf.depositDecimals).then(
-        setDepositTokenBalance
-      )
+      fetchTokenBalance(
+        web3Provider,
+        address,
+        etf.depositToken,
+        etf.depositDecimals
+      ).then(setDepositTokenBalance)
     }
   }, [open, etf, web3Provider, address])
 
@@ -179,15 +195,23 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
   const handleAmountChange = async (value: string) => {
     if (!etf || !web3Provider || !address) return
 
-    const validatedValue = validateDecimalInput(value, etf.depositDecimals || 18)
+    const validatedValue = validateDecimalInput(
+      value,
+      etf.depositDecimals || 18
+    )
     setBuyAmount(validatedValue)
 
     if (validatedValue && parseFloat(validatedValue) > 0) {
       const depositDecimals = etf.depositDecimals || 18
       const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
       const [integerPart = "0", fractionalPart = ""] = validatedValue.split(".")
-      const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
-      const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+      const paddedFractional = fractionalPart
+        .padEnd(depositDecimals, "0")
+        .slice(0, depositDecimals)
+      const amountWei = (
+        BigInt(integerPart) * depositMultiplier +
+        BigInt(paddedFractional)
+      ).toString()
 
       setIsCheckingAllowance(true)
       setIsEstimatingShares(true)
@@ -225,7 +249,8 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           const depositAmount = parseFloat(validatedValue)
 
           if (depositAmount > 0 && totalValue > 0) {
-            const lossPercentage = ((depositAmount - totalValue) / depositAmount) * 100
+            const lossPercentage =
+              ((depositAmount - totalValue) / depositAmount) * 100
             setImpermanentLossPercentage(lossPercentage)
           } else {
             setImpermanentLossPercentage(null)
@@ -239,10 +264,17 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           const sharesDecimals = 18
           const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
           const sharesBigInt = BigInt(estimateResult.sharesOut)
-          const slippageMultiplier = BigInt(Math.floor((100 - slippageBuy) * 100))
-          const sharesWithSlippage = (sharesBigInt * slippageMultiplier) / 10000n
-          const sharesNumber = Number(sharesWithSlippage) / Number(sharesMultiplier)
-          const estimatedShares = formatNumberToString(sharesNumber, sharesDecimals)
+          const slippageMultiplier = BigInt(
+            Math.floor((100 - slippageBuy) * 100)
+          )
+          const sharesWithSlippage =
+            (sharesBigInt * slippageMultiplier) / 10000n
+          const sharesNumber =
+            Number(sharesWithSlippage) / Number(sharesMultiplier)
+          const estimatedShares = formatNumberToString(
+            sharesNumber,
+            sharesDecimals
+          )
           setMinSharesOut(estimatedShares)
         }
       } catch (error) {
@@ -277,8 +309,13 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
       const depositDecimals = etf.depositDecimals || 18
       const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
       const [integerPart = "0", fractionalPart = ""] = buyAmount.split(".")
-      const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
-      const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+      const paddedFractional = fractionalPart
+        .padEnd(depositDecimals, "0")
+        .slice(0, depositDecimals)
+      const amountWei = (
+        BigInt(integerPart) * depositMultiplier +
+        BigInt(paddedFractional)
+      ).toString()
 
       await approveToken({
         tokenAddress: etf.depositToken,
@@ -303,7 +340,8 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
         }
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Approval failed"
+      const errorMessage =
+        error instanceof Error ? error.message : "Approval failed"
       toast.error(errorMessage)
     }
   }
@@ -323,13 +361,21 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
       const depositDecimals = etf.depositDecimals || 18
       const depositMultiplier = BigInt(10) ** BigInt(depositDecimals)
       const [integerPart = "0", fractionalPart = ""] = buyAmount.split(".")
-      const paddedFractional = fractionalPart.padEnd(depositDecimals, "0").slice(0, depositDecimals)
-      const amountWei = (BigInt(integerPart) * depositMultiplier + BigInt(paddedFractional)).toString()
+      const paddedFractional = fractionalPart
+        .padEnd(depositDecimals, "0")
+        .slice(0, depositDecimals)
+      const amountWei = (
+        BigInt(integerPart) * depositMultiplier +
+        BigInt(paddedFractional)
+      ).toString()
 
       const sharesDecimals = 18
       const sharesMultiplier = BigInt(10) ** BigInt(sharesDecimals)
-      const [sharesInteger = "0", sharesFractional = ""] = minSharesOut.split(".")
-      const paddedSharesFractional = sharesFractional.padEnd(sharesDecimals, "0").slice(0, sharesDecimals)
+      const [sharesInteger = "0", sharesFractional = ""] =
+        minSharesOut.split(".")
+      const paddedSharesFractional = sharesFractional
+        .padEnd(sharesDecimals, "0")
+        .slice(0, sharesDecimals)
       const minSharesOutWei = (
         BigInt(sharesInteger) * sharesMultiplier +
         BigInt(paddedSharesFractional)
@@ -368,10 +414,15 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
         }
       }
 
-      toast.success(`Successfully deposited! Received ${sharesReceived.toFixed(6)} shares.${assetsMessage}`)
+      toast.success(
+        `Successfully deposited! Received ${sharesReceived.toFixed(
+          6
+        )} shares.${assetsMessage}`
+      )
       onClose()
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Deposit failed"
+      const errorMessage =
+        error instanceof Error ? error.message : "Deposit failed"
       toast.error(errorMessage)
     }
   }
@@ -393,7 +444,9 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           onChange={(e) => handleAmountChange(e.target.value)}
           icon="hugeicons:wallet-01"
           balance={depositTokenBalance ?? undefined}
-          showMaxButton={!!depositTokenBalance && parseFloat(depositTokenBalance) > 0}
+          showMaxButton={
+            !!depositTokenBalance && parseFloat(depositTokenBalance) > 0
+          }
           onMaxClick={handleMaxClick}
         />
         <div className={s.slippageContainer}>
@@ -401,14 +454,20 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           <div className={s.slippageButtons}>
             <button
               type="button"
-              className={clsx(s.slippageButton, slippageBuy === 0.25 && s.active)}
+              className={clsx(
+                s.slippageButton,
+                slippageBuy === 0.25 && s.active
+              )}
               onClick={() => setSlippageBuy(0.25)}
             >
               0.25%
             </button>
             <button
               type="button"
-              className={clsx(s.slippageButton, slippageBuy === 0.5 && s.active)}
+              className={clsx(
+                s.slippageButton,
+                slippageBuy === 0.5 && s.active
+              )}
               onClick={() => setSlippageBuy(0.5)}
             >
               0.5%
@@ -441,7 +500,9 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           }}
           icon="hugeicons:chart-01"
           helperText={
-            isEstimatingShares ? "Estimating shares..." : "Minimum shares you're willing to accept"
+            isEstimatingShares
+              ? "Estimating shares..."
+              : "Minimum shares you're willing to accept"
           }
           disabled={isEstimatingShares}
         />
@@ -473,53 +534,82 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
           </div>
         )}
 
-        {impermanentLossPercentage !== null && impermanentLossPercentage > 2 && (
-          <div
-            style={{
-              padding: "1rem",
-              background:
-                impermanentLossPercentage > 5 ? "var(--danger-lowest)" : "var(--warning-lowest)",
-              border: `1px solid ${impermanentLossPercentage > 5 ? "var(--danger-low)" : "var(--warning-low)"
-                }`,
-              borderRadius: "var(--radius-s)",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "0.75rem"
-            }}
-          >
-            <Icon
-              icon={impermanentLossPercentage > 5 ? "hugeicons:alert-circle" : "hugeicons:alert-02"}
+        {impermanentLossPercentage !== null &&
+          impermanentLossPercentage > 2 && (
+            <div
               style={{
-                fontSize: "1.5rem",
-                color: impermanentLossPercentage > 5 ? "var(--danger-high)" : "var(--warning-high)",
-                flexShrink: 0
+                padding: "1rem",
+                background:
+                  impermanentLossPercentage > 5
+                    ? "var(--danger-lowest)"
+                    : "var(--warning-lowest)",
+                border: `1px solid ${
+                  impermanentLossPercentage > 5
+                    ? "var(--danger-low)"
+                    : "var(--warning-low)"
+                }`,
+                borderRadius: "var(--radius-s)",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "0.75rem"
               }}
-            />
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-              <strong
+            >
+              <Icon
+                icon={
+                  impermanentLossPercentage > 5
+                    ? "hugeicons:alert-circle"
+                    : "hugeicons:alert-02"
+                }
                 style={{
-                  color: impermanentLossPercentage > 5 ? "var(--danger-high)" : "var(--warning-high)",
-                  fontSize: "0.9rem"
+                  fontSize: "1.5rem",
+                  color:
+                    impermanentLossPercentage > 5
+                      ? "var(--danger-high)"
+                      : "var(--warning-high)",
+                  flexShrink: 0
+                }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.25rem"
                 }}
               >
-                {impermanentLossPercentage > 5
-                  ? "High Impermanent Loss Detected!"
-                  : "Impermanent Loss Warning"}
-              </strong>
-              <span
-                style={{
-                  color: impermanentLossPercentage > 5 ? "var(--danger-medium)" : "var(--warning-medium)",
-                  fontSize: "0.85rem",
-                  lineHeight: "1.4"
-                }}
-              >
-                {impermanentLossPercentage > 5
-                  ? `You may lose approximately ${impermanentLossPercentage.toFixed(2)}% due to swap fees and slippage. Consider depositing a smaller amount or waiting for better market conditions.`
-                  : `You may lose approximately ${impermanentLossPercentage.toFixed(2)}% due to swap fees and slippage.`}
-              </span>
+                <strong
+                  style={{
+                    color:
+                      impermanentLossPercentage > 5
+                        ? "var(--danger-high)"
+                        : "var(--warning-high)",
+                    fontSize: "0.9rem"
+                  }}
+                >
+                  {impermanentLossPercentage > 5
+                    ? "High Impermanent Loss Detected!"
+                    : "Impermanent Loss Warning"}
+                </strong>
+                <span
+                  style={{
+                    color:
+                      impermanentLossPercentage > 5
+                        ? "var(--danger-medium)"
+                        : "var(--warning-medium)",
+                    fontSize: "0.85rem",
+                    lineHeight: "1.4"
+                  }}
+                >
+                  {impermanentLossPercentage > 5
+                    ? `You may lose approximately ${impermanentLossPercentage.toFixed(
+                        2
+                      )}% due to swap fees and slippage. Consider depositing a smaller amount or waiting for better market conditions.`
+                    : `You may lose approximately ${impermanentLossPercentage.toFixed(
+                        2
+                      )}% due to swap fees and slippage.`}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {estimatedAmountsOut.length > 0 && etf.assets && (
           <div className={s.tokenDistribution}>
@@ -538,10 +628,13 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
 
                 const decimals = asset.decimals || 18
                 const multiplier = BigInt(10) ** BigInt(decimals)
-                const amountNumber = Number(BigInt(amountOut)) / Number(multiplier)
+                const amountNumber =
+                  Number(BigInt(amountOut)) / Number(multiplier)
 
                 const depositMultiplier = BigInt(10) ** BigInt(18)
-                const valueNumber = Number(BigInt(valuePerAsset || "0")) / Number(depositMultiplier)
+                const valueNumber =
+                  Number(BigInt(valuePerAsset || "0")) /
+                  Number(depositMultiplier)
 
                 const logo = tokenData?.[asset.symbol.toLowerCase()]?.logo
 
@@ -560,7 +653,9 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
                         <div
                           className={s.tokenLogo}
                           style={{
-                            backgroundColor: `var(--${getAssetColor(asset.symbol)})`,
+                            backgroundColor: `var(--${getAssetColor(
+                              asset.symbol
+                            )})`,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -580,7 +675,9 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
                       <span className={s.tokenAmount}>
                         {amountNumber.toFixed(6)} {asset.symbol}
                       </span>
-                      <span className={s.tokenValue}>≈ ${valueNumber.toFixed(2)}</span>
+                      <span className={s.tokenValue}>
+                        ≈ ${valueNumber.toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 )
@@ -598,7 +695,11 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
               variant="primary"
               onClick={handleConfirm}
               disabled={isContractLoading || !buyAmount || !minSharesOut}
-              iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:checkmark-circle-02"}
+              iconLeft={
+                isContractLoading
+                  ? "hugeicons:loading-01"
+                  : "hugeicons:checkmark-circle-02"
+              }
             >
               {isContractLoading ? "Processing..." : "Confirm Buy"}
             </Button>
@@ -607,7 +708,9 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
               variant="primary"
               onClick={handleApprove}
               disabled={isContractLoading || isCheckingAllowance || !buyAmount}
-              iconLeft={isContractLoading ? "hugeicons:loading-01" : "hugeicons:lock-01"}
+              iconLeft={
+                isContractLoading ? "hugeicons:loading-01" : "hugeicons:lock-01"
+              }
             >
               {isContractLoading ? "Processing..." : "Approve"}
             </Button>
@@ -617,4 +720,3 @@ export function BuyETFModal({ open, onClose, etf }: BuyETFModalProps) {
     </Modal>
   )
 }
-

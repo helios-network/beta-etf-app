@@ -1,11 +1,10 @@
 import { useMutation } from "@tanstack/react-query"
 import { useAccount, useChainId } from "wagmi"
 import { useWeb3Provider } from "./useWeb3Provider"
-import { erc20Abi, etfFactoryAbi as factoryAbi } from "@/constant/abis"
+import { ABIs } from "@/constant"
 import { getBestGasPrice } from "@/lib/utils/gas"
-import { decodeEventLog, TransactionReceipt, Abi } from "viem"
-import { getErrorMessage } from "@/utils/string"
-import { EventLog, ResponseError } from "web3"
+import { decodeEventLog, TransactionReceipt } from "viem"
+import { ResponseError } from "web3"
 
 interface CreateETFParams {
   factoryAddress: string
@@ -165,7 +164,7 @@ export const useETFContract = () => {
 
       try {
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           params.factoryAddress
         )
 
@@ -233,39 +232,41 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: params.factoryAddress,
-              data: factoryContract.methods
-                .createETF(
-                  config,
-                  params.assetTokens,
-                  params.priceFeeds,
-                  params.targetWeightsBps,
-                  params.swapPathsData,
-                  etfParams,
-                  params.initialSharePrice
-                )
-                .encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: params.factoryAddress,
+                data: factoryContract.methods
+                  .createETF(
+                    config,
+                    params.assetTokens,
+                    params.priceFeeds,
+                    params.targetWeightsBps,
+                    params.swapPathsData,
+                    etfParams,
+                    params.initialSharePrice
+                  )
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         let etfCreatedEvent: any | null = null
 
         for (const log of receipt.logs) {
           try {
             const evt = decodeEventLog({
-              abi: factoryAbi,
+              abi: ABIs.etfFactoryAbi,
               data: log.data,
               topics: log.topics
             })
@@ -309,7 +310,7 @@ export const useETFContract = () => {
 
       try {
         const tokenContract = new web3Provider.eth.Contract(
-          erc20Abi as any,
+          ABIs.erc20Abi as any,
           params.tokenAddress
         )
 
@@ -360,7 +361,7 @@ export const useETFContract = () => {
       try {
         const factoryAddress = params.factory
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           factoryAddress
         )
 
@@ -368,12 +369,24 @@ export const useETFContract = () => {
 
         // Simulate the transaction and get the return value
         const depositResult: any = await factoryContract.methods
-          .deposit(params.vault, params.amount, params.minSharesOut, params.slippageBps, false)
+          .deposit(
+            params.vault,
+            params.amount,
+            params.minSharesOut,
+            params.slippageBps,
+            false
+          )
           .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .deposit(params.vault, params.amount, params.minSharesOut, params.slippageBps, false)
+          .deposit(
+            params.vault,
+            params.amount,
+            params.minSharesOut,
+            params.slippageBps,
+            false
+          )
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -383,32 +396,40 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: factoryAddress,
-              data: factoryContract.methods
-                .deposit(params.vault, params.amount, params.minSharesOut, params.slippageBps, false)
-                .encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
-        
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: factoryAddress,
+                data: factoryContract.methods
+                  .deposit(
+                    params.vault,
+                    params.amount,
+                    params.minSharesOut,
+                    params.slippageBps,
+                    false
+                  )
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
+
         // Parse the Deposit event for additional info (eventNonce, eventHeight)
         let depositEvent: any | null = null
 
         for (const log of receipt.logs) {
           try {
             const evt = decodeEventLog({
-              abi: factoryAbi,
+              abi: ABIs.etfFactoryAbi,
               data: log.data,
               topics: log.topics
             })
@@ -473,18 +494,30 @@ export const useETFContract = () => {
         const factoryAddress = params.factory
 
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           factoryAddress
         )
 
         // Simulate the transaction and get the return value
         const redeemResult: any = await factoryContract.methods
-          .redeem(params.vault, params.shares, params.minOut, params.slippageBps, false)
+          .redeem(
+            params.vault,
+            params.shares,
+            params.minOut,
+            params.slippageBps,
+            false
+          )
           .call({ from: address })
 
         // Estimate gas
         const gasEstimate = await factoryContract.methods
-          .redeem(params.vault, params.shares, params.minOut, params.slippageBps, false)
+          .redeem(
+            params.vault,
+            params.shares,
+            params.minOut,
+            params.slippageBps,
+            false
+          )
           .estimateGas({ from: address })
 
         // Add 20% to the gas estimation
@@ -494,32 +527,40 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: factoryAddress,
-              data: factoryContract.methods
-                .redeem(params.vault, params.shares, params.minOut, params.slippageBps, false)
-                .encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
-        
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: factoryAddress,
+                data: factoryContract.methods
+                  .redeem(
+                    params.vault,
+                    params.shares,
+                    params.minOut,
+                    params.slippageBps,
+                    false
+                  )
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
+
         // Parse the Redeem event for additional info (eventNonce, eventHeight)
         let redeemEvent: any | null = null
 
         for (const log of receipt.logs) {
           try {
             const evt = decodeEventLog({
-              abi: factoryAbi,
+              abi: ABIs.etfFactoryAbi,
               data: log.data,
               topics: log.topics
             })
@@ -582,7 +623,7 @@ export const useETFContract = () => {
         const factoryAddress = params.factory
 
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           factoryAddress
         )
 
@@ -603,29 +644,33 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: factoryAddress,
-              data: factoryContract.methods.rebalance(params.vault, params.slippageBps).encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: factoryAddress,
+                data: factoryContract.methods
+                  .rebalance(params.vault, params.slippageBps)
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         let rebalanceEvent: any | null = null
 
         for (const log of receipt.logs) {
           try {
             const evt = decodeEventLog({
-              abi: factoryAbi,
+              abi: ABIs.etfFactoryAbi,
               data: log.data,
               topics: log.topics
             })
@@ -643,16 +688,16 @@ export const useETFContract = () => {
           )
         }
 
-        const { 
-          user, 
-          totalSoldValueUSD, 
-          totalBoughtValueUSD, 
-          soldAmounts, 
-          boughtAmounts, 
-          soldValuesUSD, 
-          boughtValuesUSD, 
-          eventNonce, 
-          eventHeight 
+        const {
+          user,
+          totalSoldValueUSD,
+          totalBoughtValueUSD,
+          soldAmounts,
+          boughtAmounts,
+          soldValuesUSD,
+          boughtValuesUSD,
+          eventNonce,
+          eventHeight
         } = rebalanceEvent.args
 
         return {
@@ -662,7 +707,9 @@ export const useETFContract = () => {
           soldAmounts: (soldAmounts || []).map((amt: any) => String(amt)),
           boughtAmounts: (boughtAmounts || []).map((amt: any) => String(amt)),
           soldValuesUSD: (soldValuesUSD || []).map((val: any) => String(val)),
-          boughtValuesUSD: (boughtValuesUSD || []).map((val: any) => String(val)),
+          boughtValuesUSD: (boughtValuesUSD || []).map((val: any) =>
+            String(val)
+          ),
           eventNonce,
           eventHeight,
           txHash: receipt.transactionHash,
@@ -694,7 +741,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         params.factory
       )
 
@@ -704,7 +751,13 @@ export const useETFContract = () => {
       // Call deposit with minSharesOut = 0 and simulate = true to get the estimated shares
       // The function now returns { sharesOutRet, amountsOut, valuesPerAsset }
       const depositResult: any = await factoryContract.methods
-        .deposit(params.vault, params.amount, "0", params.slippageBps, needEstimateBool)
+        .deposit(
+          params.vault,
+          params.amount,
+          "0",
+          params.slippageBps,
+          needEstimateBool
+        )
         .call({ from: address })
 
       console.log("depositResult", depositResult)
@@ -744,7 +797,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         params.factory
       )
 
@@ -754,7 +807,13 @@ export const useETFContract = () => {
       // Call redeem with minOut = 0 and simulate = true to get the estimated deposit tokens
       // The function now returns { depositOutRet, soldAmounts }
       const redeemResult: any = await factoryContract.methods
-        .redeem(params.vault, params.shares, "0", params.slippageBps, needEstimateBool)
+        .redeem(
+          params.vault,
+          params.shares,
+          "0",
+          params.slippageBps,
+          needEstimateBool
+        )
         .call({ from: address })
 
       return {
@@ -773,7 +832,9 @@ export const useETFContract = () => {
     }
   }
 
-  const estimateRebalance = async (params: RebalanceParams): Promise<{
+  const estimateRebalance = async (
+    params: RebalanceParams
+  ): Promise<{
     totalSoldValueUSD: string
     totalBoughtValueUSD: string
     soldAmounts: string[]
@@ -787,7 +848,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         params.factory
       )
 
@@ -803,10 +864,18 @@ export const useETFContract = () => {
       return {
         totalSoldValueUSD: String(rebalanceResult.totalSoldValueUSD || "0"),
         totalBoughtValueUSD: String(rebalanceResult.totalBoughtValueUSD || "0"),
-        soldAmounts: (rebalanceResult.soldAmounts || []).map((amt: any) => String(amt)),
-        boughtAmounts: (rebalanceResult.boughtAmounts || []).map((amt: any) => String(amt)),
-        soldValuesUSD: (rebalanceResult.soldValuesUSD || []).map((val: any) => String(val)),
-        boughtValuesUSD: (rebalanceResult.boughtValuesUSD || []).map((val: any) => String(val))
+        soldAmounts: (rebalanceResult.soldAmounts || []).map((amt: any) =>
+          String(amt)
+        ),
+        boughtAmounts: (rebalanceResult.boughtAmounts || []).map((amt: any) =>
+          String(amt)
+        ),
+        soldValuesUSD: (rebalanceResult.soldValuesUSD || []).map((val: any) =>
+          String(val)
+        ),
+        boughtValuesUSD: (rebalanceResult.boughtValuesUSD || []).map(
+          (val: any) => String(val)
+        )
       }
     } catch (error: unknown) {
       console.error("Error estimating rebalance", error)
@@ -819,14 +888,16 @@ export const useETFContract = () => {
     }
   }
 
-  const estimateUpdateParams = async (params: UpdateParamsParams): Promise<void> => {
+  const estimateUpdateParams = async (
+    params: UpdateParamsParams
+  ): Promise<void> => {
     if (!web3Provider || !address) {
       throw new Error("No wallet connected")
     }
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         params.factory
       )
 
@@ -866,7 +937,7 @@ export const useETFContract = () => {
         const factoryAddress = params.factory
 
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           factoryAddress
         )
 
@@ -899,30 +970,32 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: factoryAddress,
-              data: factoryContract.methods
-                .updateParams(
-                  params.vault,
-                  params.imbalanceThresholdBps,
-                  params.maxPriceStaleness,
-                  params.rebalanceCooldown,
-                  params.maxCapacityUSD
-                )
-                .encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: factoryAddress,
+                data: factoryContract.methods
+                  .updateParams(
+                    params.vault,
+                    params.imbalanceThresholdBps,
+                    params.maxPriceStaleness,
+                    params.rebalanceCooldown,
+                    params.maxCapacityUSD
+                  )
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         // Parse the ParamsUpdated event
         let paramsUpdatedEvent: any | null = null
@@ -930,7 +1003,7 @@ export const useETFContract = () => {
         for (const log of receipt.logs) {
           try {
             const evt = decodeEventLog({
-              abi: factoryAbi,
+              abi: ABIs.etfFactoryAbi,
               data: log.data,
               topics: log.topics
             })
@@ -969,7 +1042,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         factoryAddress
       )
 
@@ -990,7 +1063,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         factoryAddress
       )
 
@@ -1019,7 +1092,7 @@ export const useETFContract = () => {
 
       try {
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           params.factory
         )
 
@@ -1040,22 +1113,26 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: params.factory,
-              data: factoryContract.methods.setHLSAddress(params.hlsAddress).encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: params.factory,
+                data: factoryContract.methods
+                  .setHLSAddress(params.hlsAddress)
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         return {
           txHash: receipt.transactionHash,
@@ -1077,7 +1154,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         factoryAddress
       )
 
@@ -1087,7 +1164,9 @@ export const useETFContract = () => {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
       }
-      throw new Error((error as Error).message || "Error getting treasury address")
+      throw new Error(
+        (error as Error).message || "Error getting treasury address"
+      )
     }
   }
 
@@ -1106,7 +1185,7 @@ export const useETFContract = () => {
 
       try {
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           params.factory
         )
 
@@ -1127,22 +1206,26 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: params.factory,
-              data: factoryContract.methods.setTreasury(params.treasury).encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: params.factory,
+                data: factoryContract.methods
+                  .setTreasury(params.treasury)
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         return {
           txHash: receipt.transactionHash,
@@ -1152,7 +1235,9 @@ export const useETFContract = () => {
         if (error instanceof ResponseError) {
           throw new Error(error.data.message)
         }
-        throw new Error((error as Error).message || "Error setting treasury address")
+        throw new Error(
+          (error as Error).message || "Error setting treasury address"
+        )
       }
     }
   })
@@ -1164,7 +1249,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         factoryAddress
       )
 
@@ -1197,7 +1282,7 @@ export const useETFContract = () => {
 
       try {
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           params.factory
         )
 
@@ -1218,22 +1303,26 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: params.factory,
-              data: factoryContract.methods.setDepositFee(params.feeBps).encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: params.factory,
+                data: factoryContract.methods
+                  .setDepositFee(params.feeBps)
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         return {
           txHash: receipt.transactionHash,
@@ -1258,7 +1347,7 @@ export const useETFContract = () => {
 
     try {
       const factoryContract = new web3Provider.eth.Contract(
-        factoryAbi as any,
+        ABIs.etfFactoryAbi as any,
         factoryAddress
       )
 
@@ -1282,7 +1371,9 @@ export const useETFContract = () => {
       if (error instanceof ResponseError) {
         throw new Error(error.data.message)
       }
-      throw new Error((error as Error).message || "Error getting fee swap config")
+      throw new Error(
+        (error as Error).message || "Error getting fee swap config"
+      )
     }
   }
 
@@ -1304,7 +1395,7 @@ export const useETFContract = () => {
 
       try {
         const factoryContract = new web3Provider.eth.Contract(
-          factoryAbi as any,
+          ABIs.etfFactoryAbi as any,
           params.factory
         )
 
@@ -1345,34 +1436,36 @@ export const useETFContract = () => {
         const bestGasPrice = await getBestGasPrice(web3Provider)
 
         // Send the transaction
-        const receipt = await new Promise<TransactionReceipt>((resolve, reject) => {
-          web3Provider.eth
-            .sendTransaction({
-              from: address,
-              to: params.factory,
-              data: factoryContract.methods
-                .setFeeSwapConfig(
-                  params.depositToken,
-                  params.enabled,
-                  params.isV2,
-                  params.router,
-                  params.quoter,
-                  params.pathV2,
-                  params.pathV3,
-                  params.tokenOut,
-                  params.slippageBps
-                )
-                .encodeABI(),
-              gas: gasLimit.toString(),
-              gasPrice: bestGasPrice.toString()
-            })
-            .then((tx) => {
-              resolve(tx as any)
-            })
-            .catch((error) => {
-              reject(error)
-            })
-        })
+        const receipt = await new Promise<TransactionReceipt>(
+          (resolve, reject) => {
+            web3Provider.eth
+              .sendTransaction({
+                from: address,
+                to: params.factory,
+                data: factoryContract.methods
+                  .setFeeSwapConfig(
+                    params.depositToken,
+                    params.enabled,
+                    params.isV2,
+                    params.router,
+                    params.quoter,
+                    params.pathV2,
+                    params.pathV3,
+                    params.tokenOut,
+                    params.slippageBps
+                  )
+                  .encodeABI(),
+                gas: gasLimit.toString(),
+                gasPrice: bestGasPrice.toString()
+              })
+              .then((tx) => {
+                resolve(tx as any)
+              })
+              .catch((error) => {
+                reject(error)
+              })
+          }
+        )
 
         return {
           txHash: receipt.transactionHash,
@@ -1382,7 +1475,9 @@ export const useETFContract = () => {
         if (error instanceof ResponseError) {
           throw new Error(error.data.message)
         }
-        throw new Error((error as Error).message || "Error setting fee swap config")
+        throw new Error(
+          (error as Error).message || "Error setting fee swap config"
+        )
       }
     }
   })
