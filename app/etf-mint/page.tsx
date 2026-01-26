@@ -10,6 +10,7 @@ import { ETHEREUM_NETWORK_ID } from "@/config/app"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, ChangeEvent } from "react"
 import { toast } from "sonner"
+
 import s from "./page.module.scss"
 
 interface TokenInput {
@@ -23,7 +24,7 @@ export default function ETFMint() {
   const { address } = useAccount()
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   const etfSymbol = searchParams.get("symbol") || "ETF"
 
   const [mintAmount, setMintAmount] = useState("")
@@ -63,7 +64,9 @@ export default function ETFMint() {
       return
     }
 
-    const hasAllTokens = selectedTokens.every((t) => t.amount && parseFloat(t.amount) > 0)
+    const hasAllTokens = selectedTokens.every(
+      (t) => t.amount && parseFloat(t.amount) > 0
+    )
     if (!hasAllTokens) {
       toast.error("Please provide amounts for all tokens")
       return
@@ -76,7 +79,7 @@ export default function ETFMint() {
     setIsLoading(true)
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
-      
+
       toast.success(`Successfully minted ${mintAmount} ${etfSymbol} tokens!`)
       setShowPreview(false)
       setMintAmount("")
@@ -85,7 +88,7 @@ export default function ETFMint() {
         { symbol: "USDT", amount: "", percentage: 30 },
         { symbol: "DAI", amount: "", percentage: 30 }
       ])
-      
+
       setTimeout(() => {
         router.push("/etf-list")
       }, 1000)
@@ -137,13 +140,17 @@ export default function ETFMint() {
                     <div key={token.symbol} className={s.tokenInput}>
                       <div className={s.tokenHeader}>
                         <span className={s.symbol}>{token.symbol}</span>
-                        <span className={s.percentage}>{token.percentage}%</span>
+                        <span className={s.percentage}>
+                          {token.percentage}%
+                        </span>
                       </div>
                       <Input
                         type="number"
                         value={token.amount}
                         placeholder={`Enter ${token.symbol} amount`}
-                        onChange={(e) => handleTokenAmountChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleTokenAmountChange(index, e.target.value)
+                        }
                         min={0}
                       />
                     </div>
@@ -153,11 +160,15 @@ export default function ETFMint() {
                 <div className={s.summary}>
                   <div className={s.summaryRow}>
                     <span>Total Value to Provide</span>
-                    <span className={s.amount}>${calculateTotalValue().toFixed(2)}</span>
+                    <span className={s.amount}>
+                      ${calculateTotalValue().toFixed(2)}
+                    </span>
                   </div>
                   <div className={s.summaryRow}>
                     <span>ETF Tokens to Receive</span>
-                    <span className={s.amount}>{mintAmount || "0"} {etfSymbol}</span>
+                    <span className={s.amount}>
+                      {mintAmount || "0"} {etfSymbol}
+                    </span>
                   </div>
                 </div>
 
@@ -165,7 +176,9 @@ export default function ETFMint() {
                   <Button
                     variant="primary"
                     onClick={handlePreview}
-                    disabled={!isWalletConnected || !isEthereumNetwork || !mintAmount}
+                    disabled={
+                      !isWalletConnected || !isEthereumNetwork || !mintAmount
+                    }
                     iconLeft="hugeicons:eye"
                   >
                     Preview Mint
@@ -204,7 +217,9 @@ export default function ETFMint() {
                   <div className={s.stepNumber}>3</div>
                   <div className={s.stepContent}>
                     <h4>Approve & Confirm</h4>
-                    <p>Approve token transfers and confirm the mint transaction</p>
+                    <p>
+                      Approve token transfers and confirm the mint transaction
+                    </p>
                   </div>
                 </div>
 
@@ -212,7 +227,9 @@ export default function ETFMint() {
                   <div className={s.stepNumber}>4</div>
                   <div className={s.stepContent}>
                     <h4>Receive ETF Tokens</h4>
-                    <p>Your new ETF tokens will be transferred to your wallet</p>
+                    <p>
+                      Your new ETF tokens will be transferred to your wallet
+                    </p>
                   </div>
                 </div>
               </div>
@@ -261,7 +278,9 @@ export default function ETFMint() {
               <div className={s.previewContent}>
                 <div className={s.previewRow}>
                   <span>ETF Tokens to Mint</span>
-                  <span className={s.value}>{mintAmount} {etfSymbol}</span>
+                  <span className={s.value}>
+                    {mintAmount} {etfSymbol}
+                  </span>
                 </div>
 
                 {selectedTokens.map((token) => (
