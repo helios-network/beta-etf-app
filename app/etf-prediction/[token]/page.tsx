@@ -12,7 +12,7 @@ import {
   calculateTimeRemaining,
   formatTimeUnit
 } from "@/helpers/prediction"
-import { fetchETFByVaultAddress } from "@/helpers/request"
+import { fetchETFPredictionByVaultAddress } from "@/helpers/request"
 import { useParams } from "next/navigation"
 import { useEffect, useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -25,10 +25,10 @@ export default function PredictionPage() {
   const [timeRemaining, setTimeRemaining] = useState({ hours: 0, minutes: 0, seconds: 0, total: 0 })
 
   const isAddress = Boolean(token && token.startsWith("0x"))
-  
+
   const { data: etfData, isLoading: isLoadingETF } = useQuery({
     queryKey: ["etf-prediction", token],
-    queryFn: () => fetchETFByVaultAddress(token),
+    queryFn: () => fetchETFPredictionByVaultAddress(token),
     enabled: isAddress,
     retry: false,
     staleTime: 30 * 1000
@@ -37,12 +37,12 @@ export default function PredictionPage() {
   const prediction = useMemo(() => {
     const now = new Date()
     const expiryDate = new Date(now.getTime() + 19 * 60 * 60 * 1000 + 28 * 60 * 1000)
-    
+
     const mockPrediction = getPredictionByToken(token)
     if (mockPrediction) {
       return mockPrediction
     }
-    
+
     if (etfData?.data) {
       const etf = etfData.data
       return {
@@ -58,15 +58,15 @@ export default function PredictionPage() {
         priceChangePercentage: 0.24
       }
     }
-    
+
     let displayToken = token || "TOKEN"
     let displaySymbol = token || "Token"
-    
+
     if (token && !token.startsWith("0x")) {
       displayToken = token.toUpperCase()
       displaySymbol = token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()
     }
-    
+
     return {
       token: displayToken,
       symbol: displaySymbol,

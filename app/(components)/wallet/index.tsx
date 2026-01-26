@@ -8,6 +8,7 @@ import { useAppKit } from "@reown/appkit/react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useAccount, useDisconnect } from "wagmi"
+
 import s from "./wallet.module.scss"
 
 export const Wallet = () => {

@@ -8,6 +8,7 @@ import { SettingsModal } from "@/components/settings-modal"
 import routes from "@/config/routes"
 import { useAccount } from "wagmi"
 import { useState } from "react"
+
 import { Chains } from "../chains"
 import { Nav } from "../nav"
 import { Wallet } from "../wallet"

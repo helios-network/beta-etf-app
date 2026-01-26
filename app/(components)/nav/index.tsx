@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/app"
 import clsx from "clsx"
 import { useRef } from "react"
 import { useOnClickOutside } from "usehooks-ts"
+
 import NavItem, { type NavItemProps } from "./nav-item"
 import s from "./nav.module.scss"
 

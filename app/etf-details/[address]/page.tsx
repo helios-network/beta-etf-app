@@ -1,11 +1,5 @@
 "use client"
 
-import { AboutSection } from "./(components)/about-section"
-import { BasketGovernance } from "./(components)/basket-governance"
-import { Disclosures } from "./(components)/disclosures"
-import { PriceChart } from "./(components)/price-chart"
-import { TokenComposition } from "./(components)/token-composition"
-import { BuySellSidebar } from "./(components)/buy-sell-sidebar"
 import { CHAIN_CONFIG } from "@/config/chain-config"
 import { useParams } from "next/navigation"
 import { fetchETFByVaultAddress, type ETFResponse } from "@/helpers/request"
@@ -14,9 +8,16 @@ import { formatTokenAmount, formatTotalMarketCap } from "@/lib/utils/number"
 import { useQuery } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import clsx from "clsx"
-import s from "./page.module.scss"
 import { wrangleEtfResponse } from "@/utils/etf"
 import { ETF } from "@/types/etf"
+
+import { AboutSection } from "./(components)/about-section"
+import { BasketGovernance } from "./(components)/basket-governance"
+import { Disclosures } from "./(components)/disclosures"
+import { PriceChart } from "./(components)/price-chart"
+import { TokenComposition } from "./(components)/token-composition"
+import { BuySellSidebar } from "./(components)/buy-sell-sidebar"
+import s from "./page.module.scss"
 
 function formatETFResponse(etf: ETFResponse): ETF {
   return {
@@ -25,7 +26,7 @@ function formatETFResponse(etf: ETFResponse): ETF {
     totalSupply: etf.totalSupply || "0",
     price: etf.sharePrice || "0.00",
     apy: "0.00",
-    category: "DeFi",
+    category: "DeFi"
   }
 }
 
