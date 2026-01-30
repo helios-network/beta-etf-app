@@ -1,7 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Modal } from "@/components/modal"
+import { Button, Modal } from "@/components"
 import clsx from "clsx"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -11,8 +10,7 @@ import { HyperionChain } from "@/types/hyperion"
 import { getLogoByHash } from "@/utils/url"
 import Image from "next/image"
 import { useChains } from "@/hooks/useChains"
-
-const ALLOWED_CHAIN_IDS = [1, 42161]
+import { ALLOWED_CHAIN_IDS } from "@/config/app"
 
 export const Chains = () => {
   const { chains } = useChains()
@@ -60,30 +58,32 @@ export const Chains = () => {
         responsiveBottom
       >
         <ul className={s.list}>
-          {chains.filter(chain => ALLOWED_CHAIN_IDS.includes(chain.chainId)).map((chain) => (
-            <li key={chain.chainId}>
-              <Button
-                variant="secondary"
-                iconRight="hugeicons:arrow-right-01"
-                border
-                onClick={() => handleChange(chain)}
-                hovering={chain.chainId === chainId}
-                className={clsx(s.button)}
-              >
-                <div className={s.symbol}>
-                  {chain.logo !== "" && (
-                    <Image
-                      src={getLogoByHash(chain.logo)}
-                      alt=""
-                      width={28}
-                      height={28}
-                    />
-                  )}
-                </div>
-                <span>{chain.name}</span>
-              </Button>
-            </li>
-          ))}
+          {chains
+            .filter((chain) => ALLOWED_CHAIN_IDS.includes(chain.chainId))
+            .map((chain) => (
+              <li key={chain.chainId}>
+                <Button
+                  variant="secondary"
+                  iconRight="hugeicons:arrow-right-01"
+                  border
+                  onClick={() => handleChange(chain)}
+                  hovering={chain.chainId === chainId}
+                  className={clsx(s.button)}
+                >
+                  <div className={s.symbol}>
+                    {chain.logo !== "" && (
+                      <Image
+                        src={getLogoByHash(chain.logo)}
+                        alt=""
+                        width={28}
+                        height={28}
+                      />
+                    )}
+                  </div>
+                  <span>{chain.name}</span>
+                </Button>
+              </li>
+            ))}
         </ul>
       </Modal>
     </>

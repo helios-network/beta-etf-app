@@ -1,13 +1,10 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Link } from "@/components/link"
-import { Logotype } from "@/components/logotype"
-import { PointsButton } from "@/components/points-button"
-import { SettingsModal } from "@/components/settings-modal"
+import { Button, Link, Logotype, PointsButton, SettingsModal } from "@/components"
 import routes from "@/config/routes"
 import { useAccount } from "wagmi"
 import { useState } from "react"
+
 import { Chains } from "../chains"
 import { Nav } from "../nav"
 import { Wallet } from "../wallet"

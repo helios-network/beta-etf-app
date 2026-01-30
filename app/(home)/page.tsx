@@ -1,11 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Card } from "@/components/card"
-import { Icon } from "@/components/icon"
-import { Sub } from "@/components/sub"
-import { Symbol } from "@/components/symbol"
-import { Tunnel } from "@/components/tunnel"
+import { Button, Card, Icon, Sub, Symbol, Tunnel } from "@/components"
 import { ABIs } from "@/constant"
 import {
   fetchDepositTokens,
@@ -895,12 +890,12 @@ export default function Home() {
                 {isEstimating
                   ? "Estimating..."
                   : totalEstimatedValue !== null
-                  ? `~$${totalEstimatedValue.toFixed(2)}`
-                  : buyAmount && selectedETF?.sharePrice
-                  ? `~$${(
-                      parseFloat(buyAmount) * parseFloat(selectedETF.sharePrice)
-                    ).toFixed(2)}`
-                  : "$0.00"}
+                    ? `~$${totalEstimatedValue.toFixed(2)}`
+                    : buyAmount && selectedETF?.sharePrice
+                      ? `~$${(
+                        parseFloat(buyAmount) * parseFloat(selectedETF.sharePrice)
+                      ).toFixed(2)}`
+                      : "$0.00"}
               </div>
             </div>
 
@@ -914,11 +909,10 @@ export default function Home() {
                       impermanentLossPercentage > 5
                         ? "var(--danger-lowest)"
                         : "var(--warning-lowest)",
-                    border: `1px solid ${
-                      impermanentLossPercentage > 5
+                    border: `1px solid ${impermanentLossPercentage > 5
                         ? "var(--danger-low)"
                         : "var(--warning-low)"
-                    }`,
+                      }`,
                     borderRadius: "var(--radius-s)",
                     display: "flex",
                     alignItems: "flex-start",
@@ -973,11 +967,11 @@ export default function Home() {
                     >
                       {impermanentLossPercentage > 5
                         ? `You may lose approximately ${impermanentLossPercentage.toFixed(
-                            2
-                          )}% due to swap fees and slippage. Consider depositing a smaller amount or waiting for better market conditions.`
+                          2
+                        )}% due to swap fees and slippage. Consider depositing a smaller amount or waiting for better market conditions.`
                         : `You may lose approximately ${impermanentLossPercentage.toFixed(
-                            2
-                          )}% due to swap fees and slippage.`}
+                          2
+                        )}% due to swap fees and slippage.`}
                     </span>
                   </div>
                 </div>
@@ -1170,11 +1164,11 @@ export default function Home() {
                 {isEstimating
                   ? "Estimating..."
                   : sellAmount && selectedETF?.sharePrice
-                  ? `~$${(
+                    ? `~$${(
                       parseFloat(sellAmount) *
                       parseFloat(selectedETF.sharePrice)
                     ).toFixed(2)}`
-                  : "$0.00"}
+                    : "$0.00"}
               </div>
             </div>
 
@@ -1301,8 +1295,8 @@ export default function Home() {
             {isContractLoading
               ? "Processing..."
               : isReversed
-              ? "Redeem"
-              : "Deposit"}
+                ? "Redeem"
+                : "Deposit"}
           </Button>
         )}
       </Card>

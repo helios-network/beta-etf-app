@@ -1,7 +1,7 @@
-import { PointsModal } from "@/components/points-modal"
-import { TunnelDefs } from "@/components/tunnel"
+import { PointsModal, TunnelDefs } from "@/components"
 import NextTopLoader from "nextjs-toploader"
 import { Toaster } from "sonner"
+
 import { Footer } from "../footer"
 import { Header } from "../header"
 import s from "./wrapper.module.scss"
