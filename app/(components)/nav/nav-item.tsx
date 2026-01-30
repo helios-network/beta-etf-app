@@ -1,6 +1,6 @@
 "use client"
 
-import { Link } from "@/components/link"
+import { Link } from "@/components"
 import { useActive } from "@/hooks/useActive"
 import { useAppStore } from "@/stores/app"
 import clsx from "clsx"

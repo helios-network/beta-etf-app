@@ -1,9 +1,6 @@
 "use client"
 
-import { Icon } from "@/components/icon"
-import { Input } from "@/components/input"
-import { Modal } from "@/components/modal"
-import { Symbol } from "@/components/symbol"
+import { Icon, Input, Modal, Symbol } from "@/components"
 import { getAssetColor, getAssetIcon } from "@/utils/assets"
 import { fetchDepositTokens, type DepositToken } from "@/helpers/request"
 

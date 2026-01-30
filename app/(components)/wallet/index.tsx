@@ -1,8 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Dropdown } from "@/components/dropdown"
-import { PointsButton } from "@/components/points-button"
+import { Button, Dropdown, PointsButton } from "@/components"
 import { truncateAddress } from "@/lib/utils"
 import { useAppKit } from "@reown/appkit/react"
 import { useEffect, useState } from "react"

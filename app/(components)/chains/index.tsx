@@ -1,7 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Modal } from "@/components/modal"
+import { Button, Modal } from "@/components"
 import clsx from "clsx"
 import { useState } from "react"
 import { toast } from "sonner"

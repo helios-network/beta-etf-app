@@ -1,5 +1,4 @@
-import { PointsModal } from "@/components/points-modal"
-import { TunnelDefs } from "@/components/tunnel"
+import { PointsModal, TunnelDefs } from "@/components"
 import NextTopLoader from "nextjs-toploader"
 import { Toaster } from "sonner"
 

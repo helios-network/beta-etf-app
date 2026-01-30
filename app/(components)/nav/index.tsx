@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
+import { Button } from "@/components"
 import routes from "@/config/routes"
 import { useAppStore } from "@/stores/app"
 import clsx from "clsx"
