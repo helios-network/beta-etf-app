@@ -1,13 +1,12 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Dropdown } from "@/components/dropdown"
-import { PointsButton } from "@/components/points-button"
+import { Button, Dropdown, PointsButton } from "@/components"
 import { truncateAddress } from "@/lib/utils"
 import { useAppKit } from "@reown/appkit/react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { useAccount, useDisconnect } from "wagmi"
+
 import s from "./wallet.module.scss"
 
 export const Wallet = () => {

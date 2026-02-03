@@ -24,10 +24,11 @@ enum ETab {
 interface IProps {
   onClose: () => void
   selectedETF: ETF | null
+  open: boolean
 }
 
 export const UpdateParametersModal = (props: IProps) => {
-  const { onClose, selectedETF } = props
+  const { onClose, selectedETF, open } = props
   const web3Provider = useWeb3Provider()
   const {
     updateParams,
@@ -55,7 +56,6 @@ export const UpdateParametersModal = (props: IProps) => {
   const [updateParamsError, setUpdateParamsError] = useState<string | null>(
     null
   )
-  const [open, setOpen] = useState(false)
 
   const handleEstimateUpdateParams = async () => {
     if (!selectedETF) return
@@ -152,7 +152,7 @@ export const UpdateParametersModal = (props: IProps) => {
       })
 
       toast.success(`Successfully updated parameters for ${selectedETF.symbol}`)
-      setOpen(false)
+
       setImbalanceThresholdBps("")
       setMaxPriceStaleness("")
       setRebalanceCooldown("")
@@ -170,7 +170,7 @@ export const UpdateParametersModal = (props: IProps) => {
     }
   }
 
-  const handleCreatePredictionMarket = async () => {}
+  const handleCreatePredictionMarket = async () => { }
 
   useEffect(() => {
     const loadInfo = async () => {
@@ -184,11 +184,11 @@ export const UpdateParametersModal = (props: IProps) => {
         setCurrentRebalanceCooldown(null)
         setCurrentMaxCapacityUSD(null)
         setUpdateParamsError(null)
-        setOpen(true)
+
         // Fetch current params
         await fetchCurrentParams(selectedETF)
       } else {
-        setOpen(false)
+        onClose()
         setTab(ETab.UpdateParameters)
       }
     }
@@ -236,9 +236,9 @@ export const UpdateParametersModal = (props: IProps) => {
         vaultConfig.rebalanceCooldown !== undefined
           ? vaultConfig
           : {
-              rebalanceCooldown: vaultConfig[1] || "0",
-              maxCapacityUSD: vaultConfig[2] || "0"
-            }
+            rebalanceCooldown: vaultConfig[1] || "0",
+            maxCapacityUSD: vaultConfig[2] || "0"
+          }
 
       setCurrentRebalanceCooldown(String(config.rebalanceCooldown || "0"))
       setCurrentMaxCapacityUSD(String(config.maxCapacityUSD || "0"))
@@ -554,7 +554,7 @@ export const UpdateParametersModal = (props: IProps) => {
 
   return (
     <Modal
-      open={open}
+      open={open && !!selectedETF}
       onClose={onClose}
       title={`Update Parameters - ${selectedETF?.symbol || ""}`}
     >

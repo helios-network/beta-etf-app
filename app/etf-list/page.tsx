@@ -29,9 +29,10 @@ import { toast } from "sonner"
 import { useEventListener } from "usehooks-ts"
 import { useAccount, useChainId } from "wagmi"
 import Image from "next/image"
-import s from "./page.module.scss"
 import { wrangleEtfResponse } from "@/utils/etf"
+
 import { UpdateParametersModal } from "./(components)"
+import s from "./page.module.scss"
 
 function formatETFResponse(etf: ETFResponse): ETF {
   return wrangleEtfResponse(etf)
@@ -71,6 +72,7 @@ export default function ETFList() {
 
   // Rebalance modal state
   const [rebalanceModalOpen, setRebalanceModalOpen] = useState(false)
+  const [updateParametersModalOpen, setUpdateParametersModalOpen] = useState(false)
   const [isEstimatingRebalance, setIsEstimatingRebalance] = useState(false)
   const [rebalanceError, setRebalanceError] = useState<string | null>(null)
   const [rebalancePreview, setRebalancePreview] = useState<{
@@ -604,7 +606,10 @@ export default function ETFList() {
                         <Button
                           variant="secondary"
                           size="xsmall"
-                          onClick={() => handleOpenUpdateParamsModal(etf)}
+                          onClick={() => {
+                            handleOpenUpdateParamsModal(etf)
+                            setUpdateParametersModalOpen(true)
+                          }}
                           iconLeft="hugeicons:settings-01"
                           title="Update Parameters"
                         />
@@ -881,7 +886,9 @@ export default function ETFList() {
       <UpdateParametersModal
         onClose={() => {
           setSelectedETF(null)
+          setUpdateParametersModalOpen(false)
         }}
+        open={updateParametersModalOpen}
         selectedETF={selectedETF}
       />
 

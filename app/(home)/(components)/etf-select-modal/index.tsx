@@ -1,9 +1,6 @@
 "use client"
 
-import { Icon } from "@/components/icon"
-import { Input } from "@/components/input"
-import { Modal } from "@/components/modal"
-import { Symbol } from "@/components/symbol"
+import { Icon, Input, Modal, Symbol } from "@/components"
 import { getAssetColor, getAssetIcon } from "@/utils/assets"
 import { CHAIN_CONFIG } from "@/config/chain-config"
 import { fetchETFs, type ETFResponse } from "@/helpers/request"
@@ -130,7 +127,7 @@ export function ETFSelectModal({
           const balance = (balances[index].result || 0) as number
           etfValues[etf.id] = formatTokenAmount(
             parseFloat(formatUnits(BigInt(balance), etf.shareDecimals)) *
-              etf.sharePrice
+            etf.sharePrice
           )
         })
 
@@ -308,9 +305,8 @@ export function ETFSelectModal({
                     ) : null}
                     {etf.chain && CHAIN_CONFIG[etf.chain]?.abbreviatedName && (
                       <Image
-                        src={`/img/chains/${
-                          CHAIN_CONFIG[etf.chain].abbreviatedName
-                        }.png`}
+                        src={`/img/chains/${CHAIN_CONFIG[etf.chain].abbreviatedName
+                          }.png`}
                         alt={CHAIN_CONFIG[etf.chain].name}
                         width={24}
                         height={24}

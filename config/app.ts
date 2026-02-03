@@ -17,6 +17,8 @@ export const ARBITRUM_NETWORK_ID = 42161
 export const HELIOS_NETWORK_ID = 42000
 export const BETA_NETWORK_ID = ETHEREUM_NETWORK_ID
 
+export const ALLOWED_CHAIN_IDS = [ETHEREUM_NETWORK_ID, ARBITRUM_NETWORK_ID]
+
 // Import the getRpcUrl function from the rpc.ts file when using RPC_URL
 // This is a placeholder for static imports
 export const RPC_URL = "RPC_URL" // This will be replaced dynamically at runtime

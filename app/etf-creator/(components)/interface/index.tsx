@@ -1,11 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Card } from "@/components/card"
-import { Heading } from "@/components/heading"
-import { Icon } from "@/components/icon"
-import { Input } from "@/components/input"
-import { Modal } from "@/components/modal"
+import { Button, Card, Heading, Icon, Input, Modal } from "@/components"
 import { useRecentETFsContext } from "@/context/RecentETFsContext"
 import { useETFContract } from "@/hooks/useETFContract"
 import { verifyETF, VerifyETFResponse } from "@/helpers/request"
@@ -14,7 +9,7 @@ import { toast } from "sonner"
 import { useAccount, useChainId } from "wagmi"
 import s from "./interface.module.scss"
 import { getChainConfig } from "@/config/chain-config"
-import { ASSETS_ADDRS } from "@/helpers/tokens"
+import { ASSETS_ADDRS } from "@/config/constants"
 
 type TokenComponent = {
   token: string
@@ -71,38 +66,38 @@ export const ETFCreatorInterface = () => {
   const { createETF, isLoading: isCreatingETF } = useETFContract()
   const isLoadingDeploy = isLoading || isCreatingETF
 
-      const handleInputChange =
+  const handleInputChange =
     (field: keyof ETFForm) =>
-    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = e.target.value
+      (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const value = e.target.value
 
-      if (field === "currentTokenWeight") {
-        const weightValue = parseFloat(value)
-        if (
-          value !== "" &&
-          (isNaN(weightValue) ||
-            weightValue < 0 ||
-            weightValue > 100)
-        ) {
-          return
+        if (field === "currentTokenWeight") {
+          const weightValue = parseFloat(value)
+          if (
+            value !== "" &&
+            (isNaN(weightValue) ||
+              weightValue < 0 ||
+              weightValue > 100)
+          ) {
+            return
+          }
         }
-      }
 
-      if (field === "initialSharePrice") {
-        const priceValue = parseFloat(value)
-        if (
-          value !== "" &&
-          (isNaN(priceValue) || priceValue <= 0)
-        ) {
-          return
+        if (field === "initialSharePrice") {
+          const priceValue = parseFloat(value)
+          if (
+            value !== "" &&
+            (isNaN(priceValue) || priceValue <= 0)
+          ) {
+            return
+          }
         }
-      }
 
-      setForm((prev) => ({
-        ...prev,
-        [field]: value
-      }))
-    }
+        setForm((prev) => ({
+          ...prev,
+          [field]: value
+        }))
+      }
 
   const handleAddToken = () => {
     if (
@@ -241,7 +236,7 @@ export const ETFCreatorInterface = () => {
         depositToken: (ASSETS_ADDRS as any)[chainId]?.USDC || "",
         components: form.components
       })
-      
+
       if (data.status === "ERROR") {
         if (data.reason == "INSUFFICIENT_LIQUIDITY") {
           toast.error(`Insufficient liquidity for ${data.details?.token}. Required: $${data.details?.requiredUSD.toLocaleString()}. Please add more liquidity to the token.`, {
@@ -508,9 +503,8 @@ export const ETFCreatorInterface = () => {
 
               <div className={s.modeGrid}>
                 <div
-                  className={`${s.modeButton} ${
-                    form.rebalancingMode === "automatic" ? s.selected : ""
-                  }`}
+                  className={`${s.modeButton} ${form.rebalancingMode === "automatic" ? s.selected : ""
+                    }`}
                   onClick={() =>
                     setForm((prev) => ({
                       ...prev,
@@ -547,9 +541,8 @@ export const ETFCreatorInterface = () => {
                 </div>
 
                 <div
-                  className={`${s.modeButton} ${
-                    form.rebalancingMode === "manual" ? s.selected : ""
-                  } ${s.disabled}`}
+                  className={`${s.modeButton} ${form.rebalancingMode === "manual" ? s.selected : ""
+                    } ${s.disabled}`}
                   onClick={() => {
                     // Disabled
                   }}
@@ -575,9 +568,8 @@ export const ETFCreatorInterface = () => {
                 </div>
 
                 <div
-                  className={`${s.modeButton} ${
-                    form.rebalancingMode === "no-rebalancing" ? s.selected : ""
-                  } ${s.disabled}`}
+                  className={`${s.modeButton} ${form.rebalancingMode === "no-rebalancing" ? s.selected : ""
+                    } ${s.disabled}`}
                   onClick={() => {
                     // Disabled
                   }}

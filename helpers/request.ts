@@ -251,6 +251,52 @@ async function fetchETFByVaultAddress(
   return data
 }
 
+
+interface ETFPredictionByAddressApiResponse {
+  success: boolean
+  data: ETFResponse
+  message?: string
+}
+
+async function fetchETFPredictionByVaultAddress(
+  vaultAddress: string
+): Promise<ETFByAddressApiResponse> {
+  const apiUrl = env.NEXT_PUBLIC_BASE_API_URL
+
+  if (!apiUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_BASE_API_URL is not configured. Please set it in your .env file."
+    )
+  }
+
+  // Remove trailing slash if present to avoid double slashes
+  const baseUrl = apiUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}/api/etf-prediction?vault=${vaultAddress}`
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+
+  if (response.status === 404) {
+    throw new Error("ETF not found")
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ETF: ${response.statusText}`)
+  }
+
+  const data: ETFByAddressApiResponse = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.message || "API returned unsuccessful response")
+  }
+
+  return data
+}
+
 interface DepositToken {
   address: string
   symbol: string
@@ -744,7 +790,8 @@ export {
   fetchETFChart,
   fetchETFByVaultAddress,
   fetchFactoryAddress,
-  fetchBestSwapConfig
+  fetchBestSwapConfig,
+  fetchETFPredictionByVaultAddress
 }
 export type {
   BestSwapConfig,
@@ -770,5 +817,6 @@ export type {
   UserTotalPointsResponse,
   UserTotalPointsData,
   ChartDataPoint,
-  ChartApiResponse
+  ChartApiResponse,
+  ETFPredictionByAddressApiResponse
 }

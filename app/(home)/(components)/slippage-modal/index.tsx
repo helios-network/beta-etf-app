@@ -1,8 +1,6 @@
 "use client"
 
-import { Button } from "@/components/button"
-import { Input } from "@/components/input"
-import { Modal } from "@/components/modal"
+import { Button, Input, Modal } from "@/components"
 import clsx from "clsx"
 import { useState } from "react"
 import s from "./slippage-modal.module.scss"
